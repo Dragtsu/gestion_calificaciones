@@ -1,0 +1,88 @@
+/* Estilos globales */
+.root {
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+}
+
+/* Botones */
+.button {
+    -fx-cursor: hand;
+    -fx-background-radius: 5px;
+    -fx-border-radius: 5px;
+}
+
+.button:hover {
+    -fx-opacity: 0.9;
+}
+
+.button:pressed {
+    -fx-opacity: 0.8;
+}
+
+/* TextFields */
+.text-field {
+    -fx-background-radius: 5px;
+    -fx-border-radius: 5px;
+    -fx-border-color: #ddd;
+    -fx-padding: 8px;
+}
+
+.text-field:focused {
+    -fx-border-color: #2196F3;
+    -fx-border-width: 2px;
+}
+
+/* TableView */
+.table-view {
+    -fx-background-color: white;
+}
+
+.table-view .column-header {
+    -fx-background-color: #f5f5f5;
+    -fx-font-weight: bold;
+}
+
+.table-row-cell:hover {
+    -fx-background-color: #e3f2fd;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #2196F3;
+    -fx-text-fill: white;
+}
+
+/* DatePicker */
+.date-picker {
+    -fx-background-radius: 5px;
+}
+
+/* Labels */
+.label {
+    -fx-text-fill: #333;
+}
+
+/* Drawer Menu */
+.drawer-menu {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 15, 0, 5, 0);
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+}
+
+/* Menu Items */
+.menu-item {
+    -fx-cursor: hand;
+    -fx-border-width: 0;
+    -fx-background-radius: 0;
+}
+
+.menu-item:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.menu-item:pressed {
+    -fx-background-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.menu-item .label {
+    -fx-text-fill: white;
+}
+

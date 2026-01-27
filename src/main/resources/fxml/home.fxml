@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.alumnos.infrastructure.adapter.in.ui.controller.HomeController"
+           prefHeight="700.0" prefWidth="1000.0">
+
+    <!-- Contenido Principal -->
+    <BorderPane fx:id="mainContent" prefHeight="700.0" prefWidth="1000.0">
+
+        <!-- Header -->
+        <top>
+            <VBox styleClass="header" style="-fx-background-color: #2196F3; -fx-padding: 8 15;">
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <!-- Botón Menú Hamburguesa -->
+                    <Button fx:id="btnMenu" onAction="#toggleMenu"
+                            style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 3;">
+                        <graphic>
+                            <VBox spacing="3" alignment="CENTER">
+                                <Region style="-fx-background-color: white; -fx-pref-width: 20; -fx-pref-height: 2;"/>
+                                <Region style="-fx-background-color: white; -fx-pref-width: 20; -fx-pref-height: 2;"/>
+                                <Region style="-fx-background-color: white; -fx-pref-width: 20; -fx-pref-height: 2;"/>
+                            </VBox>
+                        </graphic>
+                    </Button>
+
+                    <VBox>
+                        <Label fx:id="lblTitulo" text="Sistema de Gestión de Alumnos"
+                               style="-fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold;"/>
+                    </VBox>
+
+                    <!-- Spacer para empujar los botones a la derecha -->
+                    <Region HBox.hgrow="ALWAYS"/>
+
+                    <!-- Botones de control de ventana -->
+                    <HBox spacing="2" alignment="CENTER_RIGHT">
+                        <!-- Botón Minimizar -->
+                        <Button fx:id="btnMinimizar" onAction="#minimizeWindow"
+                                style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 14px; -fx-cursor: hand; -fx-padding: 3 10;">
+                            <graphic>
+                                <Label text="─" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;"/>
+                            </graphic>
+                        </Button>
+
+                        <!-- Botón Cerrar -->
+                        <Button fx:id="btnCerrar" onAction="#closeWindow"
+                                style="-fx-background-color: #d32f2f; -fx-text-fill: white; -fx-font-size: 14px; -fx-cursor: hand; -fx-padding: 3 10; -fx-background-radius: 0;">
+                            <graphic>
+                                <Label text="✕" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;"/>
+                            </graphic>
+                        </Button>
+                    </HBox>
+                </HBox>
+            </VBox>
+        </top>
+
+    <!-- Main Content - StackPane para manejar vistas en capas -->
+    <center>
+        <StackPane fx:id="contentContainer" style="-fx-background-color: #f5f5f5;">
+            <!-- Las vistas se agregarán aquí como capas -->
+        </StackPane>
+    </center>
+
+    </BorderPane>
+
+    <!-- Overlay oscuro (capa semitransparente cuando el menú está abierto) -->
+    <Region fx:id="overlay"
+            style="-fx-background-color: rgba(0, 0, 0, 0.5);"
+            visible="false"
+            onMouseClicked="#closeMenu"/>
+
+    <!-- Menú Lateral (Drawer) -->
+    <VBox fx:id="drawerMenu" styleClass="drawer-menu"
+          style="-fx-background-color: #263238;"
+          prefWidth="280" maxWidth="280" minWidth="280"
+          prefHeight="700.0" maxHeight="Infinity"
+          translateX="-280"
+          StackPane.alignment="CENTER_LEFT">
+
+        <!-- Header del Menú -->
+        <VBox style="-fx-background-color: #1976D2; -fx-padding: 30 20;">
+            <Label text="MENÚ" style="-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;"/>
+        </VBox>
+
+        <!-- Items del Menú -->
+        <VBox spacing="0" VBox.vgrow="ALWAYS" style="-fx-padding: 10 0;">
+
+            <!-- Estudiantes -->
+            <Button fx:id="btnMenuEstudiantes" text="Estudiantes" onAction="#handleMenuEstudiantes"
+                    styleClass="menu-item" maxWidth="Infinity"
+                    style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 20 30; -fx-font-size: 16px; -fx-cursor: hand;">
+                <graphic>
+                    <Label text="👨‍🎓" style="-fx-font-size: 20px; -fx-text-fill: white;"/>
+                </graphic>
+            </Button>
+
+
+            <!-- Grupos -->
+            <Button fx:id="btnMenuGrupos" text="Grupos" onAction="#handleMenuGrupos"
+                    styleClass="menu-item" maxWidth="Infinity"
+                    style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 20 30; -fx-font-size: 16px; -fx-cursor: hand;">
+                <graphic>
+                    <Label text="👥" style="-fx-font-size: 20px; -fx-text-fill: white;"/>
+                </graphic>
+            </Button>
+
+            <!-- Materias -->
+            <Button fx:id="btnMenuMaterias" text="Materias" onAction="#handleMenuMaterias"
+                    styleClass="menu-item" maxWidth="Infinity"
+                    style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 20 30; -fx-font-size: 16px; -fx-cursor: hand;">
+                <graphic>
+                    <Label text="📚" style="-fx-font-size: 20px; -fx-text-fill: white;"/>
+                </graphic>
+            </Button>
+
+            <!-- Asignación de Materias -->
+            <Button fx:id="btnMenuAsignaciones" text="Asignación de Materias" onAction="#handleMenuAsignaciones"
+                    styleClass="menu-item" maxWidth="Infinity"
+                    style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 20 30; -fx-font-size: 16px; -fx-cursor: hand;">
+                <graphic>
+                    <Label text="🔗" style="-fx-font-size: 20px; -fx-text-fill: white;"/>
+                </graphic>
+            </Button>
+
+            <!-- Criterios de Evaluación -->
+            <Button fx:id="btnMenuCriterios" text="Criterios de Evaluación" onAction="#toggleSubmenuCriterios"
+                    styleClass="menu-item" maxWidth="Infinity"
+                    style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 20 30; -fx-font-size: 16px; -fx-cursor: hand;">
+                <graphic>
+                    <Label text="📊" style="-fx-font-size: 20px; -fx-text-fill: white;"/>
+                </graphic>
+            </Button>
+
+            <!-- Submenú de Criterios de Evaluación -->
+            <VBox fx:id="submenuCriterios" visible="false" managed="false" spacing="0" style="-fx-background-color: #1a252a;">
+                <!-- Criterios -->
+                <Button fx:id="btnMenuCriteriosLista" text="Criterios" onAction="#handleMenuCriteriosLista"
+                        styleClass="menu-item" maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 15 30 15 60; -fx-font-size: 14px; -fx-cursor: hand;">
+                    <graphic>
+                        <Label text="📝" style="-fx-font-size: 16px; -fx-text-fill: white;"/>
+                    </graphic>
+                </Button>
+
+                <!-- Agregados -->
+                <Button fx:id="btnMenuAgregados" text="Agregados" onAction="#handleMenuAgregados"
+                        styleClass="menu-item" maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 15 30 15 60; -fx-font-size: 14px; -fx-cursor: hand;">
+                    <graphic>
+                        <Label text="➕" style="-fx-font-size: 16px; -fx-text-fill: white;"/>
+                    </graphic>
+                </Button>
+            </VBox>
+
+            <Separator style="-fx-background-color: rgba(255,255,255,0.2);">
+                <VBox.margin>
+                    <Insets top="10" bottom="10" left="20" right="20"/>
+                </VBox.margin>
+            </Separator>
+
+            <!-- Configuración -->
+            <Button fx:id="btnMenuConfiguracion" text="Configuración" onAction="#handleMenuConfiguracion"
+                    styleClass="menu-item" maxWidth="Infinity"
+                    style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 20 30; -fx-font-size: 16px; -fx-cursor: hand;">
+                <graphic>
+                    <Label text="⚙️" style="-fx-font-size: 20px; -fx-text-fill: white;"/>
+                </graphic>
+            </Button>
+
+            <!-- Acerca de -->
+            <Button fx:id="btnMenuAcercaDe" text="Acerca de" onAction="#handleMenuAcercaDe"
+                    styleClass="menu-item" maxWidth="Infinity"
+                    style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 20 30; -fx-font-size: 16px; -fx-cursor: hand;">
+                <graphic>
+                    <Label text="ℹ️" style="-fx-font-size: 20px; -fx-text-fill: white;"/>
+                </graphic>
+            </Button>
+        </VBox>
+    </VBox>
+
+</StackPane>
+
