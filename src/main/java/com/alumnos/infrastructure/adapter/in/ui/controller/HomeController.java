@@ -1082,6 +1082,7 @@ public class HomeController {
 
             Button btnBuscar = new Button("Buscar");
             btnBuscar.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8 25; -fx-cursor: hand;");
+            btnBuscar.setOnAction(e -> handleBuscar());
 
             searchBox.getChildren().addAll(txtBuscar, btnBuscar);
 
@@ -1450,7 +1451,11 @@ public class HomeController {
                 @Override
                 protected void updateItem(Void item, boolean empty) {
                     super.updateItem(item, empty);
-                    setGraphic(empty ? null : btnEliminar);
+                    if (empty) {
+                        setGraphic(null);
+                    } else {
+                        setGraphic(btnEliminar);
+                    }
                 }
             });
 
@@ -1650,8 +1655,8 @@ public class HomeController {
             javafx.scene.layout.HBox filterBox = new javafx.scene.layout.HBox(10);
             filterBox.setStyle("-fx-padding: 10; -fx-alignment: center-left;");
 
-            Label lblFiltrarPor = new Label("Filtrar por Materia:");
-            lblFiltrarPor.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+            Label lblFiltrarPorMateria = new Label("Filtrar por Materia:");
+            lblFiltrarPorMateria.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
 
             ComboBox<Materia> cmbFiltroMateria = new ComboBox<>();
             cmbFiltroMateria.setPromptText("Todas las materias");
@@ -1679,6 +1684,14 @@ public class HomeController {
                 }
             });
 
+            Label lblFiltrarPorCuatrimestre = new Label("Filtrar por Cuatrimestre:");
+            lblFiltrarPorCuatrimestre.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+
+            ComboBox<Integer> cmbFiltroCuatrimestre = new ComboBox<>();
+            cmbFiltroCuatrimestre.setPromptText("Todos los cuatrimestres");
+            cmbFiltroCuatrimestre.setPrefWidth(250);
+            cmbFiltroCuatrimestre.setItems(FXCollections.observableArrayList(1, 2, 3, 4));
+
             Button btnLimpiarFiltro = new Button("Limpiar Filtro");
             btnLimpiarFiltro.setStyle("-fx-background-color: #9E9E9E; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8 20; -fx-cursor: hand;");
 
@@ -1688,7 +1701,7 @@ public class HomeController {
             Button btnGuardarOrden = new Button("Guardar Orden");
             btnGuardarOrden.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8 20; -fx-cursor: hand;");
 
-            filterBox.getChildren().addAll(lblFiltrarPor, cmbFiltroMateria, btnLimpiarFiltro, spacer, btnGuardarOrden);
+            filterBox.getChildren().addAll(lblFiltrarPorMateria, cmbFiltroMateria, lblFiltrarPorCuatrimestre, cmbFiltroCuatrimestre, btnLimpiarFiltro, spacer, btnGuardarOrden);
 
             // Tabla
             TableView<Criterio> tblCriterios = new TableView<>();
@@ -1697,6 +1710,7 @@ public class HomeController {
             TableColumn<Criterio, Long> colId = new TableColumn<>("ID");
             colId.setCellValueFactory(new PropertyValueFactory<>("id"));
             colId.setPrefWidth(60);
+            colId.setVisible(false); // Ocultar columna ID
 
             TableColumn<Criterio, String> colNombre = new TableColumn<>("Nombre");
             colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
@@ -1754,7 +1768,6 @@ public class HomeController {
             TableColumn<Criterio, Void> colOrdenAcciones = new TableColumn<>("Mover");
             colOrdenAcciones.setPrefWidth(100);
             colOrdenAcciones.setCellFactory(col -> new TableCell<>() {
-                private final javafx.scene.layout.HBox botonesBox = new javafx.scene.layout.HBox(5);
                 private final Button btnSubir = new Button("↑");
                 private final Button btnBajar = new Button("↓");
 
@@ -1770,6 +1783,7 @@ public class HomeController {
                             items.remove(index);
                             items.add(index - 1, criterio);
                             getTableView().getSelectionModel().select(index - 1);
+                            getTableView().refresh();
                         }
                     });
 
@@ -1781,17 +1795,56 @@ public class HomeController {
                             items.remove(index);
                             items.add(index + 1, criterio);
                             getTableView().getSelectionModel().select(index + 1);
+                            getTableView().refresh();
                         }
                     });
-
-                    botonesBox.getChildren().addAll(btnSubir, btnBajar);
-                    botonesBox.setStyle("-fx-alignment: center;");
                 }
 
                 @Override
                 protected void updateItem(Void item, boolean empty) {
                     super.updateItem(item, empty);
-                    setGraphic(empty ? null : botonesBox);
+
+                    if (empty) {
+                        setGraphic(null);
+                        return;
+                    }
+
+                    // Mostrar controles solo cuando ambos filtros (materia y cuatrimestre) están seleccionados
+                    boolean filtrosCompletos = cmbFiltroMateria.getValue() != null && cmbFiltroCuatrimestre.getValue() != null;
+                    if (!filtrosCompletos) {
+                        setGraphic(null);
+                        return;
+                    }
+
+                    ObservableList<Criterio> items = getTableView().getItems();
+                    int totalItems = items.size();
+                    if (totalItems <= 1) {
+                        setGraphic(null);
+                        return;
+                    }
+
+                    int index = getIndex();
+                    javafx.scene.layout.HBox contenedor = new javafx.scene.layout.HBox(5);
+                    contenedor.setPrefWidth(Double.MAX_VALUE);
+                    contenedor.setFillHeight(true);
+                    Region leftSpacer = new Region();
+                    Region rightSpacer = new Region();
+                    javafx.scene.layout.HBox.setHgrow(leftSpacer, javafx.scene.layout.Priority.ALWAYS);
+                    javafx.scene.layout.HBox.setHgrow(rightSpacer, javafx.scene.layout.Priority.ALWAYS);
+
+                    if (index == 0) {
+                        // Primer registro: botón bajar alineado a la derecha
+                        contenedor.getChildren().setAll(leftSpacer, btnBajar);
+                    } else if (index == totalItems - 1) {
+                        // Último registro: botón subir alineado a la izquierda
+                        contenedor.getChildren().setAll(btnSubir, rightSpacer);
+                    } else {
+                        // Registros intermedios: ambos botones centrados
+                        contenedor.setAlignment(javafx.geometry.Pos.CENTER);
+                        contenedor.getChildren().setAll(btnSubir, btnBajar);
+                    }
+
+                    setGraphic(contenedor);
                 }
             });
 
@@ -1879,16 +1932,20 @@ public class HomeController {
 
             // Evento: Filtrar por materia
             cmbFiltroMateria.setOnAction(event -> {
-                Materia materiaSeleccionada = cmbFiltroMateria.getValue();
-                if (materiaSeleccionada != null) {
-                    filtrarCriteriosPorMateria(tblCriterios, materiaSeleccionada.getId());
-                    lblEstadisticas.setText("Total de criterios: " + tblCriterios.getItems().size());
-                }
+                aplicarFiltrosCriterios(tblCriterios, cmbFiltroMateria, cmbFiltroCuatrimestre);
+                lblEstadisticas.setText("Total de criterios: " + tblCriterios.getItems().size());
+            });
+
+            // Evento: Filtrar por cuatrimestre
+            cmbFiltroCuatrimestre.setOnAction(event -> {
+                aplicarFiltrosCriterios(tblCriterios, cmbFiltroMateria, cmbFiltroCuatrimestre);
+                lblEstadisticas.setText("Total de criterios: " + tblCriterios.getItems().size());
             });
 
             // Evento: Limpiar filtro
             btnLimpiarFiltro.setOnAction(event -> {
                 cmbFiltroMateria.setValue(null);
+                cmbFiltroCuatrimestre.setValue(null);
                 cargarCriterios(tblCriterios);
                 lblEstadisticas.setText("Total de criterios: " + tblCriterios.getItems().size());
             });
@@ -1936,7 +1993,8 @@ public class HomeController {
                     mostrarAlerta("Éxito", "El orden de los criterios de la materia '" + materiaFiltro.getNombre() + "' (Cuatrimestre " + primerCuatrimestre + ") se guardó correctamente", Alert.AlertType.INFORMATION);
 
                     // Recargar la tabla manteniendo el filtro
-                    filtrarCriteriosPorMateria(tblCriterios, materiaId);
+                    //filtrarCriteriosPorMateria(tblCriterios, materiaId);
+                    aplicarFiltrosCriterios(tblCriterios, cmbFiltroMateria, cmbFiltroCuatrimestre);
                     lblEstadisticas.setText("Total de criterios: " + tblCriterios.getItems().size());
 
                 } catch (Exception e) {
@@ -2312,7 +2370,6 @@ public class HomeController {
             TableColumn<Agregado, Void> colOrdenAcciones = new TableColumn<>("Mover");
             colOrdenAcciones.setPrefWidth(100);
             colOrdenAcciones.setCellFactory(col -> new TableCell<>() {
-                private final javafx.scene.layout.HBox botonesBox = new javafx.scene.layout.HBox(5);
                 private final Button btnSubir = new Button("↑");
                 private final Button btnBajar = new Button("↓");
 
@@ -2341,15 +2398,53 @@ public class HomeController {
                             getTableView().getSelectionModel().select(index + 1);
                         }
                     });
-
-                    botonesBox.getChildren().addAll(btnSubir, btnBajar);
-                    botonesBox.setStyle("-fx-alignment: center;");
                 }
 
                 @Override
                 protected void updateItem(Void item, boolean empty) {
                     super.updateItem(item, empty);
-                    setGraphic(empty ? null : botonesBox);
+
+                    if (empty) {
+                        setGraphic(null);
+                        return;
+                    }
+
+                    // Mostrar controles solo cuando ambos filtros (materia y cuatrimestre) están seleccionados
+                    boolean filtrosCompletos = cmbFiltroMateriaAgregados.getValue() != null && cmbFiltroCriterioAgregados.getValue() != null;
+                    if (!filtrosCompletos) {
+                        setGraphic(null);
+                        return;
+                    }
+
+                    ObservableList<Agregado> items = getTableView().getItems();
+                    int totalItems = items.size();
+                    if (totalItems <= 1) {
+                        setGraphic(null);
+                        return;
+                    }
+
+                    int index = getIndex();
+                    javafx.scene.layout.HBox contenedor = new javafx.scene.layout.HBox(5);
+                    contenedor.setPrefWidth(Double.MAX_VALUE);
+                    contenedor.setFillHeight(true);
+                    Region leftSpacer = new Region();
+                    Region rightSpacer = new Region();
+                    javafx.scene.layout.HBox.setHgrow(leftSpacer, javafx.scene.layout.Priority.ALWAYS);
+                    javafx.scene.layout.HBox.setHgrow(rightSpacer, javafx.scene.layout.Priority.ALWAYS);
+
+                    if (index == 0) {
+                        // Primer registro: botón bajar alineado a la derecha
+                        contenedor.getChildren().setAll(leftSpacer, btnBajar);
+                    } else if (index == totalItems - 1) {
+                        // Último registro: botón subir alineado a la izquierda
+                        contenedor.getChildren().setAll(btnSubir, rightSpacer);
+                    } else {
+                        // Registros intermedios: ambos botones centrados
+                        contenedor.setAlignment(javafx.geometry.Pos.CENTER);
+                        contenedor.getChildren().setAll(btnSubir, btnBajar);
+                    }
+
+                    setGraphic(contenedor);
                 }
             });
 
@@ -2617,6 +2712,54 @@ public class HomeController {
             LOG.info("Criterios filtrados por materia {}: {} criterios", materiaId, criteriosList.size());
         } catch (Exception e) {
             LOG.error("Error al filtrar criterios por materia", e);
+            tabla.setItems(FXCollections.observableArrayList());
+        }
+    }
+
+    // Método para aplicar filtros combinados de materia y cuatrimestre
+    private void aplicarFiltrosCriterios(TableView<Criterio> tabla, ComboBox<Materia> cmbMateria, ComboBox<Integer> cmbCuatrimestre) {
+        try {
+            List<Criterio> criteriosFiltrados = criterioService.obtenerTodosLosCriterios();
+
+            // Filtrar por materia si está seleccionada
+            Materia materiaSeleccionada = cmbMateria.getValue();
+            if (materiaSeleccionada != null) {
+                criteriosFiltrados = criteriosFiltrados.stream()
+                        .filter(c -> materiaSeleccionada.getId().equals(c.getMateriaId()))
+                        .collect(java.util.stream.Collectors.toList());
+            }
+
+            // Filtrar por cuatrimestre si está seleccionado
+            Integer cuatrimestreSeleccionado = cmbCuatrimestre.getValue();
+            if (cuatrimestreSeleccionado != null) {
+                criteriosFiltrados = criteriosFiltrados.stream()
+                        .filter(c -> cuatrimestreSeleccionado.equals(c.getCuatrimestre()))
+                        .collect(java.util.stream.Collectors.toList());
+            }
+
+            // Ordenar por cuatrimestre y orden
+            criteriosFiltrados.sort((c1, c2) -> {
+                // Primero por cuatrimestre
+                if (c1.getCuatrimestre() != null && c2.getCuatrimestre() != null) {
+                    int cuatComp = Integer.compare(c1.getCuatrimestre(), c2.getCuatrimestre());
+                    if (cuatComp != 0) return cuatComp;
+                }
+                // Luego por orden
+                if (c1.getOrden() == null && c2.getOrden() == null) return 0;
+                if (c1.getOrden() == null) return 1;
+                if (c2.getOrden() == null) return -1;
+                return Integer.compare(c1.getOrden(), c2.getOrden());
+            });
+
+            ObservableList<Criterio> criteriosList = FXCollections.observableArrayList(criteriosFiltrados);
+            tabla.setItems(criteriosList);
+
+            // Forzar el refresh de la tabla
+            tabla.refresh();
+
+            LOG.info("Criterios filtrados: {} criterios", criteriosList.size());
+        } catch (Exception e) {
+            LOG.error("Error al aplicar filtros de criterios", e);
             tabla.setItems(FXCollections.observableArrayList());
         }
     }

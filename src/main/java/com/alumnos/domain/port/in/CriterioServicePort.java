@@ -13,4 +13,5 @@ public interface CriterioServicePort {
     void eliminarCriterio(Long id);
     List<Criterio> obtenerCriteriosPorMateria(Long materiaId);
     void actualizarOrdenCriterio(Long criterioId, Integer nuevoOrden);
+    List<Criterio> obtenerCriteriosPorCuatrimestre(Integer cuatrimestre);
 }

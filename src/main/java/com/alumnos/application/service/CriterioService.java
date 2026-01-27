@@ -128,6 +128,13 @@ public class CriterioService implements CriterioServicePort {
         return criterioRepositoryPort.findByMateriaId(materiaId);
     }
 
+    @Override
+    public List<Criterio> obtenerCriteriosPorCuatrimestre(Integer cuatrimestre) {
+        return criterioRepositoryPort.findAll().stream()
+                .filter(criterio -> criterio.getCuatrimestre().equals(cuatrimestre))
+                .collect(Collectors.toList());
+    }
+
     /**
      * Calcula el orden para un criterio basado en su materia y cuatrimestre
      */
