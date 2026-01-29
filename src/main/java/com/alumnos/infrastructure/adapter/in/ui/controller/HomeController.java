@@ -4187,6 +4187,11 @@ public class HomeController {
             txtTotalAciertos.textProperty().addListener((obs, oldVal, newVal) -> {
                 if (newVal != null && !newVal.matches("\\d{0,2}")) {
                     txtTotalAciertos.setText(oldVal);
+                } else {
+                    // Refrescar la tabla cuando cambia el total de aciertos
+                    if (tblAlumnos != null && tblAlumnos.getItems() != null) {
+                        tblAlumnos.refresh();
+                    }
                 }
             });
 
@@ -4256,6 +4261,8 @@ public class HomeController {
                                 valor = "0";
                             }
                             aciertosPorAlumno.put(alumno.getId(), valor);
+                            // Refrescar la tabla para actualizar el porcentaje
+                            tblAlumnos.refresh();
                         }
                     });
                 }
@@ -4272,8 +4279,37 @@ public class HomeController {
                 }
             });
 
+            // Columna Porcentaje Examen
+            TableColumn<Alumno, String> colPorcentaje = new TableColumn<>("Porcentaje examen");
+            colPorcentaje.setPrefWidth(120);
+            colPorcentaje.setStyle("-fx-alignment: CENTER;");
+
+            colPorcentaje.setCellValueFactory(cellData -> {
+                Alumno alumno = cellData.getValue();
+                String aciertoStr = aciertosPorAlumno.getOrDefault(alumno.getId(), "0");
+                String totalAciertosStr = txtTotalAciertos.getText();
+
+                try {
+                    int aciertos = Integer.parseInt(aciertoStr);
+                    int totalAciertos = totalAciertosStr != null && !totalAciertosStr.isEmpty()
+                        ? Integer.parseInt(totalAciertosStr)
+                        : 0;
+
+                    if (totalAciertos > 0) {
+                        double porcentaje = (aciertos * 100.0) / totalAciertos;
+                        return new javafx.beans.property.SimpleStringProperty(
+                            String.format("%.2f", porcentaje)
+                        );
+                    } else {
+                        return new javafx.beans.property.SimpleStringProperty("N/A");
+                    }
+                } catch (NumberFormatException e) {
+                    return new javafx.beans.property.SimpleStringProperty("0.00");
+                }
+            });
+
             tblAlumnos.setEditable(true);
-            tblAlumnos.getColumns().addAll(colNumeroLista, colNombreCompleto, colAciertos);
+            tblAlumnos.getColumns().addAll(colNumeroLista, colNombreCompleto, colAciertos, colPorcentaje);
 
             scrollPane.setContent(tblAlumnos);
 
