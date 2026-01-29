@@ -155,6 +155,36 @@
                 </Button>
             </VBox>
 
+            <!-- Concentrado -->
+            <Button fx:id="btnMenuConcentrado" text="Concentrado" onAction="#toggleSubmenuConcentrado"
+                    styleClass="menu-item" maxWidth="Infinity"
+                    style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 20 30; -fx-font-size: 16px; -fx-cursor: hand;">
+                <graphic>
+                    <Label text="📋" style="-fx-font-size: 20px; -fx-text-fill: white;"/>
+                </graphic>
+            </Button>
+
+            <!-- Submenú de Concentrado -->
+            <VBox fx:id="submenuConcentrado" visible="false" managed="false" spacing="0" style="-fx-background-color: #1a252a;">
+                <!-- Concentrado de calificaciones -->
+                <Button fx:id="btnMenuConcentradoCalificaciones" text="Concentrado de calificaciones" onAction="#handleMenuConcentrado"
+                        styleClass="menu-item" maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 15 30 15 60; -fx-font-size: 14px; -fx-cursor: hand;">
+                    <graphic>
+                        <Label text="📊" style="-fx-font-size: 16px; -fx-text-fill: white;"/>
+                    </graphic>
+                </Button>
+
+                <!-- Exámenes -->
+                <Button fx:id="btnMenuExamenes" text="Exámenes" onAction="#handleMenuExamenes"
+                        styleClass="menu-item" maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 15 30 15 60; -fx-font-size: 14px; -fx-cursor: hand;">
+                    <graphic>
+                        <Label text="📝" style="-fx-font-size: 16px; -fx-text-fill: white;"/>
+                    </graphic>
+                </Button>
+            </VBox>
+
             <Separator style="-fx-background-color: rgba(255,255,255,0.2);">
                 <VBox.margin>
                     <Insets top="10" bottom="10" left="20" right="20"/>

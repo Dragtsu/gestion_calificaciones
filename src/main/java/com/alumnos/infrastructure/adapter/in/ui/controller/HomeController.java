@@ -2,13 +2,17 @@ package com.alumnos.infrastructure.adapter.in.ui.controller;
 
 import com.alumnos.domain.model.Alumno;
 import com.alumnos.domain.model.Agregado;
+import com.alumnos.domain.model.Calificacion;
 import com.alumnos.domain.model.Criterio;
+import com.alumnos.domain.model.Examen;
 import com.alumnos.domain.model.Grupo;
 import com.alumnos.domain.model.GrupoMateria;
 import com.alumnos.domain.model.Materia;
 import com.alumnos.domain.port.in.AgregadoServicePort;
 import com.alumnos.domain.port.in.AlumnoServicePort;
+import com.alumnos.domain.port.in.CalificacionServicePort;
 import com.alumnos.domain.port.in.CriterioServicePort;
+import com.alumnos.domain.port.in.ExamenServicePort;
 import com.alumnos.domain.port.in.GrupoMateriaServicePort;
 import com.alumnos.domain.port.in.GrupoServicePort;
 import com.alumnos.domain.port.in.MateriaServicePort;
@@ -19,6 +23,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
@@ -28,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 public class HomeController {
@@ -70,6 +76,9 @@ public class HomeController {
     @FXML
     private VBox submenuCriterios;
 
+    @FXML
+    private VBox submenuConcentrado;
+
     // Componentes creados dinámicamente (no están en FXML)
     private TextField txtNombre;
     private TextField txtApellido;
@@ -100,6 +109,8 @@ public class HomeController {
     private VBox vistaAsignaciones;
     private VBox vistaCriterios;
     private VBox vistaAgregados;
+    private VBox vistaConcentrado;
+    private VBox vistaExamenes;
     private VBox vistaUsuarios;
     private VBox vistaMatricula;
 
@@ -109,18 +120,23 @@ public class HomeController {
     private final GrupoMateriaServicePort grupoMateriaService;
     private final CriterioServicePort criterioService;
     private final AgregadoServicePort agregadoService;
+    private final CalificacionServicePort calificacionService;
+    private final ExamenServicePort examenService;
     private ObservableList<Alumno> alumnosList;
     private boolean menuAbierto = false;
 
     public HomeController(AlumnoServicePort alumnoService, GrupoServicePort grupoService,
                          MateriaServicePort materiaService, GrupoMateriaServicePort grupoMateriaService,
-                         CriterioServicePort criterioService, AgregadoServicePort agregadoService) {
+                         CriterioServicePort criterioService, AgregadoServicePort agregadoService,
+                         CalificacionServicePort calificacionService, ExamenServicePort examenService) {
         this.alumnoService = alumnoService;
         this.grupoService = grupoService;
         this.materiaService = materiaService;
         this.grupoMateriaService = grupoMateriaService;
         this.criterioService = criterioService;
         this.agregadoService = agregadoService;
+        this.calificacionService = calificacionService;
+        this.examenService = examenService;
     }
 
     @FXML
@@ -193,11 +209,29 @@ public class HomeController {
                 LOG.error("Error: vistaAgregados es null");
             }
 
+            // Crear vista de concentrado de calificaciones
+            vistaConcentrado = crearVistaConcentradoCompleta();
+            if (vistaConcentrado != null) {
+                vistaConcentrado.setVisible(false); // Inicialmente oculta
+            } else {
+                LOG.error("Error: vistaConcentrado es null");
+            }
+
+            // Crear vista de exámenes
+            vistaExamenes = crearVistaExamenesCompleta();
+            if (vistaExamenes != null) {
+                vistaExamenes.setVisible(false); // Inicialmente oculta
+            } else {
+                LOG.error("Error: vistaExamenes es null");
+            }
+
             // Agregar todas las vistas al contenedor
             if (vistaEstudiantes != null && vistaGrupos != null && vistaMaterias != null &&
-                vistaAsignaciones != null && vistaCriterios != null && vistaAgregados != null) {
+                vistaAsignaciones != null && vistaCriterios != null && vistaAgregados != null &&
+                vistaConcentrado != null && vistaExamenes != null) {
                 contentContainer.getChildren().addAll(vistaEstudiantes, vistaGrupos, vistaMaterias,
-                                                     vistaAsignaciones, vistaCriterios, vistaAgregados);
+                                                     vistaAsignaciones, vistaCriterios, vistaAgregados,
+                                                     vistaConcentrado, vistaExamenes);
             } else {
                 LOG.error("Error: No se pudieron crear todas las vistas");
                 // Crear al menos una vista vacía para evitar errores
@@ -221,8 +255,21 @@ public class HomeController {
                     vistaCriterios = new VBox();
                     vistaCriterios.setVisible(false);
                 }
+                if (vistaAgregados == null) {
+                    vistaAgregados = new VBox();
+                    vistaAgregados.setVisible(false);
+                }
+                if (vistaConcentrado == null) {
+                    vistaConcentrado = new VBox();
+                    vistaConcentrado.setVisible(false);
+                }
+                if (vistaExamenes == null) {
+                    vistaExamenes = new VBox();
+                    vistaExamenes.setVisible(false);
+                }
                 contentContainer.getChildren().addAll(vistaEstudiantes, vistaGrupos, vistaMaterias,
-                                                     vistaAsignaciones, vistaCriterios);
+                                                     vistaAsignaciones, vistaCriterios, vistaAgregados,
+                                                     vistaConcentrado, vistaExamenes);
             }
         } catch (Exception e) {
             LOG.error("Error al crear las vistas", e);
@@ -234,21 +281,27 @@ public class HomeController {
             vistaAsignaciones = new VBox();
             vistaCriterios = new VBox();
             vistaAgregados = new VBox();
+            vistaConcentrado = new VBox();
+            vistaExamenes = new VBox();
             vistaEstudiantes.setVisible(false);
             vistaGrupos.setVisible(false);
             vistaMaterias.setVisible(false);
             vistaAsignaciones.setVisible(false);
             vistaCriterios.setVisible(false);
             vistaAgregados.setVisible(false);
+            vistaConcentrado.setVisible(false);
+            vistaExamenes.setVisible(false);
             contentContainer.getChildren().addAll(vistaEstudiantes, vistaGrupos, vistaMaterias,
-                                                 vistaAsignaciones, vistaCriterios, vistaAgregados);
+                                                 vistaAsignaciones, vistaCriterios, vistaAgregados,
+                                                 vistaConcentrado, vistaExamenes);
         }
     }
 
     private void mostrarVista(String nombreVista) {
         // Validar que las vistas existen
         if (vistaEstudiantes == null || vistaGrupos == null || vistaMaterias == null ||
-            vistaAsignaciones == null || vistaCriterios == null || vistaAgregados == null) {
+            vistaAsignaciones == null || vistaCriterios == null || vistaAgregados == null ||
+            vistaConcentrado == null || vistaExamenes == null) {
             LOG.error("Error: Las vistas no están inicializadas correctamente");
             return;
         }
@@ -260,6 +313,8 @@ public class HomeController {
         vistaAsignaciones.setVisible(false);
         vistaCriterios.setVisible(false);
         vistaAgregados.setVisible(false);
+        vistaConcentrado.setVisible(false);
+        vistaExamenes.setVisible(false);
 
         // Mostrar solo la vista seleccionada
         try {
@@ -287,6 +342,14 @@ public class HomeController {
                 case "agregados":
                     vistaAgregados.setVisible(true);
                     vistaAgregados.toFront();
+                    break;
+                case "concentrado":
+                    vistaConcentrado.setVisible(true);
+                    vistaConcentrado.toFront();
+                    break;
+                case "examenes":
+                    vistaExamenes.setVisible(true);
+                    vistaExamenes.toFront();
                     break;
                 default:
                     LOG.warn("Vista no reconocida: " + nombreVista);
@@ -407,6 +470,15 @@ public class HomeController {
     }
 
     @FXML
+    private void toggleSubmenuConcentrado() {
+        if (submenuConcentrado != null) {
+            boolean isVisible = submenuConcentrado.isVisible();
+            submenuConcentrado.setVisible(!isVisible);
+            submenuConcentrado.setManaged(!isVisible);
+        }
+    }
+
+    @FXML
     private void handleMenuCriteriosLista() {
         lblTitulo.setText("Criterios de Evaluación - Sistema de Gestión");
         mostrarVista("criterios");
@@ -417,6 +489,20 @@ public class HomeController {
     private void handleMenuAgregados() {
         lblTitulo.setText("Agregados - Sistema de Gestión");
         mostrarVista("agregados");
+        toggleMenu();
+    }
+
+    @FXML
+    private void handleMenuConcentrado() {
+        lblTitulo.setText("Concentrado de calificaciones - Sistema de Gestión");
+        mostrarVista("concentrado");
+        toggleMenu();
+    }
+
+    @FXML
+    private void handleMenuExamenes() {
+        lblTitulo.setText("Exámenes - Sistema de Gestión");
+        mostrarVista("examenes");
         toggleMenu();
     }
 
@@ -476,6 +562,23 @@ public class HomeController {
         if (alumnosList != null) {
             alumnosList.clear();
             alumnosList.addAll(alumnoService.obtenerTodosLosAlumnos());
+        }
+    }
+
+    private void filtrarAlumnosPorGrupo(Long grupoId) {
+        if (alumnosList != null) {
+            alumnosList.clear();
+            List<Alumno> alumnosDelGrupo = alumnoService.obtenerTodosLosAlumnos().stream()
+                .filter(alumno -> alumno.getGrupoId() != null && alumno.getGrupoId().equals(grupoId))
+                .sorted((a1, a2) -> {
+                    // Ordenar por número de lista
+                    if (a1.getNumeroLista() == null) return 1;
+                    if (a2.getNumeroLista() == null) return -1;
+                    return a1.getNumeroLista().compareTo(a2.getNumeroLista());
+                })
+                .collect(java.util.stream.Collectors.toList());
+            alumnosList.addAll(alumnosDelGrupo);
+            actualizarEstadisticas();
         }
     }
 
@@ -687,18 +790,69 @@ public class HomeController {
         Label lblTableTitle = new Label("Lista de Alumnos");
         lblTableTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
-        // Búsqueda
+        // Búsqueda y filtros
         javafx.scene.layout.HBox searchBox = new javafx.scene.layout.HBox(10);
         searchBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
         txtBuscar = new TextField();
         txtBuscar.setPromptText("Buscar por nombre...");
-        txtBuscar.setPrefWidth(300);
+        txtBuscar.setPrefWidth(250);
 
         btnBuscar = new Button("Buscar");
         btnBuscar.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8 25; -fx-cursor: hand;");
         btnBuscar.setOnAction(e -> handleBuscar());
 
-        searchBox.getChildren().addAll(txtBuscar, btnBuscar);
+        // ComboBox para filtrar por grupo
+        Label lblFiltroGrupo = new Label("Grupo:");
+        lblFiltroGrupo.setStyle("-fx-font-size: 14px; -fx-text-fill: #555;");
+
+        ComboBox<Grupo> cmbFiltroGrupo = new ComboBox<>();
+        cmbFiltroGrupo.setPromptText("Todos");
+        cmbFiltroGrupo.setPrefWidth(120);
+
+        // Cargar grupos en el combo
+        try {
+            List<Grupo> grupos = grupoService.obtenerTodosLosGrupos();
+            cmbFiltroGrupo.setItems(FXCollections.observableArrayList(grupos));
+        } catch (Exception e) {
+            LOG.error("Error al cargar grupos para filtro", e);
+        }
+
+        // Configurar cómo se muestran los grupos
+        cmbFiltroGrupo.setCellFactory(param -> new ListCell<Grupo>() {
+            @Override
+            protected void updateItem(Grupo item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : String.valueOf(item.getId()));
+            }
+        });
+        cmbFiltroGrupo.setButtonCell(new ListCell<Grupo>() {
+            @Override
+            protected void updateItem(Grupo item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? "Todos" : String.valueOf(item.getId()));
+            }
+        });
+
+        // Evento para filtrar por grupo
+        cmbFiltroGrupo.setOnAction(event -> {
+            Grupo grupoSeleccionado = cmbFiltroGrupo.getValue();
+            if (grupoSeleccionado != null) {
+                filtrarAlumnosPorGrupo(grupoSeleccionado.getId());
+            } else {
+                cargarAlumnos();
+            }
+        });
+
+        // Botón para limpiar filtro
+        Button btnLimpiarFiltroGrupo = new Button("Limpiar");
+        btnLimpiarFiltroGrupo.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8 20; -fx-cursor: hand;");
+        btnLimpiarFiltroGrupo.setOnAction(event -> {
+            cmbFiltroGrupo.setValue(null);
+            cargarAlumnos();
+            actualizarEstadisticas();
+        });
+
+        searchBox.getChildren().addAll(txtBuscar, btnBuscar, lblFiltroGrupo, cmbFiltroGrupo, btnLimpiarFiltroGrupo);
 
         // Tabla
         tblAlumnos = new TableView<>();
@@ -1609,18 +1763,18 @@ public class HomeController {
                 }
             });
 
-            // ComboBox Cuatrimestre
-            Label lblCuatrimestre = new Label("Cuatrimestre:");
-            ComboBox<Integer> cmbCuatrimestre = new ComboBox<>();
-            cmbCuatrimestre.setPromptText("Seleccione cuatrimestre");
-            cmbCuatrimestre.setPrefWidth(250);
-            cmbCuatrimestre.setItems(FXCollections.observableArrayList(1, 2, 3, 4));
+            // ComboBox Parcial
+            Label lblParcial = new Label("Parcial:");
+            ComboBox<Integer> cmbParcial = new ComboBox<>();
+            cmbParcial.setPromptText("Seleccione parcial");
+            cmbParcial.setPrefWidth(250);
+            cmbParcial.setItems(FXCollections.observableArrayList(1, 2, 3));
 
             // El campo de puntuación máxima siempre está habilitado/editable
 
             // Distribuir en 2 columnas:
             // Columna 1 (0-1): Nombre, Tipo Eval, Punt Max
-            // Columna 2 (2-3): Materia, Cuatrimestre
+            // Columna 2 (2-3): Materia, Parcial
             gridForm.add(lblNombre, 0, 0);
             gridForm.add(txtNombre, 1, 0);
             gridForm.add(lblTipoEval, 0, 1);
@@ -1630,8 +1784,8 @@ public class HomeController {
 
             gridForm.add(lblMateria, 2, 0);
             gridForm.add(cmbMateria, 3, 0);
-            gridForm.add(lblCuatrimestre, 2, 1);
-            gridForm.add(cmbCuatrimestre, 3, 1);
+            gridForm.add(lblParcial, 2, 1);
+            gridForm.add(cmbParcial, 3, 1);
 
             // Botones
             javafx.scene.layout.HBox buttonBox = new javafx.scene.layout.HBox(10);
@@ -1684,13 +1838,13 @@ public class HomeController {
                 }
             });
 
-            Label lblFiltrarPorCuatrimestre = new Label("Filtrar por Cuatrimestre:");
-            lblFiltrarPorCuatrimestre.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+            Label lblFiltrarPorParcial = new Label("Filtrar por Parcial:");
+            lblFiltrarPorParcial.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
 
-            ComboBox<Integer> cmbFiltroCuatrimestre = new ComboBox<>();
-            cmbFiltroCuatrimestre.setPromptText("Todos los cuatrimestres");
-            cmbFiltroCuatrimestre.setPrefWidth(250);
-            cmbFiltroCuatrimestre.setItems(FXCollections.observableArrayList(1, 2, 3, 4));
+            ComboBox<Integer> cmbFiltroParcial = new ComboBox<>();
+            cmbFiltroParcial.setPromptText("Todos los parciales");
+            cmbFiltroParcial.setPrefWidth(250);
+            cmbFiltroParcial.setItems(FXCollections.observableArrayList(1, 2, 3));
 
             Button btnLimpiarFiltro = new Button("Limpiar Filtro");
             btnLimpiarFiltro.setStyle("-fx-background-color: #9E9E9E; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8 20; -fx-cursor: hand;");
@@ -1701,7 +1855,7 @@ public class HomeController {
             Button btnGuardarOrden = new Button("Guardar Orden");
             btnGuardarOrden.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8 20; -fx-cursor: hand;");
 
-            filterBox.getChildren().addAll(lblFiltrarPorMateria, cmbFiltroMateria, lblFiltrarPorCuatrimestre, cmbFiltroCuatrimestre, btnLimpiarFiltro, spacer, btnGuardarOrden);
+            filterBox.getChildren().addAll(lblFiltrarPorMateria, cmbFiltroMateria, lblFiltrarPorParcial, cmbFiltroParcial, btnLimpiarFiltro, spacer, btnGuardarOrden);
 
             // Tabla
             TableView<Criterio> tblCriterios = new TableView<>();
@@ -1741,10 +1895,10 @@ public class HomeController {
             colOrden.setPrefWidth(80);
             colOrden.setStyle("-fx-alignment: CENTER;");
 
-            TableColumn<Criterio, Integer> colCuatrimestre = new TableColumn<>("Cuatrim.");
-            colCuatrimestre.setCellValueFactory(new PropertyValueFactory<>("cuatrimestre"));
-            colCuatrimestre.setPrefWidth(80);
-            colCuatrimestre.setStyle("-fx-alignment: CENTER;");
+            TableColumn<Criterio, Integer> colParcial = new TableColumn<>("Parcial");
+            colParcial.setCellValueFactory(new PropertyValueFactory<>("parcial"));
+            colParcial.setPrefWidth(80);
+            colParcial.setStyle("-fx-alignment: CENTER;");
 
             TableColumn<Criterio, String> colMateria = new TableColumn<>("Materia");
             colMateria.setPrefWidth(200);
@@ -1809,8 +1963,8 @@ public class HomeController {
                         return;
                     }
 
-                    // Mostrar controles solo cuando ambos filtros (materia y cuatrimestre) están seleccionados
-                    boolean filtrosCompletos = cmbFiltroMateria.getValue() != null && cmbFiltroCuatrimestre.getValue() != null;
+                    // Mostrar controles solo cuando ambos filtros (materia y parcial) están seleccionados
+                    boolean filtrosCompletos = cmbFiltroMateria.getValue() != null && cmbFiltroParcial.getValue() != null;
                     if (!filtrosCompletos) {
                         setGraphic(null);
                         return;
@@ -1880,9 +2034,9 @@ public class HomeController {
                             }
                         }
 
-                        // Seleccionar el cuatrimestre
-                        if (criterio.getCuatrimestre() != null) {
-                            cmbCuatrimestre.setValue(criterio.getCuatrimestre());
+                        // Seleccionar el parcial
+                        if (criterio.getParcial() != null) {
+                            cmbParcial.setValue(criterio.getParcial());
                         }
 
                         btnGuardar.setText("Actualizar");
@@ -1919,7 +2073,7 @@ public class HomeController {
                 }
             });
 
-            tblCriterios.getColumns().addAll(colId, colNombre, colTipo, colPuntMax, colOrden, colCuatrimestre, colMateria, colOrdenAcciones, colAcciones);
+            tblCriterios.getColumns().addAll(colId, colNombre, colTipo, colPuntMax, colOrden, colParcial, colMateria, colOrdenAcciones, colAcciones);
 
             Label lblEstadisticas = new Label("Total de criterios: 0");
             lblEstadisticas.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #666;");
@@ -1932,20 +2086,20 @@ public class HomeController {
 
             // Evento: Filtrar por materia
             cmbFiltroMateria.setOnAction(event -> {
-                aplicarFiltrosCriterios(tblCriterios, cmbFiltroMateria, cmbFiltroCuatrimestre);
+                aplicarFiltrosCriterios(tblCriterios, cmbFiltroMateria, cmbFiltroParcial);
                 lblEstadisticas.setText("Total de criterios: " + tblCriterios.getItems().size());
             });
 
-            // Evento: Filtrar por cuatrimestre
-            cmbFiltroCuatrimestre.setOnAction(event -> {
-                aplicarFiltrosCriterios(tblCriterios, cmbFiltroMateria, cmbFiltroCuatrimestre);
+            // Evento: Filtrar por parcial
+            cmbFiltroParcial.setOnAction(event -> {
+                aplicarFiltrosCriterios(tblCriterios, cmbFiltroMateria, cmbFiltroParcial);
                 lblEstadisticas.setText("Total de criterios: " + tblCriterios.getItems().size());
             });
 
             // Evento: Limpiar filtro
             btnLimpiarFiltro.setOnAction(event -> {
                 cmbFiltroMateria.setValue(null);
-                cmbFiltroCuatrimestre.setValue(null);
+                cmbFiltroParcial.setValue(null);
                 cargarCriterios(tblCriterios);
                 lblEstadisticas.setText("Total de criterios: " + tblCriterios.getItems().size());
             });
@@ -1969,17 +2123,17 @@ public class HomeController {
                         return;
                     }
 
-                    // Verificar que todos los criterios sean de la misma materia y cuatrimestre
+                    // Verificar que todos los criterios sean de la misma materia y parcial
                     Long materiaId = materiaFiltro.getId();
-                    Integer primerCuatrimestre = criteriosOrdenados.isEmpty() ? null : criteriosOrdenados.get(0).getCuatrimestre();
+                    Integer primerParcial = criteriosOrdenados.isEmpty() ? null : criteriosOrdenados.get(0).getParcial();
 
                     for (Criterio criterio : criteriosOrdenados) {
                         if (!materiaId.equals(criterio.getMateriaId())) {
                             mostrarAlerta("Error", "Todos los criterios deben ser de la misma materia", Alert.AlertType.ERROR);
                             return;
                         }
-                        if (!criterio.getCuatrimestre().equals(primerCuatrimestre)) {
-                            mostrarAlerta("Error", "Todos los criterios deben ser del mismo cuatrimestre para guardar el orden", Alert.AlertType.ERROR);
+                        if (!criterio.getParcial().equals(primerParcial)) {
+                            mostrarAlerta("Error", "Todos los criterios deben ser del mismo parcial para guardar el orden", Alert.AlertType.ERROR);
                             return;
                         }
                     }
@@ -1990,11 +2144,11 @@ public class HomeController {
                         criterioService.actualizarOrdenCriterio(criterio.getId(), nuevoOrden++);
                     }
 
-                    mostrarAlerta("Éxito", "El orden de los criterios de la materia '" + materiaFiltro.getNombre() + "' (Cuatrimestre " + primerCuatrimestre + ") se guardó correctamente", Alert.AlertType.INFORMATION);
+                    mostrarAlerta("Éxito", "El orden de los criterios de la materia '" + materiaFiltro.getNombre() + "' (Parcial " + primerParcial + ") se guardó correctamente", Alert.AlertType.INFORMATION);
 
                     // Recargar la tabla manteniendo el filtro
                     //filtrarCriteriosPorMateria(tblCriterios, materiaId);
-                    aplicarFiltrosCriterios(tblCriterios, cmbFiltroMateria, cmbFiltroCuatrimestre);
+                    aplicarFiltrosCriterios(tblCriterios, cmbFiltroMateria, cmbFiltroParcial);
                     lblEstadisticas.setText("Total de criterios: " + tblCriterios.getItems().size());
 
                 } catch (Exception e) {
@@ -2018,8 +2172,8 @@ public class HomeController {
                         mostrarAlerta("Validación", "Debe seleccionar una materia", Alert.AlertType.WARNING);
                         return;
                     }
-                    if (cmbCuatrimestre.getValue() == null) {
-                        mostrarAlerta("Validación", "Debe seleccionar un cuatrimestre", Alert.AlertType.WARNING);
+                    if (cmbParcial.getValue() == null) {
+                        mostrarAlerta("Validación", "Debe seleccionar un parcial", Alert.AlertType.WARNING);
                         return;
                     }
 
@@ -2048,7 +2202,7 @@ public class HomeController {
                             .tipoEvaluacion(cmbTipoEval.getValue())
                             .puntuacionMaxima(puntuacionMax)
                             .materiaId(cmbMateria.getValue().getId())
-                            .cuatrimestre(cmbCuatrimestre.getValue());
+                            .parcial(cmbParcial.getValue());
 
                     if ("Actualizar".equals(btnGuardar.getText()) && btnGuardar.getUserData() != null) {
                         // Actualizar
@@ -2068,7 +2222,7 @@ public class HomeController {
                     cmbTipoEval.setValue(null);
                     txtPuntMax.clear();
                     cmbMateria.setValue(null);
-                    cmbCuatrimestre.setValue(null);
+                    cmbParcial.setValue(null);
                     btnGuardar.setText("Guardar");
                     btnGuardar.setUserData(null);
 
@@ -2087,7 +2241,7 @@ public class HomeController {
                 cmbTipoEval.setValue(null);
                 txtPuntMax.clear();
                 cmbMateria.setValue(null);
-                cmbCuatrimestre.setValue(null);
+                cmbParcial.setValue(null);
                 btnGuardar.setText("Guardar");
                 btnGuardar.setUserData(null);
             });
@@ -2144,17 +2298,104 @@ public class HomeController {
             txtNombre.setPromptText("Nombre del agregado");
             txtNombre.setPrefWidth(300);
 
+            // ComboBox Grupo
+            Label lblGrupo = new Label("Grupo:");
+            ComboBox<Grupo> cmbGrupo = new ComboBox<>();
+            cmbGrupo.setPromptText("Seleccione un grupo");
+            cmbGrupo.setPrefWidth(300);
+
+            // Cargar grupos
+            try {
+                List<Grupo> grupos = grupoService.obtenerTodosLosGrupos();
+                cmbGrupo.setItems(FXCollections.observableArrayList(grupos));
+            } catch (Exception e) {
+                LOG.error("Error al cargar grupos", e);
+            }
+
+            cmbGrupo.setCellFactory(param -> new ListCell<Grupo>() {
+                @Override
+                protected void updateItem(Grupo item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(String.valueOf(item.getId()));
+                    }
+                }
+            });
+            cmbGrupo.setButtonCell(new ListCell<Grupo>() {
+                @Override
+                protected void updateItem(Grupo item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(String.valueOf(item.getId()));
+                    }
+                }
+            });
+
+            // ComboBox Materia
+            Label lblMateria = new Label("Materia:");
+            ComboBox<Materia> cmbMateria = new ComboBox<>();
+            cmbMateria.setPromptText("Seleccione primero un grupo");
+            cmbMateria.setPrefWidth(300);
+            cmbMateria.setDisable(true);
+
+            // Listas para almacenar todas las asignaciones y materias
+            final List<GrupoMateria> todasAsignaciones = new java.util.ArrayList<>();
+            final List<Materia> todasMaterias = new java.util.ArrayList<>();
+
+            try {
+                todasAsignaciones.addAll(grupoMateriaService.obtenerTodasLasAsignaciones());
+                todasMaterias.addAll(materiaService.obtenerTodasLasMaterias());
+            } catch (Exception e) {
+                LOG.error("Error al cargar asignaciones y materias", e);
+            }
+
+            cmbMateria.setCellFactory(param -> new ListCell<Materia>() {
+                @Override
+                protected void updateItem(Materia item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(item.getNombre());
+                    }
+                }
+            });
+            cmbMateria.setButtonCell(new ListCell<Materia>() {
+                @Override
+                protected void updateItem(Materia item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(item.getNombre());
+                    }
+                }
+            });
+
+            // ComboBox Parcial
+            Label lblParcial = new Label("Parcial:");
+            ComboBox<Integer> cmbParcial = new ComboBox<>();
+            cmbParcial.setPromptText("Seleccione primero una materia");
+            cmbParcial.setPrefWidth(300);
+            cmbParcial.setDisable(true);
+            cmbParcial.setItems(FXCollections.observableArrayList(1, 2, 3));
+
             // ComboBox Criterio de Evaluación
             Label lblCriterio = new Label("Criterio de Evaluación:");
             ComboBox<Criterio> cmbCriterio = new ComboBox<>();
-            cmbCriterio.setPromptText("Seleccione un criterio");
+            cmbCriterio.setPromptText("Seleccione primero un parcial");
             cmbCriterio.setPrefWidth(400);
+            cmbCriterio.setDisable(true);
 
+            // Lista completa de criterios para filtrar
+            final List<Criterio> todosCriterios = new java.util.ArrayList<>();
             try {
-                // Cargar todos los criterios con su información de materia
                 List<Criterio> criterios = criterioService.obtenerTodosLosCriterios();
                 for (Criterio criterio : criterios) {
-                    // Obtener el nombre de la materia
                     try {
                         Materia materia = materiaService.obtenerMateriaPorId(criterio.getMateriaId()).orElse(null);
                         if (materia != null) {
@@ -2164,7 +2405,7 @@ public class HomeController {
                         LOG.error("Error al cargar materia", e);
                     }
                 }
-                cmbCriterio.setItems(FXCollections.observableArrayList(criterios));
+                todosCriterios.addAll(criterios);
             } catch (Exception e) {
                 LOG.error("Error al cargar criterios", e);
             }
@@ -2176,7 +2417,7 @@ public class HomeController {
                     if (empty || item == null) {
                         setText(null);
                     } else {
-                        setText(item.getNombre() + " - " + (item.getNombreMateria() != null ? item.getNombreMateria() : "Sin materia"));
+                        setText(item.getNombre() + " - " + (item.getNombreMateria() != null ? item.getNombreMateria() : "Sin materia") + " (Parcial " + item.getParcial() + ")");
                     }
                 }
             });
@@ -2187,15 +2428,115 @@ public class HomeController {
                     if (empty || item == null) {
                         setText(null);
                     } else {
-                        setText(item.getNombre() + " - " + (item.getNombreMateria() != null ? item.getNombreMateria() : "Sin materia"));
+                        setText(item.getNombre() + " - " + (item.getNombreMateria() != null ? item.getNombreMateria() : "Sin materia") + " (Parcial " + item.getParcial() + ")");
                     }
+                }
+            });
+
+            // Evento cuando se selecciona un grupo
+            cmbGrupo.setOnAction(event -> {
+                Grupo grupoSeleccionado = cmbGrupo.getValue();
+                if (grupoSeleccionado != null) {
+                    // Filtrar materias asignadas a este grupo
+                    List<Long> materiaIdsDelGrupo = todasAsignaciones.stream()
+                            .filter(gm -> gm.getGrupoId().equals(grupoSeleccionado.getId()))
+                            .map(GrupoMateria::getMateriaId)
+                            .collect(java.util.stream.Collectors.toList());
+
+                    List<Materia> materiasDelGrupo = todasMaterias.stream()
+                            .filter(m -> materiaIdsDelGrupo.contains(m.getId()))
+                            .collect(java.util.stream.Collectors.toList());
+
+                    if (materiasDelGrupo.isEmpty()) {
+                        cmbMateria.setItems(FXCollections.observableArrayList());
+                        cmbMateria.setValue(null);
+                        cmbMateria.setDisable(true);
+                        cmbMateria.setPromptText("No hay materias asignadas al grupo");
+                    } else {
+                        cmbMateria.setItems(FXCollections.observableArrayList(materiasDelGrupo));
+                        cmbMateria.setValue(null);
+                        cmbMateria.setDisable(false);
+                        cmbMateria.setPromptText("Seleccione una materia");
+                    }
+                } else {
+                    cmbMateria.setItems(FXCollections.observableArrayList());
+                    cmbMateria.setValue(null);
+                    cmbMateria.setDisable(true);
+                    cmbMateria.setPromptText("Seleccione primero un grupo");
+                }
+
+                // Resetear parcial y criterio
+                cmbParcial.setValue(null);
+                cmbParcial.setDisable(true);
+                cmbParcial.setPromptText("Seleccione primero una materia");
+                cmbCriterio.setItems(FXCollections.observableArrayList());
+                cmbCriterio.setValue(null);
+                cmbCriterio.setDisable(true);
+                cmbCriterio.setPromptText("Seleccione primero un parcial");
+            });
+
+            // Evento cuando se selecciona una materia
+            cmbMateria.setOnAction(event -> {
+                Materia materiaSeleccionada = cmbMateria.getValue();
+                if (materiaSeleccionada != null) {
+                    // Habilitar el selector de parcial
+                    cmbParcial.setValue(null);
+                    cmbParcial.setDisable(false);
+                    cmbParcial.setPromptText("Seleccione un parcial");
+                } else {
+                    cmbParcial.setValue(null);
+                    cmbParcial.setDisable(true);
+                    cmbParcial.setPromptText("Seleccione primero una materia");
+                }
+
+                // Resetear criterio
+                cmbCriterio.setItems(FXCollections.observableArrayList());
+                cmbCriterio.setValue(null);
+                cmbCriterio.setDisable(true);
+                cmbCriterio.setPromptText("Seleccione primero un parcial");
+            });
+
+            // Evento cuando se selecciona un parcial
+            cmbParcial.setOnAction(event -> {
+                Integer parcialSeleccionado = cmbParcial.getValue();
+                Materia materiaSeleccionada = cmbMateria.getValue();
+
+                if (parcialSeleccionado != null && materiaSeleccionada != null) {
+                    // Filtrar criterios por materia y parcial
+                    List<Criterio> criteriosFiltrados = todosCriterios.stream()
+                            .filter(c -> c.getParcial() != null && c.getParcial().equals(parcialSeleccionado))
+                            .filter(c -> c.getMateriaId() != null && c.getMateriaId().equals(materiaSeleccionada.getId()))
+                            .collect(java.util.stream.Collectors.toList());
+
+                    if (criteriosFiltrados.isEmpty()) {
+                        cmbCriterio.setItems(FXCollections.observableArrayList());
+                        cmbCriterio.setValue(null);
+                        cmbCriterio.setDisable(true);
+                        cmbCriterio.setPromptText("No hay criterios para esta materia y parcial");
+                    } else {
+                        cmbCriterio.setItems(FXCollections.observableArrayList(criteriosFiltrados));
+                        cmbCriterio.setValue(null);
+                        cmbCriterio.setDisable(false);
+                        cmbCriterio.setPromptText("Seleccione un criterio");
+                    }
+                } else {
+                    cmbCriterio.setItems(FXCollections.observableArrayList());
+                    cmbCriterio.setValue(null);
+                    cmbCriterio.setDisable(true);
+                    cmbCriterio.setPromptText("Seleccione primero un parcial");
                 }
             });
 
             gridForm.add(lblNombre, 0, 0);
             gridForm.add(txtNombre, 1, 0);
-            gridForm.add(lblCriterio, 0, 1);
-            gridForm.add(cmbCriterio, 1, 1);
+            gridForm.add(lblGrupo, 0, 1);
+            gridForm.add(cmbGrupo, 1, 1);
+            gridForm.add(lblMateria, 0, 2);
+            gridForm.add(cmbMateria, 1, 2);
+            gridForm.add(lblParcial, 0, 3);
+            gridForm.add(cmbParcial, 1, 3);
+            gridForm.add(lblCriterio, 0, 4);
+            gridForm.add(cmbCriterio, 1, 4);
 
             // Botones
             javafx.scene.layout.HBox buttonBox = new javafx.scene.layout.HBox(10);
@@ -2221,19 +2562,42 @@ public class HomeController {
             javafx.scene.layout.HBox filterBox = new javafx.scene.layout.HBox(10);
             filterBox.setStyle("-fx-padding: 10; -fx-alignment: center-left;");
 
-            Label lblFiltrarPor = new Label("Filtrar por Materia:");
-            lblFiltrarPor.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+            Label lblFiltroGrupo = new Label("Grupo:");
+            lblFiltroGrupo.setStyle("-fx-font-size: 12px; -fx-font-weight: bold;");
 
-            ComboBox<Materia> cmbFiltroMateriaAgregados = new ComboBox<>();
-            cmbFiltroMateriaAgregados.setPromptText("Todas las materias");
-            cmbFiltroMateriaAgregados.setPrefWidth(250);
+            ComboBox<Grupo> cmbFiltroGrupoAgregados = new ComboBox<>();
+            cmbFiltroGrupoAgregados.setPromptText("Todos");
+            cmbFiltroGrupoAgregados.setPrefWidth(80);
 
             try {
-                List<Materia> materias = materiaService.obtenerTodasLasMaterias();
-                cmbFiltroMateriaAgregados.setItems(FXCollections.observableArrayList(materias));
+                List<Grupo> grupos = grupoService.obtenerTodosLosGrupos();
+                cmbFiltroGrupoAgregados.setItems(FXCollections.observableArrayList(grupos));
             } catch (Exception e) {
-                LOG.error("Error al cargar materias para filtro", e);
+                LOG.error("Error al cargar grupos para filtro", e);
             }
+
+            cmbFiltroGrupoAgregados.setCellFactory(param -> new ListCell<Grupo>() {
+                @Override
+                protected void updateItem(Grupo item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? null : String.valueOf(item.getId()));
+                }
+            });
+            cmbFiltroGrupoAgregados.setButtonCell(new ListCell<Grupo>() {
+                @Override
+                protected void updateItem(Grupo item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? "Todos" : String.valueOf(item.getId()));
+                }
+            });
+
+            Label lblFiltroMateria = new Label("Materia:");
+            lblFiltroMateria.setStyle("-fx-font-size: 12px; -fx-font-weight: bold;");
+
+            ComboBox<Materia> cmbFiltroMateriaAgregados = new ComboBox<>();
+            cmbFiltroMateriaAgregados.setPromptText("Seleccione grupo");
+            cmbFiltroMateriaAgregados.setPrefWidth(150);
+            cmbFiltroMateriaAgregados.setDisable(true);
 
             cmbFiltroMateriaAgregados.setCellFactory(param -> new ListCell<Materia>() {
                 @Override
@@ -2246,24 +2610,26 @@ public class HomeController {
                 @Override
                 protected void updateItem(Materia item, boolean empty) {
                     super.updateItem(item, empty);
-                    setText(empty || item == null ? "Todas las materias" : item.getNombre());
+                    setText(empty || item == null ? "Todas" : item.getNombre());
                 }
             });
 
+            Label lblFiltroParcial = new Label("Parcial:");
+            lblFiltroParcial.setStyle("-fx-font-size: 12px; -fx-font-weight: bold;");
+
+            ComboBox<Integer> cmbFiltroParcialAgregados = new ComboBox<>();
+            cmbFiltroParcialAgregados.setPromptText("Todos");
+            cmbFiltroParcialAgregados.setPrefWidth(80);
+            cmbFiltroParcialAgregados.setDisable(true);
+            cmbFiltroParcialAgregados.setItems(FXCollections.observableArrayList(1, 2, 3));
+
             Label lblFiltroCriterio = new Label("Criterio:");
-            lblFiltroCriterio.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+            lblFiltroCriterio.setStyle("-fx-font-size: 12px; -fx-font-weight: bold;");
 
             ComboBox<Criterio> cmbFiltroCriterioAgregados = new ComboBox<>();
-            cmbFiltroCriterioAgregados.setPromptText("Todos los criterios");
-            cmbFiltroCriterioAgregados.setPrefWidth(250);
-
-            // Cargar todos los criterios inicialmente
-            try {
-                List<Criterio> criterios = criterioService.obtenerTodosLosCriterios();
-                cmbFiltroCriterioAgregados.setItems(FXCollections.observableArrayList(criterios));
-            } catch (Exception e) {
-                LOG.error("Error al cargar criterios para filtro", e);
-            }
+            cmbFiltroCriterioAgregados.setPromptText("Seleccione parcial");
+            cmbFiltroCriterioAgregados.setPrefWidth(180);
+            cmbFiltroCriterioAgregados.setDisable(true);
 
             cmbFiltroCriterioAgregados.setCellFactory(param -> new ListCell<Criterio>() {
                 @Override
@@ -2287,7 +2653,7 @@ public class HomeController {
                 protected void updateItem(Criterio item, boolean empty) {
                     super.updateItem(item, empty);
                     if (empty || item == null) {
-                        setText("Todos los criterios");
+                        setText("Todos");
                     } else {
                         try {
                             Materia materia = materiaService.obtenerMateriaPorId(item.getMateriaId()).orElse(null);
@@ -2300,16 +2666,18 @@ public class HomeController {
                 }
             });
 
-            Button btnLimpiarFiltroAgregados = new Button("Limpiar Filtro");
-            btnLimpiarFiltroAgregados.setStyle("-fx-background-color: #9E9E9E; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8 20; -fx-cursor: hand;");
+            Button btnLimpiarFiltroAgregados = new Button("Limpiar");
+            btnLimpiarFiltroAgregados.setStyle("-fx-background-color: #9E9E9E; -fx-text-fill: white; -fx-font-size: 12px; -fx-padding: 8 15; -fx-cursor: hand;");
 
             Region spacer = new Region();
             javafx.scene.layout.HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
 
             Button btnGuardarOrdenAgregados = new Button("Guardar Orden");
-            btnGuardarOrdenAgregados.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8 20; -fx-cursor: hand;");
+            btnGuardarOrdenAgregados.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 12px; -fx-padding: 8 15; -fx-cursor: hand;");
 
-            filterBox.getChildren().addAll(lblFiltrarPor, cmbFiltroMateriaAgregados, lblFiltroCriterio, cmbFiltroCriterioAgregados, btnLimpiarFiltroAgregados, spacer, btnGuardarOrdenAgregados);
+            filterBox.getChildren().addAll(lblFiltroGrupo, cmbFiltroGrupoAgregados, lblFiltroMateria, cmbFiltroMateriaAgregados,
+                                          lblFiltroParcial, cmbFiltroParcialAgregados, lblFiltroCriterio, cmbFiltroCriterioAgregados,
+                                          btnLimpiarFiltroAgregados, spacer, btnGuardarOrdenAgregados);
 
 
             // Tabla
@@ -2463,13 +2831,58 @@ public class HomeController {
                         Agregado agregado = getTableView().getItems().get(getIndex());
                         txtNombre.setText(agregado.getNombre());
 
-                        // Buscar y seleccionar el criterio
-                        for (Criterio c : cmbCriterio.getItems()) {
-                            if (c.getId().equals(agregado.getCriterioId())) {
-                                cmbCriterio.setValue(c);
-                                break;
+                        // Encontrar el criterio completo para obtener su materia y parcial
+                        try {
+                            Criterio criterioSeleccionado = criterioService.obtenerCriterioPorId(agregado.getCriterioId()).orElse(null);
+                            if (criterioSeleccionado != null) {
+                                Long materiaId = criterioSeleccionado.getMateriaId();
+                                Integer parcial = criterioSeleccionado.getParcial();
+
+                                // Encontrar el grupo que tiene asignada esta materia
+                                Grupo grupoEncontrado = null;
+                                for (GrupoMateria asignacion : todasAsignaciones) {
+                                    if (asignacion.getMateriaId().equals(materiaId)) {
+                                        // Buscar el grupo
+                                        for (Grupo g : cmbGrupo.getItems()) {
+                                            if (g.getId().equals(asignacion.getGrupoId())) {
+                                                grupoEncontrado = g;
+                                                break;
+                                            }
+                                        }
+                                        if (grupoEncontrado != null) break;
+                                    }
+                                }
+
+                                if (grupoEncontrado != null) {
+                                    // 1. Seleccionar el grupo
+                                    cmbGrupo.setValue(grupoEncontrado);
+
+                                    // 2. Buscar y seleccionar la materia en la lista filtrada
+                                    for (Materia m : cmbMateria.getItems()) {
+                                        if (m.getId().equals(materiaId)) {
+                                            cmbMateria.setValue(m);
+                                            break;
+                                        }
+                                    }
+
+                                    // 3. Seleccionar el parcial
+                                    if (parcial != null) {
+                                        cmbParcial.setValue(parcial);
+
+                                        // 4. Buscar y seleccionar el criterio en la lista filtrada
+                                        for (Criterio c : cmbCriterio.getItems()) {
+                                            if (c.getId().equals(agregado.getCriterioId())) {
+                                                cmbCriterio.setValue(c);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
                             }
+                        } catch (Exception e) {
+                            LOG.error("Error al cargar criterio para editar", e);
                         }
+
                         btnGuardar.setText("Actualizar");
                         btnGuardar.setUserData(agregado.getId());
                     });
@@ -2520,22 +2933,115 @@ public class HomeController {
             // Cargar datos iniciales
             cargarAgregados(tblAgregados);
 
+            // Evento: Filtrar por grupo
+            cmbFiltroGrupoAgregados.setOnAction(event -> {
+                Grupo grupoSeleccionado = cmbFiltroGrupoAgregados.getValue();
+                if (grupoSeleccionado != null) {
+                    // Cargar materias asignadas al grupo
+                    try {
+                        List<Long> materiaIdsDelGrupo = todasAsignaciones.stream()
+                                .filter(gm -> gm.getGrupoId().equals(grupoSeleccionado.getId()))
+                                .map(GrupoMateria::getMateriaId)
+                                .collect(java.util.stream.Collectors.toList());
+
+                        List<Materia> materiasDelGrupo = todasMaterias.stream()
+                                .filter(m -> materiaIdsDelGrupo.contains(m.getId()))
+                                .collect(java.util.stream.Collectors.toList());
+
+                        if (materiasDelGrupo.isEmpty()) {
+                            cmbFiltroMateriaAgregados.setItems(FXCollections.observableArrayList());
+                            cmbFiltroMateriaAgregados.setValue(null);
+                            cmbFiltroMateriaAgregados.setDisable(true);
+                            cmbFiltroMateriaAgregados.setPromptText("No hay materias para este grupo");
+                        } else {
+                            cmbFiltroMateriaAgregados.setItems(FXCollections.observableArrayList(materiasDelGrupo));
+                            cmbFiltroMateriaAgregados.setValue(null);
+                            cmbFiltroMateriaAgregados.setDisable(false);
+                            cmbFiltroMateriaAgregados.setPromptText("Todas las materias");
+                        }
+                    } catch (Exception e) {
+                        LOG.error("Error al cargar materias del grupo", e);
+                    }
+                } else {
+                    cmbFiltroMateriaAgregados.setItems(FXCollections.observableArrayList());
+                    cmbFiltroMateriaAgregados.setValue(null);
+                    cmbFiltroMateriaAgregados.setDisable(true);
+                    cmbFiltroMateriaAgregados.setPromptText("Seleccione primero un grupo");
+                }
+
+                // Resetear parcial y criterio
+                cmbFiltroParcialAgregados.setValue(null);
+                cmbFiltroParcialAgregados.setDisable(true);
+                cmbFiltroParcialAgregados.setPromptText("Seleccione primero una materia");
+                cmbFiltroCriterioAgregados.setItems(FXCollections.observableArrayList());
+                cmbFiltroCriterioAgregados.setValue(null);
+                cmbFiltroCriterioAgregados.setDisable(true);
+                cmbFiltroCriterioAgregados.setPromptText("Seleccione primero un parcial");
+
+                cargarAgregados(tblAgregados);
+                lblEstadisticas.setText("Total de agregados: " + tblAgregados.getItems().size());
+            });
+
             // Evento: Filtrar por materia
             cmbFiltroMateriaAgregados.setOnAction(event -> {
                 Materia materiaSeleccionada = cmbFiltroMateriaAgregados.getValue();
                 if (materiaSeleccionada != null) {
-                    // Cargar criterios de la materia seleccionada
-                    try {
-                        List<Criterio> criteriosDeMateria = criterioService.obtenerCriteriosPorMateria(materiaSeleccionada.getId());
-                        cmbFiltroCriterioAgregados.setItems(FXCollections.observableArrayList(criteriosDeMateria));
-                        cmbFiltroCriterioAgregados.setValue(null);
-                    } catch (Exception e) {
-                        LOG.error("Error al cargar criterios de la materia", e);
-                    }
-
-                    filtrarAgregadosPorMateria(tblAgregados, materiaSeleccionada.getId());
-                    lblEstadisticas.setText("Total de agregados: " + tblAgregados.getItems().size());
+                    // Habilitar parcial
+                    cmbFiltroParcialAgregados.setValue(null);
+                    cmbFiltroParcialAgregados.setDisable(false);
+                    cmbFiltroParcialAgregados.setPromptText("Todos los parciales");
+                } else {
+                    cmbFiltroParcialAgregados.setValue(null);
+                    cmbFiltroParcialAgregados.setDisable(true);
+                    cmbFiltroParcialAgregados.setPromptText("Seleccione primero una materia");
                 }
+
+                // Resetear criterio
+                cmbFiltroCriterioAgregados.setItems(FXCollections.observableArrayList());
+                cmbFiltroCriterioAgregados.setValue(null);
+                cmbFiltroCriterioAgregados.setDisable(true);
+                cmbFiltroCriterioAgregados.setPromptText("Seleccione primero un parcial");
+
+                cargarAgregados(tblAgregados);
+                lblEstadisticas.setText("Total de agregados: " + tblAgregados.getItems().size());
+            });
+
+            // Evento: Filtrar por parcial
+            cmbFiltroParcialAgregados.setOnAction(event -> {
+                Integer parcialSeleccionado = cmbFiltroParcialAgregados.getValue();
+                Materia materiaSeleccionada = cmbFiltroMateriaAgregados.getValue();
+
+                if (parcialSeleccionado != null && materiaSeleccionada != null) {
+                    // Cargar criterios de la materia y parcial seleccionados
+                    try {
+                        List<Criterio> criteriosFiltrados = todosCriterios.stream()
+                                .filter(c -> c.getMateriaId() != null && c.getMateriaId().equals(materiaSeleccionada.getId()))
+                                .filter(c -> c.getParcial() != null && c.getParcial().equals(parcialSeleccionado))
+                                .collect(java.util.stream.Collectors.toList());
+
+                        if (criteriosFiltrados.isEmpty()) {
+                            cmbFiltroCriterioAgregados.setItems(FXCollections.observableArrayList());
+                            cmbFiltroCriterioAgregados.setValue(null);
+                            cmbFiltroCriterioAgregados.setDisable(true);
+                            cmbFiltroCriterioAgregados.setPromptText("No hay criterios para esta combinación");
+                        } else {
+                            cmbFiltroCriterioAgregados.setItems(FXCollections.observableArrayList(criteriosFiltrados));
+                            cmbFiltroCriterioAgregados.setValue(null);
+                            cmbFiltroCriterioAgregados.setDisable(false);
+                            cmbFiltroCriterioAgregados.setPromptText("Todos los criterios");
+                        }
+                    } catch (Exception e) {
+                        LOG.error("Error al cargar criterios", e);
+                    }
+                } else {
+                    cmbFiltroCriterioAgregados.setItems(FXCollections.observableArrayList());
+                    cmbFiltroCriterioAgregados.setValue(null);
+                    cmbFiltroCriterioAgregados.setDisable(true);
+                    cmbFiltroCriterioAgregados.setPromptText("Seleccione primero un parcial");
+                }
+
+                cargarAgregados(tblAgregados);
+                lblEstadisticas.setText("Total de agregados: " + tblAgregados.getItems().size());
             });
 
             // Evento: Filtrar por criterio
@@ -2544,14 +3050,25 @@ public class HomeController {
                 if (criterioSeleccionado != null) {
                     filtrarAgregadosPorCriterio(tblAgregados, criterioSeleccionado.getId());
                     lblEstadisticas.setText("Total de agregados: " + tblAgregados.getItems().size());
+                } else {
+                    cargarAgregados(tblAgregados);
+                    lblEstadisticas.setText("Total de agregados: " + tblAgregados.getItems().size());
                 }
             });
 
             // Evento: Limpiar filtro
             btnLimpiarFiltroAgregados.setOnAction(event -> {
+                cmbFiltroGrupoAgregados.setValue(null);
                 cmbFiltroMateriaAgregados.setValue(null);
+                cmbFiltroMateriaAgregados.setDisable(true);
+                cmbFiltroMateriaAgregados.setPromptText("Seleccione primero un grupo");
+                cmbFiltroParcialAgregados.setValue(null);
+                cmbFiltroParcialAgregados.setDisable(true);
+                cmbFiltroParcialAgregados.setPromptText("Seleccione primero una materia");
                 cmbFiltroCriterioAgregados.setValue(null);
                 cmbFiltroCriterioAgregados.setItems(FXCollections.observableArrayList());
+                cmbFiltroCriterioAgregados.setDisable(true);
+                cmbFiltroCriterioAgregados.setPromptText("Seleccione primero un parcial");
                 cargarAgregados(tblAgregados);
                 lblEstadisticas.setText("Total de agregados: " + tblAgregados.getItems().size());
             });
@@ -2594,12 +3111,14 @@ public class HomeController {
                     mostrarAlerta("Éxito", "El orden de los agregados del criterio '" + nombreCriterio + "' se guardó correctamente", Alert.AlertType.INFORMATION);
 
                     // Recargar la tabla manteniendo el filtro
-                    Materia materiaFiltro = cmbFiltroMateriaAgregados.getValue();
+                    /*Materia materiaFiltro = cmbFiltroMateriaAgregados.getValue();
                     if (materiaFiltro != null) {
                         filtrarAgregadosPorMateria(tblAgregados, materiaFiltro.getId());
                     } else {
                         cargarAgregados(tblAgregados);
-                    }
+                    }*/
+                    Criterio criterioSeleccionado = cmbFiltroCriterioAgregados.getValue();
+                    filtrarAgregadosPorCriterio(tblAgregados, criterioSeleccionado.getId());
                     lblEstadisticas.setText("Total de agregados: " + tblAgregados.getItems().size());
 
                 } catch (Exception e) {
@@ -2640,7 +3159,16 @@ public class HomeController {
 
                     // Limpiar formulario
                     txtNombre.clear();
+                    cmbGrupo.setValue(null);
+                    cmbMateria.setValue(null);
+                    cmbMateria.setDisable(true);
+                    cmbMateria.setPromptText("Seleccione primero un grupo");
+                    cmbParcial.setValue(null);
+                    cmbParcial.setDisable(true);
+                    cmbParcial.setPromptText("Seleccione primero una materia");
                     cmbCriterio.setValue(null);
+                    cmbCriterio.setDisable(true);
+                    cmbCriterio.setPromptText("Seleccione primero un parcial");
                     btnGuardar.setText("Guardar");
                     btnGuardar.setUserData(null);
 
@@ -2657,7 +3185,16 @@ public class HomeController {
 
             btnLimpiar.setOnAction(event -> {
                 txtNombre.clear();
+                cmbGrupo.setValue(null);
+                cmbMateria.setValue(null);
+                cmbMateria.setDisable(true);
+                cmbMateria.setPromptText("Seleccione primero un grupo");
+                cmbParcial.setValue(null);
+                cmbParcial.setDisable(true);
+                cmbParcial.setPromptText("Seleccione primero una materia");
                 cmbCriterio.setValue(null);
+                cmbCriterio.setDisable(true);
+                cmbCriterio.setPromptText("Seleccione primero un parcial");
                 btnGuardar.setText("Guardar");
                 btnGuardar.setUserData(null);
             });
@@ -2669,6 +3206,702 @@ public class HomeController {
         }
 
         return vista;
+    }
+
+    // Método para crear la vista completa de Concentrado de calificaciones
+    private VBox crearVistaConcentradoCompleta() {
+        VBox vista = new VBox(20);
+        vista.setStyle("-fx-padding: 20; -fx-background-color: #f5f5f5;");
+
+        try {
+            // Header
+            Label lblTitulo = new Label("Concentrado de Calificaciones");
+            lblTitulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;");
+
+            // Panel de filtros
+            VBox filtrosPanel = new VBox(15);
+            filtrosPanel.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 2);");
+
+            Label lblFiltros = new Label("Filtros (Obligatorios)");
+            lblFiltros.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");
+
+            // Fila de filtros
+            javafx.scene.layout.HBox filtrosBox = new javafx.scene.layout.HBox(20);
+            filtrosBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+            // ComboBox para seleccionar grupo
+            VBox grupoContainer = new VBox(5);
+            Label lblGrupo = new Label("Grupo: *");
+            lblGrupo.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #555;");
+            ComboBox<Grupo> cmbGrupo = new ComboBox<>();
+            cmbGrupo.setPrefWidth(150);
+            cmbGrupo.setPromptText("Seleccionar...");
+            try {
+                List<Grupo> grupos = grupoService.obtenerTodosLosGrupos();
+                cmbGrupo.setItems(FXCollections.observableArrayList(grupos));
+            } catch (Exception e) {
+                LOG.error("Error al cargar grupos", e);
+            }
+            cmbGrupo.setCellFactory(param -> new ListCell<Grupo>() {
+                @Override
+                protected void updateItem(Grupo item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? null : String.valueOf(item.getId()));
+                }
+            });
+            cmbGrupo.setButtonCell(new ListCell<Grupo>() {
+                @Override
+                protected void updateItem(Grupo item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? "Seleccionar..." : String.valueOf(item.getId()));
+                }
+            });
+            grupoContainer.getChildren().addAll(lblGrupo, cmbGrupo);
+
+            // ComboBox para seleccionar materia
+            VBox materiaContainer = new VBox(5);
+            Label lblMateria = new Label("Materia: *");
+            lblMateria.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #555;");
+            ComboBox<Materia> cmbMateria = new ComboBox<>();
+            cmbMateria.setPrefWidth(250);
+            cmbMateria.setPromptText("Seleccionar...");
+            cmbMateria.setDisable(true);
+            cmbMateria.setCellFactory(param -> new ListCell<Materia>() {
+                @Override
+                protected void updateItem(Materia item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? null : item.getNombre());
+                }
+            });
+            cmbMateria.setButtonCell(new ListCell<Materia>() {
+                @Override
+                protected void updateItem(Materia item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? "Seleccionar..." : item.getNombre());
+                }
+            });
+            materiaContainer.getChildren().addAll(lblMateria, cmbMateria);
+
+            // ComboBox para seleccionar parcial
+            VBox parcialContainer = new VBox(5);
+            Label lblParcial = new Label("Parcial: *");
+            lblParcial.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #555;");
+            ComboBox<Integer> cmbParcial = new ComboBox<>();
+            cmbParcial.setPrefWidth(120);
+            cmbParcial.setPromptText("Seleccionar...");
+            cmbParcial.setItems(FXCollections.observableArrayList(1, 2, 3));
+            parcialContainer.getChildren().addAll(lblParcial, cmbParcial);
+
+            filtrosBox.getChildren().addAll(grupoContainer, materiaContainer, parcialContainer);
+
+            // Botones
+            javafx.scene.layout.HBox botonesBox = new javafx.scene.layout.HBox(10);
+            Button btnGenerar = new Button("Generar Tabla");
+            btnGenerar.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;");
+
+            Button btnGuardar = new Button("Guardar Calificaciones");
+            btnGuardar.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;");
+            btnGuardar.setDisable(true);
+
+            botonesBox.getChildren().addAll(btnGenerar, btnGuardar);
+
+            filtrosPanel.getChildren().addAll(lblFiltros, filtrosBox, botonesBox);
+
+            // Panel de tabla
+            VBox tablaPanel = new VBox(15);
+            tablaPanel.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 2);");
+
+            ScrollPane scrollPane = new ScrollPane();
+            scrollPane.setFitToWidth(true);
+            scrollPane.setFitToHeight(true);
+            scrollPane.setPrefHeight(500);
+            scrollPane.setStyle("-fx-background-color: transparent;");
+
+            TableView<java.util.Map<String, Object>> tblCalificaciones = new TableView<>();
+            tblCalificaciones.setEditable(true);
+            tblCalificaciones.setPlaceholder(new Label("Seleccione Grupo, Materia y Parcial, luego presione 'Generar Tabla'"));
+            tblCalificaciones.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+
+            scrollPane.setContent(tblCalificaciones);
+            tablaPanel.getChildren().add(scrollPane);
+
+            // Lógica para cargar materias cuando se selecciona un grupo
+            cmbGrupo.setOnAction(event -> {
+                Grupo grupoSeleccionado = cmbGrupo.getValue();
+                if (grupoSeleccionado != null) {
+                    try {
+                        List<GrupoMateria> asignaciones = grupoMateriaService.obtenerMateriasPorGrupo(grupoSeleccionado.getId());
+                        List<Materia> materias = new java.util.ArrayList<>();
+                        for (GrupoMateria gm : asignaciones) {
+                            materiaService.obtenerMateriaPorId(gm.getMateriaId()).ifPresent(materias::add);
+                        }
+                        cmbMateria.setItems(FXCollections.observableArrayList(materias));
+                        cmbMateria.setDisable(false);
+                    } catch (Exception e) {
+                        LOG.error("Error al cargar materias del grupo", e);
+                        mostrarAlerta("Error", "No se pudieron cargar las materias del grupo", Alert.AlertType.ERROR);
+                    }
+                } else {
+                    cmbMateria.setItems(FXCollections.observableArrayList());
+                    cmbMateria.setDisable(true);
+                }
+            });
+
+            // Evento del botón generar
+            btnGenerar.setOnAction(event -> {
+                if (cmbGrupo.getValue() == null || cmbMateria.getValue() == null || cmbParcial.getValue() == null) {
+                    mostrarAlerta("Validación", "Debe seleccionar Grupo, Materia y Parcial", Alert.AlertType.WARNING);
+                    return;
+                }
+
+                generarTablaCalificaciones(tblCalificaciones, cmbGrupo.getValue(), cmbMateria.getValue(), cmbParcial.getValue());
+                btnGuardar.setDisable(false);
+            });
+
+            // Evento del botón guardar
+            btnGuardar.setOnAction(event -> {
+                guardarCalificaciones(tblCalificaciones);
+                mostrarAlerta("Éxito", "Calificaciones guardadas correctamente", Alert.AlertType.INFORMATION);
+            });
+
+            vista.getChildren().addAll(lblTitulo, filtrosPanel, tablaPanel);
+
+        } catch (Exception e) {
+            LOG.error("Error al crear vista de concentrado de calificaciones", e);
+        }
+
+        return vista;
+    }
+
+    // Método para generar la tabla de calificaciones
+    private void generarTablaCalificaciones(TableView<java.util.Map<String, Object>> tabla, Grupo grupo, Materia materia, Integer parcial) {
+        try {
+            tabla.getColumns().clear();
+            tabla.getItems().clear();
+
+            // Obtener alumnos del grupo
+            List<Alumno> alumnos = alumnoService.obtenerTodosLosAlumnos().stream()
+                    .filter(a -> grupo.getId().equals(a.getGrupoId()))
+                    .sorted((a1, a2) -> {
+                        String nombre1 = a1.getApellidoPaterno() + " " + a1.getApellidoMaterno() + " " + a1.getNombre();
+                        String nombre2 = a2.getApellidoPaterno() + " " + a2.getApellidoMaterno() + " " + a2.getNombre();
+                        return nombre1.compareToIgnoreCase(nombre2);
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+
+            if (alumnos.isEmpty()) {
+                mostrarAlerta("Información", "No hay alumnos en este grupo", Alert.AlertType.INFORMATION);
+                return;
+            }
+
+            // Obtener criterios de la materia y parcial
+            List<Criterio> criterios = criterioService.obtenerCriteriosPorMateria(materia.getId()).stream()
+                    .filter(c -> parcial.equals(c.getParcial()))
+                    .sorted((c1, c2) -> {
+                        if (c1.getOrden() == null && c2.getOrden() == null) return 0;
+                        if (c1.getOrden() == null) return 1;
+                        if (c2.getOrden() == null) return -1;
+                        return Integer.compare(c1.getOrden(), c2.getOrden());
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+
+            if (criterios.isEmpty()) {
+                mostrarAlerta("Información", "No hay criterios para esta materia y parcial", Alert.AlertType.INFORMATION);
+                return;
+            }
+
+            // Columna #
+            TableColumn<java.util.Map<String, Object>, Integer> colNumero = new TableColumn<>("#");
+            colNumero.setPrefWidth(50);
+            colNumero.setMinWidth(50);
+            colNumero.setMaxWidth(50);
+            colNumero.setResizable(false);
+            colNumero.setCellValueFactory(cellData -> {
+                Integer numero = (Integer) cellData.getValue().get("numero");
+                return new javafx.beans.property.SimpleObjectProperty<>(numero);
+            });
+            tabla.getColumns().add(colNumero);
+
+            // Columna Nombre Completo
+            TableColumn<java.util.Map<String, Object>, String> colNombre = new TableColumn<>("Nombre Completo");
+            colNombre.setPrefWidth(250);
+            colNombre.setMinWidth(250);
+            colNombre.setMaxWidth(250);
+            colNombre.setResizable(false);
+            colNombre.setCellValueFactory(cellData -> {
+                String nombre = (String) cellData.getValue().get("nombreCompleto");
+                return new javafx.beans.property.SimpleStringProperty(nombre);
+            });
+            tabla.getColumns().add(colNombre);
+
+            // Lista para recopilar información de todos los agregados de todos los criterios
+            List<java.util.Map<String, Object>> criteriosInfo = new java.util.ArrayList<>();
+
+            // Crear columnas dinámicamente por criterio
+            for (Criterio criterio : criterios) {
+                // Obtener agregados del criterio
+                List<Agregado> agregados = agregadoService.obtenerAgregadosPorCriterio(criterio.getId()).stream()
+                        .sorted((a1, a2) -> {
+                            if (a1.getOrden() == null && a2.getOrden() == null) return 0;
+                            if (a1.getOrden() == null) return 1;
+                            if (a2.getOrden() == null) return -1;
+                            return Integer.compare(a1.getOrden(), a2.getOrden());
+                        })
+                        .collect(java.util.stream.Collectors.toList());
+
+                if (!agregados.isEmpty()) {
+                    // Crear columna padre para el criterio
+                    TableColumn<java.util.Map<String, Object>, String> colCriterio = new TableColumn<>(
+                            criterio.getNombre() + " (" + criterio.getPuntuacionMaxima() + " pts)"
+                    );
+                    colCriterio.setResizable(false);
+
+                    // Obtener IDs de todos los agregados del criterio para validación
+                    final List<Long> agregadoIdsDelCriterio = agregados.stream()
+                            .map(Agregado::getId)
+                            .collect(java.util.stream.Collectors.toList());
+                    final Double puntuacionMaximaCriterio = criterio.getPuntuacionMaxima();
+
+                    // Crear columnas hijas para cada agregado
+                    for (Agregado agregado : agregados) {
+                        boolean esCheck = "Check".equalsIgnoreCase(criterio.getTipoEvaluacion());
+
+                        if (esCheck) {
+                            // Columna con CheckBox para tipo Check
+                            TableColumn<java.util.Map<String, Object>, Boolean> colAgregadoCheck = new TableColumn<>(agregado.getNombre());
+                            colAgregadoCheck.setPrefWidth(100);
+                            colAgregadoCheck.setMinWidth(100);
+                            colAgregadoCheck.setMaxWidth(100);
+                            colAgregadoCheck.setResizable(false);
+                            colAgregadoCheck.setEditable(true);
+
+                            colAgregadoCheck.setCellValueFactory(cellData -> {
+                                Object valor = cellData.getValue().get("agregado_" + agregado.getId());
+                                boolean checked = false;
+                                if (valor != null) {
+                                    if (valor instanceof Boolean) {
+                                        checked = (Boolean) valor;
+                                    } else if (valor instanceof String) {
+                                        String strValor = (String) valor;
+                                        checked = "true".equalsIgnoreCase(strValor) || "1".equals(strValor);
+                                    } else if (valor instanceof Number) {
+                                        checked = ((Number) valor).doubleValue() > 0;
+                                    }
+                                }
+                                return new javafx.beans.property.SimpleBooleanProperty(checked);
+                            });
+
+                            colAgregadoCheck.setCellFactory(col -> new TableCell<java.util.Map<String, Object>, Boolean>() {
+                                private final CheckBox checkBox = new CheckBox();
+                                private boolean isUpdating = false;
+
+                                {
+                                    checkBox.setStyle("-fx-alignment: CENTER;");
+                                    checkBox.setOnAction(event -> {
+                                        if (!isUpdating && getTableRow() != null && getTableRow().getItem() != null) {
+                                            java.util.Map<String, Object> fila = getTableRow().getItem();
+                                            fila.put("agregado_" + agregado.getId(), checkBox.isSelected());
+                                            // Refrescar la tabla para actualizar el acumulado
+                                            tabla.refresh();
+                                        }
+                                    });
+                                }
+
+                                @Override
+                                protected void updateItem(Boolean item, boolean empty) {
+                                    super.updateItem(item, empty);
+                                    if (empty) {
+                                        setGraphic(null);
+                                    } else {
+                                        isUpdating = true;
+                                        checkBox.setSelected(item != null && item);
+                                        isUpdating = false;
+                                        setGraphic(checkBox);
+                                        setStyle("-fx-alignment: CENTER;");
+                                    }
+                                }
+                            });
+
+                            colCriterio.getColumns().add(colAgregadoCheck);
+
+                        } else {
+                            // Columna con TextField para tipo Puntuacion (máximo 2 dígitos)
+                            TableColumn<java.util.Map<String, Object>, String> colAgregadoPuntos = new TableColumn<>(agregado.getNombre());
+                            colAgregadoPuntos.setPrefWidth(100);
+                            colAgregadoPuntos.setMinWidth(100);
+                            colAgregadoPuntos.setMaxWidth(100);
+                            colAgregadoPuntos.setResizable(false);
+                            colAgregadoPuntos.setEditable(true);
+
+                            colAgregadoPuntos.setCellValueFactory(cellData -> {
+                                Object valor = cellData.getValue().get("agregado_" + agregado.getId());
+                                return new javafx.beans.property.SimpleStringProperty(valor != null ? valor.toString() : "");
+                            });
+
+                            colAgregadoPuntos.setCellFactory(col -> new TableCell<java.util.Map<String, Object>, String>() {
+                                private final TextField textField = new TextField();
+
+                                {
+                                    textField.setStyle("-fx-alignment: CENTER; -fx-pref-width: 90px;");
+                                    textField.setMaxWidth(90);
+
+                                    // Validar que solo sean números de máximo 2 dígitos
+                                    textField.textProperty().addListener((obs, oldVal, newVal) -> {
+                                        if (newVal != null && !newVal.isEmpty()) {
+                                            // Solo permitir números y punto decimal
+                                            if (!newVal.matches("\\d{0,2}(\\.\\d{0,2})?")) {
+                                                textField.setText(oldVal);
+                                                return;
+                                            }
+                                            // Validar que no exceda 99
+                                            try {
+                                                double valor = Double.parseDouble(newVal);
+                                                if (valor > 99) {
+                                                    textField.setText(oldVal);
+                                                    return;
+                                                }
+                                            } catch (NumberFormatException e) {
+                                                // Ignorar si no es un número válido aún
+                                            }
+                                        }
+                                    });
+
+                                    textField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                                        if (!newVal && getTableRow() != null && getTableRow().getItem() != null) {
+                                            // Al perder el foco, validar la sumatoria total
+                                            String valorTexto = textField.getText();
+                                            java.util.Map<String, Object> fila = getTableRow().getItem();
+
+                                            // Guardar temporalmente el nuevo valor
+                                            String valorAnterior = (String) fila.get("agregado_" + agregado.getId());
+                                            fila.put("agregado_" + agregado.getId(), valorTexto);
+
+                                            // Calcular la sumatoria de todos los agregados del criterio
+                                            double sumaTotal = 0.0;
+                                            for (Long agregadoId : agregadoIdsDelCriterio) {
+                                                Object valor = fila.get("agregado_" + agregadoId);
+                                                if (valor instanceof String && !((String) valor).isEmpty()) {
+                                                    try {
+                                                        sumaTotal += Double.parseDouble((String) valor);
+                                                    } catch (NumberFormatException e) {
+                                                        // Ignorar valores no numéricos
+                                                    }
+                                                }
+                                            }
+
+                                            // Validar que la suma no exceda el máximo
+                                            if (sumaTotal > puntuacionMaximaCriterio) {
+                                                mostrarAlerta("Advertencia",
+                                                    "No puede exceder el máximo de puntos",
+                                                    Alert.AlertType.WARNING);
+                                                // Restaurar el valor anterior
+                                                fila.put("agregado_" + agregado.getId(), valorAnterior != null ? valorAnterior : "");
+                                                textField.setText(valorAnterior != null ? valorAnterior : "");
+                                            }
+
+                                            // Refrescar la tabla para actualizar el acumulado
+                                            tabla.refresh();
+                                        }
+                                    });
+
+                                    textField.setOnAction(event -> {
+                                        if (getTableRow() != null && getTableRow().getItem() != null) {
+                                            // Al presionar Enter, validar la sumatoria total
+                                            String valorTexto = textField.getText();
+                                            java.util.Map<String, Object> fila = getTableRow().getItem();
+
+                                            // Guardar temporalmente el nuevo valor
+                                            String valorAnterior = (String) fila.get("agregado_" + agregado.getId());
+                                            fila.put("agregado_" + agregado.getId(), valorTexto);
+
+                                            // Calcular la sumatoria de todos los agregados del criterio
+                                            double sumaTotal = 0.0;
+                                            for (Long agregadoId : agregadoIdsDelCriterio) {
+                                                Object valor = fila.get("agregado_" + agregadoId);
+                                                if (valor instanceof String && !((String) valor).isEmpty()) {
+                                                    try {
+                                                        sumaTotal += Double.parseDouble((String) valor);
+                                                    } catch (NumberFormatException e) {
+                                                        // Ignorar valores no numéricos
+                                                    }
+                                                }
+                                            }
+
+                                            // Validar que la suma no exceda el máximo
+                                            if (sumaTotal > puntuacionMaximaCriterio) {
+                                                mostrarAlerta("Advertencia",
+                                                    "No puede exceder el máximo de puntos",
+                                                    Alert.AlertType.WARNING);
+                                                // Restaurar el valor anterior
+                                                fila.put("agregado_" + agregado.getId(), valorAnterior != null ? valorAnterior : "");
+                                                textField.setText(valorAnterior != null ? valorAnterior : "");
+                                            }
+
+                                            // Refrescar la tabla para actualizar el acumulado
+                                            tabla.refresh();
+                                        }
+                                    });
+                                }
+
+                                @Override
+                                protected void updateItem(String item, boolean empty) {
+                                    super.updateItem(item, empty);
+                                    if (empty) {
+                                        setGraphic(null);
+                                    } else {
+                                        textField.setText(item != null ? item : "");
+                                        setGraphic(textField);
+                                        setStyle("-fx-alignment: CENTER;");
+                                    }
+                                }
+                            });
+
+                            colCriterio.getColumns().add(colAgregadoPuntos);
+                        }
+                    }
+
+                    // Agregar columna Acumulado al final de cada grupo de agregados
+                    TableColumn<java.util.Map<String, Object>, String> colAcumulado = new TableColumn<>("Acumulado");
+                    colAcumulado.setPrefWidth(120);
+                    colAcumulado.setMinWidth(120);
+                    colAcumulado.setMaxWidth(120);
+                    colAcumulado.setResizable(false);
+                    colAcumulado.setStyle("-fx-alignment: CENTER;");
+
+                    final Long criterioIdFinal = criterio.getId();
+                    final Double puntuacionMaximaFinal = criterio.getPuntuacionMaxima();
+                    final boolean esCheckFinal = "Check".equalsIgnoreCase(criterio.getTipoEvaluacion());
+                    final List<Long> agregadoIds = agregados.stream()
+                            .map(Agregado::getId)
+                            .collect(java.util.stream.Collectors.toList());
+
+                    colAcumulado.setCellValueFactory(cellData -> {
+                        java.util.Map<String, Object> fila = cellData.getValue();
+                        double puntosObtenidos = 0.0;
+
+                        // Calcular puntos obtenidos sumando los valores de los agregados
+                        for (Long agregadoId : agregadoIds) {
+                            Object valor = fila.get("agregado_" + agregadoId);
+
+                            if (esCheckFinal) {
+                                // Para tipo Check, cada checkbox marcado suma una parte proporcional
+                                if (valor instanceof Boolean && (Boolean) valor) {
+                                    puntosObtenidos += puntuacionMaximaFinal / agregadoIds.size();
+                                } else if (valor instanceof String) {
+                                    String strValor = (String) valor;
+                                    if ("true".equalsIgnoreCase(strValor) || "1".equals(strValor)) {
+                                        puntosObtenidos += puntuacionMaximaFinal / agregadoIds.size();
+                                    }
+                                }
+                            } else {
+                                // Para tipo Puntuación, sumar los valores numéricos
+                                if (valor instanceof Number) {
+                                    puntosObtenidos += ((Number) valor).doubleValue();
+                                } else if (valor instanceof String && !((String) valor).isEmpty()) {
+                                    try {
+                                        puntosObtenidos += Double.parseDouble((String) valor);
+                                    } catch (NumberFormatException e) {
+                                        // Ignorar valores no numéricos
+                                    }
+                                }
+                            }
+                        }
+
+                        return new javafx.beans.property.SimpleStringProperty(
+                            String.format("%.2f / %.2f", puntosObtenidos, puntuacionMaximaFinal)
+                        );
+                    });
+
+                    colAcumulado.setCellFactory(col -> new TableCell<java.util.Map<String, Object>, String>() {
+                        @Override
+                        protected void updateItem(String item, boolean empty) {
+                            super.updateItem(item, empty);
+                            if (empty || item == null) {
+                                setText(null);
+                                setStyle("");
+                            } else {
+                                setText(item);
+                                setStyle("-fx-alignment: CENTER; -fx-font-weight: bold; -fx-background-color: #f0f0f0;");
+                            }
+                        }
+                    });
+
+                    colCriterio.getColumns().add(colAcumulado);
+
+                    tabla.getColumns().add(colCriterio);
+
+                    // Guardar información del criterio para la columna Portafolio
+                    java.util.Map<String, Object> criterioInfo = new java.util.HashMap<>();
+                    criterioInfo.put("criterioId", criterio.getId());
+                    criterioInfo.put("agregadoIds", agregadoIdsDelCriterio);
+                    criterioInfo.put("esCheck", "Check".equalsIgnoreCase(criterio.getTipoEvaluacion()));
+                    criterioInfo.put("puntuacionMaxima", criterio.getPuntuacionMaxima());
+                    criteriosInfo.add(criterioInfo);
+                }
+            }
+
+            // Agregar columna Portafolio al final de todos los criterios
+            if (!criteriosInfo.isEmpty()) {
+                TableColumn<java.util.Map<String, Object>, String> colPortafolio = new TableColumn<>("Portafolio");
+                colPortafolio.setPrefWidth(120);
+                colPortafolio.setMinWidth(120);
+                colPortafolio.setMaxWidth(120);
+                colPortafolio.setResizable(false);
+                colPortafolio.setStyle("-fx-alignment: CENTER;");
+
+                colPortafolio.setCellValueFactory(cellData -> {
+                    java.util.Map<String, Object> fila = cellData.getValue();
+                    double totalPortafolio = 0.0;
+
+                    // Sumar los puntos obtenidos de todos los criterios
+                    for (java.util.Map<String, Object> criterioInfo : criteriosInfo) {
+                        @SuppressWarnings("unchecked")
+                        List<Long> agregadoIds = (List<Long>) criterioInfo.get("agregadoIds");
+                        boolean esCheck = (Boolean) criterioInfo.get("esCheck");
+                        Double puntuacionMaxima = (Double) criterioInfo.get("puntuacionMaxima");
+
+                        double puntosObtenidosCriterio = 0.0;
+
+                        // Calcular puntos obtenidos de este criterio
+                        for (Long agregadoId : agregadoIds) {
+                            Object valor = fila.get("agregado_" + agregadoId);
+
+                            if (esCheck) {
+                                // Para tipo Check, cada checkbox marcado suma una parte proporcional
+                                if (valor instanceof Boolean && (Boolean) valor) {
+                                    puntosObtenidosCriterio += puntuacionMaxima / agregadoIds.size();
+                                } else if (valor instanceof String) {
+                                    String strValor = (String) valor;
+                                    if ("true".equalsIgnoreCase(strValor) || "1".equals(strValor)) {
+                                        puntosObtenidosCriterio += puntuacionMaxima / agregadoIds.size();
+                                    }
+                                }
+                            } else {
+                                // Para tipo Puntuación, sumar los valores numéricos
+                                if (valor instanceof Number) {
+                                    puntosObtenidosCriterio += ((Number) valor).doubleValue();
+                                } else if (valor instanceof String && !((String) valor).isEmpty()) {
+                                    try {
+                                        puntosObtenidosCriterio += Double.parseDouble((String) valor);
+                                    } catch (NumberFormatException e) {
+                                        // Ignorar valores no numéricos
+                                    }
+                                }
+                            }
+                        }
+
+                        totalPortafolio += puntosObtenidosCriterio;
+                    }
+
+                    return new javafx.beans.property.SimpleStringProperty(
+                        String.format("%.2f", totalPortafolio)
+                    );
+                });
+
+                colPortafolio.setCellFactory(col -> new TableCell<java.util.Map<String, Object>, String>() {
+                    @Override
+                    protected void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || item == null) {
+                            setText(null);
+                            setStyle("");
+                        } else {
+                            setText(item);
+                            setStyle("-fx-alignment: CENTER; -fx-font-weight: bold; -fx-background-color: #e3f2fd; -fx-font-size: 14px;");
+                        }
+                    }
+                });
+
+                tabla.getColumns().add(colPortafolio);
+            }
+
+            // Llenar datos
+            ObservableList<java.util.Map<String, Object>> datos = FXCollections.observableArrayList();
+            int numero = 1;
+            for (Alumno alumno : alumnos) {
+                java.util.Map<String, Object> fila = new java.util.HashMap<>();
+                fila.put("numero", numero++);
+                fila.put("alumnoId", alumno.getId());
+                fila.put("nombreCompleto", alumno.getApellidoPaterno() + " " +
+                        alumno.getApellidoMaterno() + " " + alumno.getNombre());
+
+                // Cargar calificaciones existentes
+                for (Criterio criterio : criterios) {
+                    List<Agregado> agregados = agregadoService.obtenerAgregadosPorCriterio(criterio.getId());
+                    for (Agregado agregado : agregados) {
+                        Optional<Calificacion> calificacion = calificacionService
+                                .obtenerCalificacionPorAlumnoYAgregado(alumno.getId(), agregado.getId());
+                        fila.put("agregado_" + agregado.getId(),
+                                calificacion.map(c -> String.valueOf(c.getPuntuacion())).orElse(""));
+                    }
+                }
+
+                datos.add(fila);
+            }
+
+            tabla.setItems(datos);
+
+        } catch (Exception e) {
+            LOG.error("Error al generar tabla de calificaciones", e);
+            mostrarAlerta("Error", "Error al generar la tabla: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
+    }
+
+    // Método para guardar las calificaciones
+    private void guardarCalificaciones(TableView<java.util.Map<String, Object>> tabla) {
+        try {
+            for (java.util.Map<String, Object> fila : tabla.getItems()) {
+                Long alumnoId = (Long) fila.get("alumnoId");
+
+                // Recorrer todas las claves que empiezan con "agregado_"
+                for (String clave : fila.keySet()) {
+                    if (clave.startsWith("agregado_")) {
+                        Object valor = fila.get(clave);
+                        if (valor != null) {
+                            try {
+                                Long agregadoId = Long.parseLong(clave.replace("agregado_", ""));
+                                Double puntuacion = null;
+
+                                // Manejar diferentes tipos de valores
+                                if (valor instanceof Boolean) {
+                                    // Para checkboxes: true = 1.0, false = 0.0
+                                    puntuacion = ((Boolean) valor) ? 1.0 : 0.0;
+                                } else if (valor instanceof String) {
+                                    String valorStr = ((String) valor).trim();
+                                    if (!valorStr.isEmpty()) {
+                                        // Intentar convertir a número
+                                        if ("true".equalsIgnoreCase(valorStr)) {
+                                            puntuacion = 1.0;
+                                        } else if ("false".equalsIgnoreCase(valorStr)) {
+                                            puntuacion = 0.0;
+                                        } else {
+                                            puntuacion = Double.parseDouble(valorStr);
+                                        }
+                                    }
+                                } else if (valor instanceof Number) {
+                                    puntuacion = ((Number) valor).doubleValue();
+                                }
+
+                                if (puntuacion != null) {
+                                    Calificacion calificacion = Calificacion.builder()
+                                            .alumnoId(alumnoId)
+                                            .agregadoId(agregadoId)
+                                            .puntuacion(puntuacion)
+                                            .build();
+
+                                    calificacionService.crearCalificacion(calificacion);
+                                }
+                            } catch (NumberFormatException e) {
+                                LOG.warn("Valor inválido para calificación: " + valor);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOG.error("Error al guardar calificaciones", e);
+            mostrarAlerta("Error", "Error al guardar las calificaciones: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
     }
 
     // Método para cargar agregados en la tabla
@@ -2716,8 +3949,8 @@ public class HomeController {
         }
     }
 
-    // Método para aplicar filtros combinados de materia y cuatrimestre
-    private void aplicarFiltrosCriterios(TableView<Criterio> tabla, ComboBox<Materia> cmbMateria, ComboBox<Integer> cmbCuatrimestre) {
+    // Método para aplicar filtros combinados de materia y parcial
+    private void aplicarFiltrosCriterios(TableView<Criterio> tabla, ComboBox<Materia> cmbMateria, ComboBox<Integer> cmbParcial) {
         try {
             List<Criterio> criteriosFiltrados = criterioService.obtenerTodosLosCriterios();
 
@@ -2729,20 +3962,20 @@ public class HomeController {
                         .collect(java.util.stream.Collectors.toList());
             }
 
-            // Filtrar por cuatrimestre si está seleccionado
-            Integer cuatrimestreSeleccionado = cmbCuatrimestre.getValue();
-            if (cuatrimestreSeleccionado != null) {
+            // Filtrar por parcial si está seleccionado
+            Integer parcialSeleccionado = cmbParcial.getValue();
+            if (parcialSeleccionado != null) {
                 criteriosFiltrados = criteriosFiltrados.stream()
-                        .filter(c -> cuatrimestreSeleccionado.equals(c.getCuatrimestre()))
+                        .filter(c -> parcialSeleccionado.equals(c.getParcial()))
                         .collect(java.util.stream.Collectors.toList());
             }
 
-            // Ordenar por cuatrimestre y orden
+            // Ordenar por parcial y orden
             criteriosFiltrados.sort((c1, c2) -> {
-                // Primero por cuatrimestre
-                if (c1.getCuatrimestre() != null && c2.getCuatrimestre() != null) {
-                    int cuatComp = Integer.compare(c1.getCuatrimestre(), c2.getCuatrimestre());
-                    if (cuatComp != 0) return cuatComp;
+                // Primero por parcial
+                if (c1.getParcial() != null && c2.getParcial() != null) {
+                    int parcialComp = Integer.compare(c1.getParcial(), c2.getParcial());
+                    if (parcialComp != 0) return parcialComp;
                 }
                 // Luego por orden
                 if (c1.getOrden() == null && c2.getOrden() == null) return 0;
@@ -2829,5 +4062,347 @@ public class HomeController {
             LOG.error("Error al filtrar agregados por criterio", e);
             tabla.setItems(FXCollections.observableArrayList());
         }
+    }
+
+    // Método para crear la vista completa de Exámenes
+    private VBox crearVistaExamenesCompleta() {
+        VBox vista = new VBox(20);
+        vista.setStyle("-fx-padding: 20; -fx-background-color: #f5f5f5;");
+
+        try {
+            // Header
+            Label lblTitulo = new Label("Exámenes");
+            lblTitulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;");
+
+            // Panel de filtros
+            VBox filtrosPanel = new VBox(15);
+            filtrosPanel.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 2);");
+
+            Label lblFiltros = new Label("Filtros (Obligatorios)");
+            lblFiltros.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");
+
+            // Fila de filtros
+            javafx.scene.layout.HBox filtrosBox = new javafx.scene.layout.HBox(20);
+            filtrosBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+            // ComboBox para seleccionar grupo
+            VBox grupoContainer = new VBox(5);
+            Label lblGrupo = new Label("Grupo: *");
+            lblGrupo.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #555;");
+            ComboBox<Grupo> cmbGrupo = new ComboBox<>();
+            cmbGrupo.setPrefWidth(150);
+            cmbGrupo.setPromptText("Seleccionar...");
+            try {
+                List<Grupo> grupos = grupoService.obtenerTodosLosGrupos();
+                cmbGrupo.setItems(FXCollections.observableArrayList(grupos));
+            } catch (Exception e) {
+                LOG.error("Error al cargar grupos", e);
+            }
+            cmbGrupo.setCellFactory(param -> new ListCell<Grupo>() {
+                @Override
+                protected void updateItem(Grupo item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? null : String.valueOf(item.getId()));
+                }
+            });
+            cmbGrupo.setButtonCell(new ListCell<Grupo>() {
+                @Override
+                protected void updateItem(Grupo item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? "Seleccionar..." : String.valueOf(item.getId()));
+                }
+            });
+            grupoContainer.getChildren().addAll(lblGrupo, cmbGrupo);
+
+            // ComboBox para seleccionar materia
+            VBox materiaContainer = new VBox(5);
+            Label lblMateria = new Label("Materia: *");
+            lblMateria.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #555;");
+            ComboBox<Materia> cmbMateria = new ComboBox<>();
+            cmbMateria.setPrefWidth(250);
+            cmbMateria.setPromptText("Seleccionar...");
+            cmbMateria.setDisable(true);
+            cmbMateria.setCellFactory(param -> new ListCell<Materia>() {
+                @Override
+                protected void updateItem(Materia item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? null : item.getNombre());
+                }
+            });
+            cmbMateria.setButtonCell(new ListCell<Materia>() {
+                @Override
+                protected void updateItem(Materia item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? "Seleccionar..." : item.getNombre());
+                }
+            });
+            materiaContainer.getChildren().addAll(lblMateria, cmbMateria);
+
+            // ComboBox para seleccionar parcial
+            VBox parcialContainer = new VBox(5);
+            Label lblParcial = new Label("Parcial: *");
+            lblParcial.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #555;");
+            ComboBox<Integer> cmbParcial = new ComboBox<>();
+            cmbParcial.setPrefWidth(120);
+            cmbParcial.setPromptText("Seleccionar...");
+            cmbParcial.setItems(FXCollections.observableArrayList(1, 2, 3));
+            parcialContainer.getChildren().addAll(lblParcial, cmbParcial);
+
+            // Botón Buscar en la misma fila
+            VBox buscarContainer = new VBox(5);
+            Label lblEspacio = new Label(" "); // Espaciador para alinear con los otros labels
+            lblEspacio.setStyle("-fx-font-size: 14px;");
+            Button btnBuscar = new Button("Buscar");
+            btnBuscar.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;");
+            btnBuscar.setOnMouseEntered(e -> btnBuscar.setStyle("-fx-background-color: #1976D2; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;"));
+            btnBuscar.setOnMouseExited(e -> btnBuscar.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;"));
+            buscarContainer.getChildren().addAll(lblEspacio, btnBuscar);
+
+            filtrosBox.getChildren().addAll(grupoContainer, materiaContainer, parcialContainer, buscarContainer);
+
+            filtrosPanel.getChildren().addAll(lblFiltros, filtrosBox);
+
+            // Panel de tabla
+            VBox tablaPanel = new VBox(15);
+            tablaPanel.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 2);");
+
+            ScrollPane scrollPane = new ScrollPane();
+            scrollPane.setFitToWidth(true);
+            scrollPane.setFitToHeight(true);
+            scrollPane.setPrefHeight(500);
+            scrollPane.setStyle("-fx-background-color: transparent;");
+
+            TableView<Alumno> tblAlumnos = new TableView<>();
+            tblAlumnos.setPlaceholder(new Label("Seleccione Grupo, Materia y Parcial, luego presione 'Generar Tabla'"));
+            tblAlumnos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+            // Columna Número de Lista
+            TableColumn<Alumno, Integer> colNumeroLista = new TableColumn<>("N° Lista");
+            colNumeroLista.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("numeroLista"));
+            colNumeroLista.setPrefWidth(80);
+            colNumeroLista.setStyle("-fx-alignment: CENTER;");
+
+            // Columna Nombre Completo
+            TableColumn<Alumno, String> colNombreCompleto = new TableColumn<>("Nombre Completo");
+            colNombreCompleto.setCellValueFactory(cellData -> {
+                Alumno alumno = cellData.getValue();
+                String nombreCompleto = alumno.getNombre() + " " +
+                                       alumno.getApellidoPaterno() + " " +
+                                       alumno.getApellidoMaterno();
+                return new javafx.beans.property.SimpleStringProperty(nombreCompleto);
+            });
+            colNombreCompleto.setPrefWidth(300);
+
+            // Columna Aciertos
+            TableColumn<Alumno, String> colAciertos = new TableColumn<>("Aciertos");
+            colAciertos.setPrefWidth(100);
+            colAciertos.setStyle("-fx-alignment: CENTER;");
+
+            // HashMap para almacenar los valores de aciertos por alumno
+            java.util.Map<Long, String> aciertosPorAlumno = new java.util.HashMap<>();
+
+            colAciertos.setCellValueFactory(cellData -> {
+                Alumno alumno = cellData.getValue();
+                String valor = aciertosPorAlumno.getOrDefault(alumno.getId(), "0");
+                return new javafx.beans.property.SimpleStringProperty(valor);
+            });
+            colAciertos.setEditable(true);
+            colAciertos.setCellFactory(col -> new TableCell<Alumno, String>() {
+                private final TextField textField = new TextField();
+
+                {
+                    textField.setStyle("-fx-alignment: CENTER;");
+                    textField.setPromptText("0-99");
+
+                    // Limitar a máximo 2 dígitos
+                    textField.textProperty().addListener((obs, oldVal, newVal) -> {
+                        if (newVal != null && !newVal.matches("\\d{0,2}")) {
+                            textField.setText(oldVal);
+                        }
+                    });
+
+                    // Guardar el valor en el HashMap cuando cambia
+                    textField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                        if (!newVal && getTableRow() != null && getTableRow().getItem() != null) {
+                            Alumno alumno = getTableRow().getItem();
+                            String valor = textField.getText();
+                            if (valor == null || valor.trim().isEmpty()) {
+                                valor = "0";
+                            }
+                            aciertosPorAlumno.put(alumno.getId(), valor);
+                        }
+                    });
+                }
+
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                        setGraphic(null);
+                    } else {
+                        textField.setText(item != null ? item : "0");
+                        setGraphic(textField);
+                    }
+                }
+            });
+
+            tblAlumnos.setEditable(true);
+            tblAlumnos.getColumns().addAll(colNumeroLista, colNombreCompleto, colAciertos);
+
+            scrollPane.setContent(tblAlumnos);
+
+            // Botón para guardar
+            Button btnGuardarExamenes = new Button("Guardar Exámenes");
+            btnGuardarExamenes.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;");
+            btnGuardarExamenes.setOnMouseEntered(e -> btnGuardarExamenes.setStyle("-fx-background-color: #45a049; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;"));
+            btnGuardarExamenes.setOnMouseExited(e -> btnGuardarExamenes.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;"));
+            btnGuardarExamenes.setOnAction(e -> {
+                if (cmbGrupo.getValue() == null || cmbMateria.getValue() == null || cmbParcial.getValue() == null) {
+                    mostrarAlerta("Validación", "Debe generar la tabla primero", Alert.AlertType.WARNING);
+                    return;
+                }
+
+                try {
+                    Grupo grupo = cmbGrupo.getValue();
+                    Materia materia = cmbMateria.getValue();
+                    Integer parcial = cmbParcial.getValue();
+
+                    int guardados = 0;
+                    int actualizados = 0;
+
+                    for (Alumno alumno : tblAlumnos.getItems()) {
+                        String aciertoStr = aciertosPorAlumno.getOrDefault(alumno.getId(), "0");
+                        int aciertos = Integer.parseInt(aciertoStr);
+
+                        // Buscar si ya existe un examen guardado
+                        Optional<Examen> examenExistente = examenService.obtenerExamenPorAlumnoGrupoMateriaParcial(
+                            alumno.getId(), grupo.getId(), materia.getId(), parcial
+                        );
+
+                        if (examenExistente.isPresent()) {
+                            // Actualizar
+                            Examen examen = examenExistente.get();
+                            examen.setAciertos(aciertos);
+                            examenService.actualizarExamen(examen);
+                            actualizados++;
+                        } else {
+                            // Crear nuevo
+                            Examen examen = Examen.builder()
+                                .alumnoId(alumno.getId())
+                                .grupoId(grupo.getId())
+                                .materiaId(materia.getId())
+                                .parcial(parcial)
+                                .aciertos(aciertos)
+                                .build();
+                            examenService.crearExamen(examen);
+                            guardados++;
+                        }
+                    }
+
+                    mostrarAlerta("Éxito",
+                        "Exámenes guardados correctamente\n" +
+                        "Nuevos: " + guardados + "\n" +
+                        "Actualizados: " + actualizados,
+                        Alert.AlertType.INFORMATION);
+
+                    LOG.info("Exámenes guardados - Grupo: {}, Materia: {}, Parcial: {}, Nuevos: {}, Actualizados: {}",
+                            grupo.getId(), materia.getNombre(), parcial, guardados, actualizados);
+
+                } catch (Exception ex) {
+                    LOG.error("Error al guardar exámenes", ex);
+                    mostrarAlerta("Error", "No se pudieron guardar los exámenes: " + ex.getMessage(), Alert.AlertType.ERROR);
+                }
+            });
+
+            tablaPanel.getChildren().addAll(scrollPane, btnGuardarExamenes);
+
+            // Lógica para cargar materias cuando se selecciona un grupo
+            cmbGrupo.setOnAction(event -> {
+                Grupo grupoSeleccionado = cmbGrupo.getValue();
+                if (grupoSeleccionado != null) {
+                    try {
+                        List<GrupoMateria> asignaciones = grupoMateriaService.obtenerMateriasPorGrupo(grupoSeleccionado.getId());
+                        List<Materia> materias = new java.util.ArrayList<>();
+                        for (GrupoMateria gm : asignaciones) {
+                            materiaService.obtenerMateriaPorId(gm.getMateriaId()).ifPresent(materias::add);
+                        }
+                        cmbMateria.setItems(FXCollections.observableArrayList(materias));
+                        cmbMateria.setDisable(false);
+                    } catch (Exception e) {
+                        LOG.error("Error al cargar materias del grupo", e);
+                        cmbMateria.setItems(FXCollections.observableArrayList());
+                        cmbMateria.setDisable(true);
+                    }
+                } else {
+                    cmbMateria.setItems(FXCollections.observableArrayList());
+                    cmbMateria.setDisable(true);
+                }
+            });
+
+            // Evento del botón buscar
+            btnBuscar.setOnAction(event -> {
+                if (cmbGrupo.getValue() == null || cmbMateria.getValue() == null || cmbParcial.getValue() == null) {
+                    mostrarAlerta("Validación", "Debe seleccionar Grupo, Materia y Parcial", Alert.AlertType.WARNING);
+                    return;
+                }
+
+                try {
+                    // Obtener los alumnos del grupo seleccionado
+                    Grupo grupoSeleccionado = cmbGrupo.getValue();
+                    Materia materiaSeleccionada = cmbMateria.getValue();
+                    Integer parcialSeleccionado = cmbParcial.getValue();
+
+                    List<Alumno> alumnos = alumnoService.obtenerTodosLosAlumnos().stream()
+                        .filter(alumno -> alumno.getGrupoId() != null && alumno.getGrupoId().equals(grupoSeleccionado.getId()))
+                        .sorted((a1, a2) -> {
+                            // Ordenar por número de lista
+                            if (a1.getNumeroLista() == null && a2.getNumeroLista() == null) return 0;
+                            if (a1.getNumeroLista() == null) return 1;
+                            if (a2.getNumeroLista() == null) return -1;
+                            return Integer.compare(a1.getNumeroLista(), a2.getNumeroLista());
+                        })
+                        .collect(java.util.stream.Collectors.toList());
+
+                    // Limpiar el HashMap
+                    aciertosPorAlumno.clear();
+
+                    // Cargar los valores guardados de la base de datos
+                    List<Examen> examenesGuardados = examenService.obtenerExamenesPorGrupoMateriaParcial(
+                        grupoSeleccionado.getId(), materiaSeleccionada.getId(), parcialSeleccionado
+                    );
+
+                    // Poblar el HashMap con los valores guardados
+                    for (Examen examen : examenesGuardados) {
+                        aciertosPorAlumno.put(examen.getAlumnoId(), String.valueOf(examen.getAciertos()));
+                    }
+
+                    // Para los alumnos sin valores guardados, establecer "0"
+                    for (Alumno alumno : alumnos) {
+                        if (!aciertosPorAlumno.containsKey(alumno.getId())) {
+                            aciertosPorAlumno.put(alumno.getId(), "0");
+                        }
+                    }
+
+                    ObservableList<Alumno> alumnosList = FXCollections.observableArrayList(alumnos);
+                    tblAlumnos.setItems(alumnosList);
+
+                    // Forzar refresh de la tabla para que muestre los valores
+                    tblAlumnos.refresh();
+
+                    LOG.info("Tabla de exámenes generada - Grupo: {}, Materia: {}, Parcial: {}, Alumnos: {}, Exámenes cargados: {}",
+                            grupoSeleccionado.getId(), materiaSeleccionada.getNombre(), parcialSeleccionado, alumnos.size(), examenesGuardados.size());
+                } catch (Exception e) {
+                    LOG.error("Error al generar tabla de exámenes", e);
+                    mostrarAlerta("Error", "No se pudo generar la tabla: " + e.getMessage(), Alert.AlertType.ERROR);
+                }
+            });
+
+            vista.getChildren().addAll(lblTitulo, filtrosPanel, tablaPanel);
+
+        } catch (Exception e) {
+            LOG.error("Error al crear vista de exámenes", e);
+        }
+
+        return vista;
     }
 }

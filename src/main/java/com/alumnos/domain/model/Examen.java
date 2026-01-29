@@ -9,15 +9,15 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Criterio {
+public class Examen {
     private Long id;
-    private String nombre;
-    private String tipoEvaluacion;  // "Check" o "Puntuacion"
-    private Double puntuacionMaxima;
+    private Long alumnoId;
+    private Long grupoId;
     private Long materiaId;
-    private Integer orden;  // Orden dinámico basado en la materia
-    private Integer parcial;  // Parcial del 1 al 3
+    private Integer parcial;  // 1, 2 o 3
+    private Integer aciertos;  // Número de aciertos (0-99)
 
     // Campos opcionales para mostrar información
+    private String nombreAlumno;
     private String nombreMateria;
 }

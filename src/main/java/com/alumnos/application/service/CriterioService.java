@@ -33,7 +33,7 @@ public class CriterioService implements CriterioServicePort {
         if (criterio.getMateriaId() == null) {
             throw new IllegalArgumentException("La materia es requerida");
         }
-        if (criterio.getCuatrimestre() == null) {
+        if (criterio.getParcial() == null) {
             throw new IllegalArgumentException("El cuatrimestre es requerido");
         }
 
@@ -80,8 +80,8 @@ public class CriterioService implements CriterioServicePort {
         if (criterio.getMateriaId() == null) {
             throw new IllegalArgumentException("La materia es requerida");
         }
-        if (criterio.getCuatrimestre() == null) {
-            throw new IllegalArgumentException("El cuatrimestre es requerido");
+        if (criterio.getParcial() == null) {
+            throw new IllegalArgumentException("El parcial es requerido");
         }
 
         if ("Puntuacion".equals(criterio.getTipoEvaluacion())) {
@@ -90,7 +90,7 @@ public class CriterioService implements CriterioServicePort {
             }
         }
 
-        // Obtener criterio anterior para verificar si cambió materia o cuatrimestre
+        // Obtener criterio anterior para verificar si cambió materia o parcial
         Criterio criterioAnterior = criterioRepositoryPort.findById(criterio.getId()).orElse(null);
         Long materiaAnterior = criterioAnterior != null ? criterioAnterior.getMateriaId() : null;
 
@@ -129,34 +129,34 @@ public class CriterioService implements CriterioServicePort {
     }
 
     @Override
-    public List<Criterio> obtenerCriteriosPorCuatrimestre(Integer cuatrimestre) {
+    public List<Criterio> obtenerCriteriosPorParcial(Integer parcial) {
         return criterioRepositoryPort.findAll().stream()
-                .filter(criterio -> criterio.getCuatrimestre().equals(cuatrimestre))
+                .filter(criterio -> criterio.getParcial().equals(parcial))
                 .collect(Collectors.toList());
     }
 
     /**
-     * Calcula el orden para un criterio basado en su materia y cuatrimestre
+     * Calcula el orden para un criterio basado en su materia y parcial
      */
     private void calcularOrden(Criterio criterio) {
-        if (criterio.getMateriaId() == null || criterio.getCuatrimestre() == null) {
+        if (criterio.getMateriaId() == null || criterio.getParcial() == null) {
             criterio.setOrden(null);
             return;
         }
 
-        // Obtener todos los criterios de la misma materia y cuatrimestre
-        List<Criterio> criteriosDeLaMateriaYCuatrimestre = criterioRepositoryPort.findAll().stream()
+        // Obtener todos los criterios de la misma materia y parcial
+        List<Criterio> criteriosDeLaMateriaYParcial = criterioRepositoryPort.findAll().stream()
                 .filter(c -> criterio.getMateriaId().equals(c.getMateriaId()))
-                .filter(c -> criterio.getCuatrimestre().equals(c.getCuatrimestre()))
+                .filter(c -> criterio.getParcial().equals(c.getParcial()))
                 .filter(c -> !c.getId().equals(criterio.getId())) // Excluir el criterio actual
                 .toList();
 
         // El orden es la cantidad de criterios + 1
-        criterio.setOrden(criteriosDeLaMateriaYCuatrimestre.size() + 1);
+        criterio.setOrden(criteriosDeLaMateriaYParcial.size() + 1);
     }
 
     /**
-     * Recalcula los órdenes para todos los criterios de una materia agrupados por cuatrimestre
+     * Recalcula los órdenes para todos los criterios de una materia agrupados por parcial
      */
     private void recalcularOrdenes(Long materiaId) {
         if (materiaId == null) return;
@@ -166,15 +166,15 @@ public class CriterioService implements CriterioServicePort {
                 .filter(c -> materiaId.equals(c.getMateriaId()))
                 .toList();
 
-        // Agrupar por cuatrimestre y recalcular orden dentro de cada grupo
-        Map<Integer, List<Criterio>> criteriosPorCuatrimestre = criteriosDeLaMateria.stream()
-                .filter(c -> c.getCuatrimestre() != null)
-                .collect(Collectors.groupingBy(Criterio::getCuatrimestre));
+        // Agrupar por parcial y recalcular orden dentro de cada grupo
+        Map<Integer, List<Criterio>> criteriosPorParcial = criteriosDeLaMateria.stream()
+                .filter(c -> c.getParcial() != null)
+                .collect(Collectors.groupingBy(Criterio::getParcial));
 
-        // Para cada cuatrimestre, asignar órdenes secuenciales
-        for (Map.Entry<Integer, List<Criterio>> entry : criteriosPorCuatrimestre.entrySet()) {
-            List<Criterio> criteriosDelCuatrimestre = entry.getValue();
-            criteriosDelCuatrimestre.sort((c1, c2) -> {
+        // Para cada parcial, asignar órdenes secuenciales
+        for (Map.Entry<Integer, List<Criterio>> entry : criteriosPorParcial.entrySet()) {
+            List<Criterio> criteriosDelParcial = entry.getValue();
+            criteriosDelParcial.sort((c1, c2) -> {
                 // Ordenar primero por orden existente, luego por ID
                 if (c1.getOrden() != null && c2.getOrden() != null) {
                     return Integer.compare(c1.getOrden(), c2.getOrden());
@@ -182,9 +182,9 @@ public class CriterioService implements CriterioServicePort {
                 return Long.compare(c1.getId(), c2.getId());
             });
 
-            // Asignar órdenes secuenciales dentro del cuatrimestre
+            // Asignar órdenes secuenciales dentro del parcial
             int orden = 1;
-            for (Criterio criterio : criteriosDelCuatrimestre) {
+            for (Criterio criterio : criteriosDelParcial) {
                 criterio.setOrden(orden++);
                 criterioRepositoryPort.save(criterio);
             }
