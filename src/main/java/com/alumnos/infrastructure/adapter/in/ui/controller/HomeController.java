@@ -4260,6 +4260,26 @@ public class HomeController {
                             if (valor == null || valor.trim().isEmpty()) {
                                 valor = "0";
                             }
+
+                            // Validar que los aciertos no superen el total de aciertos del examen
+                            try {
+                                int aciertos = Integer.parseInt(valor);
+                                String totalAciertosStr = txtTotalAciertos.getText();
+                                if (totalAciertosStr != null && !totalAciertosStr.trim().isEmpty()) {
+                                    int totalAciertos = Integer.parseInt(totalAciertosStr);
+                                    if (aciertos > totalAciertos) {
+                                        // Si supera el total, establecer el máximo permitido
+                                        valor = String.valueOf(totalAciertos);
+                                        textField.setText(valor);
+                                        mostrarAlerta("Validación",
+                                            "Los aciertos (" + aciertos + ") no pueden superar el total de aciertos del examen (" + totalAciertos + ")",
+                                            Alert.AlertType.WARNING);
+                                    }
+                                }
+                            } catch (NumberFormatException e) {
+                                valor = "0";
+                            }
+
                             aciertosPorAlumno.put(alumno.getId(), valor);
                             // Refrescar la tabla para actualizar el porcentaje
                             tblAlumnos.refresh();
@@ -4308,8 +4328,38 @@ public class HomeController {
                 }
             });
 
+            // Columna Calificación Examen
+            TableColumn<Alumno, String> colCalificacion = new TableColumn<>("Calificación examen");
+            colCalificacion.setPrefWidth(130);
+            colCalificacion.setStyle("-fx-alignment: CENTER;");
+
+            colCalificacion.setCellValueFactory(cellData -> {
+                Alumno alumno = cellData.getValue();
+                String aciertoStr = aciertosPorAlumno.getOrDefault(alumno.getId(), "0");
+                String totalAciertosStr = txtTotalAciertos.getText();
+
+                try {
+                    int aciertos = Integer.parseInt(aciertoStr);
+                    int totalAciertos = totalAciertosStr != null && !totalAciertosStr.isEmpty()
+                        ? Integer.parseInt(totalAciertosStr)
+                        : 0;
+
+                    if (totalAciertos > 0) {
+                        double porcentaje = (aciertos * 100.0) / totalAciertos;
+                        double calificacion = (porcentaje * 10.0) / 100.0;
+                        return new javafx.beans.property.SimpleStringProperty(
+                            String.format("%.1f", calificacion)
+                        );
+                    } else {
+                        return new javafx.beans.property.SimpleStringProperty("N/A");
+                    }
+                } catch (NumberFormatException e) {
+                    return new javafx.beans.property.SimpleStringProperty("0.0");
+                }
+            });
+
             tblAlumnos.setEditable(true);
-            tblAlumnos.getColumns().addAll(colNumeroLista, colNombreCompleto, colAciertos, colPorcentaje);
+            tblAlumnos.getColumns().addAll(colNumeroLista, colNombreCompleto, colAciertos, colPorcentaje, colCalificacion);
 
             scrollPane.setContent(tblAlumnos);
 
