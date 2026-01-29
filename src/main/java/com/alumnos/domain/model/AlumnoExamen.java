@@ -9,13 +9,13 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Examen {
+public class AlumnoExamen {
     private Long id;
-    private Long grupoId;
-    private Long materiaId;
-    private Integer parcial;  // 1, 2 o 3
-    private Integer totalAciertos;  // Total de aciertos del examen (máximo de aciertos posibles)
+    private Long alumnoId;
+    private Long examenId;
+    private Integer aciertos;  // Aciertos obtenidos por el alumno en este examen (0-99)
 
     // Campos opcionales para mostrar información
-    private String nombreMateria;
+    private String nombreAlumno;
+    private Integer numeroLista;
 }

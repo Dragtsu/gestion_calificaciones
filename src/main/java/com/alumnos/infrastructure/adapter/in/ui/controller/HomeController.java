@@ -2,6 +2,7 @@ package com.alumnos.infrastructure.adapter.in.ui.controller;
 
 import com.alumnos.domain.model.Alumno;
 import com.alumnos.domain.model.Agregado;
+import com.alumnos.domain.model.AlumnoExamen;
 import com.alumnos.domain.model.Calificacion;
 import com.alumnos.domain.model.Criterio;
 import com.alumnos.domain.model.Examen;
@@ -9,6 +10,7 @@ import com.alumnos.domain.model.Grupo;
 import com.alumnos.domain.model.GrupoMateria;
 import com.alumnos.domain.model.Materia;
 import com.alumnos.domain.port.in.AgregadoServicePort;
+import com.alumnos.domain.port.in.AlumnoExamenServicePort;
 import com.alumnos.domain.port.in.AlumnoServicePort;
 import com.alumnos.domain.port.in.CalificacionServicePort;
 import com.alumnos.domain.port.in.CriterioServicePort;
@@ -122,13 +124,15 @@ public class HomeController {
     private final AgregadoServicePort agregadoService;
     private final CalificacionServicePort calificacionService;
     private final ExamenServicePort examenService;
+    private final AlumnoExamenServicePort alumnoExamenService;
     private ObservableList<Alumno> alumnosList;
     private boolean menuAbierto = false;
 
     public HomeController(AlumnoServicePort alumnoService, GrupoServicePort grupoService,
                          MateriaServicePort materiaService, GrupoMateriaServicePort grupoMateriaService,
                          CriterioServicePort criterioService, AgregadoServicePort agregadoService,
-                         CalificacionServicePort calificacionService, ExamenServicePort examenService) {
+                         CalificacionServicePort calificacionService, ExamenServicePort examenService,
+                         AlumnoExamenServicePort alumnoExamenService) {
         this.alumnoService = alumnoService;
         this.grupoService = grupoService;
         this.materiaService = materiaService;
@@ -137,6 +141,7 @@ public class HomeController {
         this.agregadoService = agregadoService;
         this.calificacionService = calificacionService;
         this.examenService = examenService;
+        this.alumnoExamenService = alumnoExamenService;
     }
 
     @FXML
@@ -4166,6 +4171,27 @@ public class HomeController {
             VBox tablaPanel = new VBox(15);
             tablaPanel.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 2);");
 
+            // Campo para Total de Aciertos del Examen
+            javafx.scene.layout.HBox totalAciertosBox = new javafx.scene.layout.HBox(10);
+            totalAciertosBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+            Label lblTotalAciertos = new Label("Total de aciertos de examen:");
+            lblTotalAciertos.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #555;");
+
+            TextField txtTotalAciertos = new TextField();
+            txtTotalAciertos.setPromptText("00");
+            txtTotalAciertos.setPrefWidth(60);
+            txtTotalAciertos.setStyle("-fx-alignment: CENTER;");
+
+            // Limitar a máximo 2 dígitos
+            txtTotalAciertos.textProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal != null && !newVal.matches("\\d{0,2}")) {
+                    txtTotalAciertos.setText(oldVal);
+                }
+            });
+
+            totalAciertosBox.getChildren().addAll(lblTotalAciertos, txtTotalAciertos);
+
             ScrollPane scrollPane = new ScrollPane();
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);
@@ -4262,11 +4288,42 @@ public class HomeController {
                     return;
                 }
 
+                // Validar que se haya ingresado el total de aciertos
+                String totalAciertosStr = txtTotalAciertos.getText();
+                if (totalAciertosStr == null || totalAciertosStr.trim().isEmpty()) {
+                    mostrarAlerta("Validación", "Debe ingresar el total de aciertos del examen", Alert.AlertType.WARNING);
+                    return;
+                }
+
                 try {
+                    int totalAciertosExamen = Integer.parseInt(totalAciertosStr);
                     Grupo grupo = cmbGrupo.getValue();
                     Materia materia = cmbMateria.getValue();
                     Integer parcial = cmbParcial.getValue();
 
+                    // Buscar o crear el examen (sin aciertos individuales)
+                    Optional<Examen> examenExistente = examenService.obtenerExamenPorGrupoMateriaParcial(
+                        grupo.getId(), materia.getId(), parcial
+                    );
+
+                    Examen examen;
+                    if (examenExistente.isPresent()) {
+                        // Actualizar el examen existente
+                        examen = examenExistente.get();
+                        examen.setTotalAciertos(totalAciertosExamen);
+                        examen = examenService.actualizarExamen(examen);
+                    } else {
+                        // Crear nuevo examen
+                        examen = Examen.builder()
+                            .grupoId(grupo.getId())
+                            .materiaId(materia.getId())
+                            .parcial(parcial)
+                            .totalAciertos(totalAciertosExamen)
+                            .build();
+                        examen = examenService.crearExamen(examen);
+                    }
+
+                    // Ahora guardar los aciertos de cada alumno en AlumnoExamen
                     int guardados = 0;
                     int actualizados = 0;
 
@@ -4274,27 +4331,25 @@ public class HomeController {
                         String aciertoStr = aciertosPorAlumno.getOrDefault(alumno.getId(), "0");
                         int aciertos = Integer.parseInt(aciertoStr);
 
-                        // Buscar si ya existe un examen guardado
-                        Optional<Examen> examenExistente = examenService.obtenerExamenPorAlumnoGrupoMateriaParcial(
-                            alumno.getId(), grupo.getId(), materia.getId(), parcial
+                        // Buscar si ya existe un AlumnoExamen
+                        Optional<AlumnoExamen> alumnoExamenExistente = alumnoExamenService.obtenerAlumnoExamenPorAlumnoYExamen(
+                            alumno.getId(), examen.getId()
                         );
 
-                        if (examenExistente.isPresent()) {
+                        if (alumnoExamenExistente.isPresent()) {
                             // Actualizar
-                            Examen examen = examenExistente.get();
-                            examen.setAciertos(aciertos);
-                            examenService.actualizarExamen(examen);
+                            AlumnoExamen alumnoExamen = alumnoExamenExistente.get();
+                            alumnoExamen.setAciertos(aciertos);
+                            alumnoExamenService.actualizarAlumnoExamen(alumnoExamen);
                             actualizados++;
                         } else {
                             // Crear nuevo
-                            Examen examen = Examen.builder()
+                            AlumnoExamen alumnoExamen = AlumnoExamen.builder()
                                 .alumnoId(alumno.getId())
-                                .grupoId(grupo.getId())
-                                .materiaId(materia.getId())
-                                .parcial(parcial)
+                                .examenId(examen.getId())
                                 .aciertos(aciertos)
                                 .build();
-                            examenService.crearExamen(examen);
+                            alumnoExamenService.crearAlumnoExamen(alumnoExamen);
                             guardados++;
                         }
                     }
@@ -4314,7 +4369,7 @@ public class HomeController {
                 }
             });
 
-            tablaPanel.getChildren().addAll(scrollPane, btnGuardarExamenes);
+            tablaPanel.getChildren().addAll(totalAciertosBox, scrollPane, btnGuardarExamenes);
 
             // Lógica para cargar materias cuando se selecciona un grupo
             cmbGrupo.setOnAction(event -> {
@@ -4366,14 +4421,27 @@ public class HomeController {
                     // Limpiar el HashMap
                     aciertosPorAlumno.clear();
 
-                    // Cargar los valores guardados de la base de datos
-                    List<Examen> examenesGuardados = examenService.obtenerExamenesPorGrupoMateriaParcial(
+                    // Buscar si existe un examen para este grupo/materia/parcial
+                    Optional<Examen> examenOpt = examenService.obtenerExamenPorGrupoMateriaParcial(
                         grupoSeleccionado.getId(), materiaSeleccionada.getId(), parcialSeleccionado
                     );
 
-                    // Poblar el HashMap con los valores guardados
-                    for (Examen examen : examenesGuardados) {
-                        aciertosPorAlumno.put(examen.getAlumnoId(), String.valueOf(examen.getAciertos()));
+                    // Establecer el totalAciertos en el campo de texto
+                    if (examenOpt.isPresent()) {
+                        Examen examen = examenOpt.get();
+                        if (examen.getTotalAciertos() != null) {
+                            txtTotalAciertos.setText(String.valueOf(examen.getTotalAciertos()));
+                        } else {
+                            txtTotalAciertos.setText("");
+                        }
+
+                        // Cargar los aciertos de cada alumno desde AlumnoExamen
+                        List<AlumnoExamen> alumnoExamenes = alumnoExamenService.obtenerAlumnoExamenPorExamen(examen.getId());
+                        for (AlumnoExamen ae : alumnoExamenes) {
+                            aciertosPorAlumno.put(ae.getAlumnoId(), String.valueOf(ae.getAciertos()));
+                        }
+                    } else {
+                        txtTotalAciertos.setText("");
                     }
 
                     // Para los alumnos sin valores guardados, establecer "0"
@@ -4389,8 +4457,8 @@ public class HomeController {
                     // Forzar refresh de la tabla para que muestre los valores
                     tblAlumnos.refresh();
 
-                    LOG.info("Tabla de exámenes generada - Grupo: {}, Materia: {}, Parcial: {}, Alumnos: {}, Exámenes cargados: {}",
-                            grupoSeleccionado.getId(), materiaSeleccionada.getNombre(), parcialSeleccionado, alumnos.size(), examenesGuardados.size());
+                    LOG.info("Tabla de exámenes generada - Grupo: {}, Materia: {}, Parcial: {}, Alumnos: {}",
+                            grupoSeleccionado.getId(), materiaSeleccionada.getNombre(), parcialSeleccionado, alumnos.size());
                 } catch (Exception e) {
                     LOG.error("Error al generar tabla de exámenes", e);
                     mostrarAlerta("Error", "No se pudo generar la tabla: " + e.getMessage(), Alert.AlertType.ERROR);

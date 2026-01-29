@@ -11,7 +11,5 @@ public interface ExamenServicePort {
     List<Examen> obtenerTodosLosExamenes();
     Examen actualizarExamen(Examen examen);
     void eliminarExamen(Long id);
-    List<Examen> obtenerExamenesPorAlumno(Long alumnoId);
-    List<Examen> obtenerExamenesPorGrupoMateriaParcial(Long grupoId, Long materiaId, Integer parcial);
-    Optional<Examen> obtenerExamenPorAlumnoGrupoMateriaParcial(Long alumnoId, Long grupoId, Long materiaId, Integer parcial);
+    Optional<Examen> obtenerExamenPorGrupoMateriaParcial(Long grupoId, Long materiaId, Integer parcial);
 }

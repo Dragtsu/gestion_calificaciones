@@ -44,18 +44,9 @@ public class ExamenService implements ExamenServicePort {
         examenRepositoryPort.deleteById(id);
     }
 
-    @Override
-    public List<Examen> obtenerExamenesPorAlumno(Long alumnoId) {
-        return examenRepositoryPort.findByAlumnoId(alumnoId);
-    }
 
     @Override
-    public List<Examen> obtenerExamenesPorGrupoMateriaParcial(Long grupoId, Long materiaId, Integer parcial) {
+    public Optional<Examen> obtenerExamenPorGrupoMateriaParcial(Long grupoId, Long materiaId, Integer parcial) {
         return examenRepositoryPort.findByGrupoIdAndMateriaIdAndParcial(grupoId, materiaId, parcial);
-    }
-
-    @Override
-    public Optional<Examen> obtenerExamenPorAlumnoGrupoMateriaParcial(Long alumnoId, Long grupoId, Long materiaId, Integer parcial) {
-        return examenRepositoryPort.findByAlumnoIdAndGrupoIdAndMateriaIdAndParcial(alumnoId, grupoId, materiaId, parcial);
     }
 }
