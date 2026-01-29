@@ -4417,6 +4417,10 @@ public class HomeController {
                         String aciertoStr = aciertosPorAlumno.getOrDefault(alumno.getId(), "0");
                         int aciertos = Integer.parseInt(aciertoStr);
 
+                        // Calcular porcentaje y calificación
+                        double porcentaje = (aciertos * 100.0) / totalAciertosExamen;
+                        double calificacion = (porcentaje * 10.0) / 100.0;
+
                         // Buscar si ya existe un AlumnoExamen
                         Optional<AlumnoExamen> alumnoExamenExistente = alumnoExamenService.obtenerAlumnoExamenPorAlumnoYExamen(
                             alumno.getId(), examen.getId()
@@ -4426,6 +4430,8 @@ public class HomeController {
                             // Actualizar
                             AlumnoExamen alumnoExamen = alumnoExamenExistente.get();
                             alumnoExamen.setAciertos(aciertos);
+                            alumnoExamen.setPorcentaje(porcentaje);
+                            alumnoExamen.setCalificacion(calificacion);
                             alumnoExamenService.actualizarAlumnoExamen(alumnoExamen);
                             actualizados++;
                         } else {
@@ -4434,6 +4440,8 @@ public class HomeController {
                                 .alumnoId(alumno.getId())
                                 .examenId(examen.getId())
                                 .aciertos(aciertos)
+                                .porcentaje(porcentaje)
+                                .calificacion(calificacion)
                                 .build();
                             alumnoExamenService.crearAlumnoExamen(alumnoExamen);
                             guardados++;
