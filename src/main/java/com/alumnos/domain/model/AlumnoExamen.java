@@ -13,7 +13,7 @@ public class AlumnoExamen {
     private Long id;
     private Long alumnoId;
     private Long examenId;
-    private Integer aciertos;  // Aciertos obtenidos por el alumno en este examen (0-99)
+    private Integer puntosExamen;  // Puntos de examen obtenidos por el alumno (0-99)
     private Double porcentaje;  // Porcentaje obtenido (0-100)
     private Double calificacion;  // Calificación sobre 10 (0-10)
 

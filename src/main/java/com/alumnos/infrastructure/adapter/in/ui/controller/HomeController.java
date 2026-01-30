@@ -4,6 +4,7 @@ import com.alumnos.domain.model.Alumno;
 import com.alumnos.domain.model.Agregado;
 import com.alumnos.domain.model.AlumnoExamen;
 import com.alumnos.domain.model.Calificacion;
+import com.alumnos.domain.model.CalificacionConcentrado;
 import com.alumnos.domain.model.Criterio;
 import com.alumnos.domain.model.Examen;
 import com.alumnos.domain.model.Grupo;
@@ -13,6 +14,7 @@ import com.alumnos.domain.port.in.AgregadoServicePort;
 import com.alumnos.domain.port.in.AlumnoExamenServicePort;
 import com.alumnos.domain.port.in.AlumnoServicePort;
 import com.alumnos.domain.port.in.CalificacionServicePort;
+import com.alumnos.domain.port.in.CalificacionConcentradoServicePort;
 import com.alumnos.domain.port.in.CriterioServicePort;
 import com.alumnos.domain.port.in.ExamenServicePort;
 import com.alumnos.domain.port.in.GrupoMateriaServicePort;
@@ -123,6 +125,7 @@ public class HomeController {
     private final CriterioServicePort criterioService;
     private final AgregadoServicePort agregadoService;
     private final CalificacionServicePort calificacionService;
+    private final CalificacionConcentradoServicePort calificacionConcentradoService;
     private final ExamenServicePort examenService;
     private final AlumnoExamenServicePort alumnoExamenService;
     private ObservableList<Alumno> alumnosList;
@@ -131,7 +134,9 @@ public class HomeController {
     public HomeController(AlumnoServicePort alumnoService, GrupoServicePort grupoService,
                          MateriaServicePort materiaService, GrupoMateriaServicePort grupoMateriaService,
                          CriterioServicePort criterioService, AgregadoServicePort agregadoService,
-                         CalificacionServicePort calificacionService, ExamenServicePort examenService,
+                         CalificacionServicePort calificacionService,
+                         CalificacionConcentradoServicePort calificacionConcentradoService,
+                         ExamenServicePort examenService,
                          AlumnoExamenServicePort alumnoExamenService) {
         this.alumnoService = alumnoService;
         this.grupoService = grupoService;
@@ -140,6 +145,7 @@ public class HomeController {
         this.criterioService = criterioService;
         this.agregadoService = agregadoService;
         this.calificacionService = calificacionService;
+        this.calificacionConcentradoService = calificacionConcentradoService;
         this.examenService = examenService;
         this.alumnoExamenService = alumnoExamenService;
     }
@@ -3297,24 +3303,28 @@ public class HomeController {
             cmbParcial.setItems(FXCollections.observableArrayList(1, 2, 3));
             parcialContainer.getChildren().addAll(lblParcial, cmbParcial);
 
-            filtrosBox.getChildren().addAll(grupoContainer, materiaContainer, parcialContainer);
+            // Botón Buscar (antes "Generar Tabla") - en la misma fila que los inputs
+            VBox buscarContainer = new VBox(5);
+            Label lblEspacio = new Label(" "); // Espacio para alinear con los otros labels
+            Button btnBuscar = new Button("Buscar");
+            btnBuscar.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;");
+            buscarContainer.getChildren().addAll(lblEspacio, btnBuscar);
 
-            // Botones
-            javafx.scene.layout.HBox botonesBox = new javafx.scene.layout.HBox(10);
-            Button btnGenerar = new Button("Generar Tabla");
-            btnGenerar.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;");
+            filtrosBox.getChildren().addAll(grupoContainer, materiaContainer, parcialContainer, buscarContainer);
 
-            Button btnGuardar = new Button("Guardar Calificaciones");
-            btnGuardar.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;");
-            btnGuardar.setDisable(true);
-
-            botonesBox.getChildren().addAll(btnGenerar, btnGuardar);
-
-            filtrosPanel.getChildren().addAll(lblFiltros, filtrosBox, botonesBox);
+            filtrosPanel.getChildren().addAll(lblFiltros, filtrosBox);
 
             // Panel de tabla
             VBox tablaPanel = new VBox(15);
             tablaPanel.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 2);");
+
+            // Botón Guardar (antes "Guardar Calificaciones") - sobre la tabla
+            javafx.scene.layout.HBox botonesTablaBox = new javafx.scene.layout.HBox(10);
+            botonesTablaBox.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+            Button btnGuardar = new Button("Guardar");
+            btnGuardar.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;");
+            btnGuardar.setDisable(true);
+            botonesTablaBox.getChildren().add(btnGuardar);
 
             ScrollPane scrollPane = new ScrollPane();
             scrollPane.setFitToWidth(true);
@@ -3324,11 +3334,11 @@ public class HomeController {
 
             TableView<java.util.Map<String, Object>> tblCalificaciones = new TableView<>();
             tblCalificaciones.setEditable(true);
-            tblCalificaciones.setPlaceholder(new Label("Seleccione Grupo, Materia y Parcial, luego presione 'Generar Tabla'"));
+            tblCalificaciones.setPlaceholder(new Label("Seleccione Grupo, Materia y Parcial, luego presione 'Buscar'"));
             tblCalificaciones.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
 
             scrollPane.setContent(tblCalificaciones);
-            tablaPanel.getChildren().add(scrollPane);
+            tablaPanel.getChildren().addAll(botonesTablaBox, scrollPane);
 
             // Lógica para cargar materias cuando se selecciona un grupo
             cmbGrupo.setOnAction(event -> {
@@ -3352,8 +3362,8 @@ public class HomeController {
                 }
             });
 
-            // Evento del botón generar
-            btnGenerar.setOnAction(event -> {
+            // Evento del botón Buscar (antes "Generar Tabla")
+            btnBuscar.setOnAction(event -> {
                 if (cmbGrupo.getValue() == null || cmbMateria.getValue() == null || cmbParcial.getValue() == null) {
                     mostrarAlerta("Validación", "Debe seleccionar Grupo, Materia y Parcial", Alert.AlertType.WARNING);
                     return;
@@ -3363,9 +3373,13 @@ public class HomeController {
                 btnGuardar.setDisable(false);
             });
 
-            // Evento del botón guardar
+            // Evento del botón Guardar (antes "Guardar Calificaciones")
             btnGuardar.setOnAction(event -> {
-                guardarCalificaciones(tblCalificaciones);
+                if (cmbGrupo.getValue() == null || cmbMateria.getValue() == null || cmbParcial.getValue() == null) {
+                    mostrarAlerta("Validación", "Debe seleccionar Grupo, Materia y Parcial", Alert.AlertType.WARNING);
+                    return;
+                }
+                guardarCalificaciones(tblCalificaciones, cmbGrupo.getValue(), cmbMateria.getValue(), cmbParcial.getValue());
                 mostrarAlerta("Éxito", "Calificaciones guardadas correctamente", Alert.AlertType.INFORMATION);
             });
 
@@ -3820,9 +3834,301 @@ public class HomeController {
                 tabla.getColumns().add(colPortafolio);
             }
 
+            // Agregar columnas de Examen (Puntos Examen, Porcentaje, Calificación)
+            // Buscar el examen correspondiente al grupo, materia y parcial
+            Optional<Examen> examenOpt = examenService.obtenerExamenPorGrupoMateriaParcial(
+                    grupo.getId(), materia.getId(), parcial);
+
+            if (examenOpt.isPresent()) {
+                Examen examen = examenOpt.get();
+
+                // Columna Puntos Examen
+                TableColumn<java.util.Map<String, Object>, String> colAciertos = new TableColumn<>("Puntos Examen");
+                colAciertos.setPrefWidth(100);
+                colAciertos.setMinWidth(100);
+                colAciertos.setMaxWidth(100);
+                colAciertos.setResizable(false);
+                colAciertos.setStyle("-fx-alignment: CENTER;");
+
+                colAciertos.setCellValueFactory(cellData -> {
+                    Object valor = cellData.getValue().get("aciertosExamen");
+                    return new javafx.beans.property.SimpleStringProperty(
+                        valor != null ? String.valueOf(valor) : "-"
+                    );
+                });
+
+                colAciertos.setCellFactory(col -> new TableCell<java.util.Map<String, Object>, String>() {
+                    @Override
+                    protected void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || item == null) {
+                            setText(null);
+                            setStyle("");
+                        } else {
+                            setText(item);
+                            setStyle("-fx-alignment: CENTER; -fx-font-weight: bold; -fx-background-color: #fff3e0;");
+                        }
+                    }
+                });
+
+                tabla.getColumns().add(colAciertos);
+
+                // Columna Porcentaje Examen
+                TableColumn<java.util.Map<String, Object>, String> colPorcentajeExamen = new TableColumn<>("% Examen");
+                colPorcentajeExamen.setPrefWidth(100);
+                colPorcentajeExamen.setMinWidth(100);
+                colPorcentajeExamen.setMaxWidth(100);
+                colPorcentajeExamen.setResizable(false);
+                colPorcentajeExamen.setStyle("-fx-alignment: CENTER;");
+
+                colPorcentajeExamen.setCellValueFactory(cellData -> {
+                    Object valor = cellData.getValue().get("porcentajeExamen");
+                    return new javafx.beans.property.SimpleStringProperty(
+                        valor != null ? String.format("%.1f%%", (Double) valor) : "-"
+                    );
+                });
+
+                colPorcentajeExamen.setCellFactory(col -> new TableCell<java.util.Map<String, Object>, String>() {
+                    @Override
+                    protected void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || item == null) {
+                            setText(null);
+                            setStyle("");
+                        } else {
+                            setText(item);
+                            setStyle("-fx-alignment: CENTER; -fx-font-weight: bold; -fx-background-color: #fff3e0;");
+                        }
+                    }
+                });
+
+                tabla.getColumns().add(colPorcentajeExamen);
+
+                // Columna Calificación Examen
+                TableColumn<java.util.Map<String, Object>, String> colCalificacionExamen = new TableColumn<>("Calif. Examen");
+                colCalificacionExamen.setPrefWidth(120);
+                colCalificacionExamen.setMinWidth(120);
+                colCalificacionExamen.setMaxWidth(120);
+                colCalificacionExamen.setResizable(false);
+                colCalificacionExamen.setStyle("-fx-alignment: CENTER;");
+
+                colCalificacionExamen.setCellValueFactory(cellData -> {
+                    Object valor = cellData.getValue().get("calificacionExamen");
+                    return new javafx.beans.property.SimpleStringProperty(
+                        valor != null ? String.format("%.2f", (Double) valor) : "-"
+                    );
+                });
+
+                colCalificacionExamen.setCellFactory(col -> new TableCell<java.util.Map<String, Object>, String>() {
+                    @Override
+                    protected void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || item == null) {
+                            setText(null);
+                            setStyle("");
+                        } else {
+                            setText(item);
+                            setStyle("-fx-alignment: CENTER; -fx-font-weight: bold; -fx-background-color: #fff3e0; -fx-font-size: 14px;");
+                        }
+                    }
+                });
+
+                tabla.getColumns().add(colCalificacionExamen);
+            }
+
+            // Agregar columna Puntos Parcial (Portafolio + Puntos Examen)
+            TableColumn<java.util.Map<String, Object>, String> colPuntosParcial = new TableColumn<>("Puntos Parcial");
+            colPuntosParcial.setPrefWidth(120);
+            colPuntosParcial.setMinWidth(120);
+            colPuntosParcial.setMaxWidth(120);
+            colPuntosParcial.setResizable(false);
+            colPuntosParcial.setStyle("-fx-alignment: CENTER;");
+
+            colPuntosParcial.setCellValueFactory(cellData -> {
+                java.util.Map<String, Object> fila = cellData.getValue();
+                double totalPortafolio = 0.0;
+
+                // Sumar los puntos obtenidos de todos los criterios (Portafolio)
+                for (java.util.Map<String, Object> criterioInfo : criteriosInfo) {
+                    @SuppressWarnings("unchecked")
+                    List<Long> agregadoIds = (List<Long>) criterioInfo.get("agregadoIds");
+                    boolean esCheck = (Boolean) criterioInfo.get("esCheck");
+                    Double puntuacionMaxima = (Double) criterioInfo.get("puntuacionMaxima");
+
+                    double puntosObtenidosCriterio = 0.0;
+
+                    // Calcular puntos obtenidos de este criterio
+                    for (Long agregadoId : agregadoIds) {
+                        Object valor = fila.get("agregado_" + agregadoId);
+
+                        if (esCheck) {
+                            // Para tipo Check, cada checkbox marcado suma una parte proporcional
+                            if (valor instanceof Boolean && (Boolean) valor) {
+                                puntosObtenidosCriterio += puntuacionMaxima / agregadoIds.size();
+                            } else if (valor instanceof String) {
+                                String strValor = (String) valor;
+                                if ("true".equalsIgnoreCase(strValor) || "1".equals(strValor)) {
+                                    puntosObtenidosCriterio += puntuacionMaxima / agregadoIds.size();
+                                }
+                            }
+                        } else {
+                            // Para tipo Puntuación, sumar los valores numéricos
+                            if (valor instanceof Number) {
+                                puntosObtenidosCriterio += ((Number) valor).doubleValue();
+                            } else if (valor instanceof String && !((String) valor).isEmpty()) {
+                                try {
+                                    puntosObtenidosCriterio += Double.parseDouble((String) valor);
+                                } catch (NumberFormatException e) {
+                                    // Ignorar valores no numéricos
+                                }
+                            }
+                        }
+                    }
+
+                    totalPortafolio += puntosObtenidosCriterio;
+                }
+
+                // Obtener puntos del examen (aciertos/puntos examen, no calificación)
+                Object aciertosExamen = fila.get("aciertosExamen");
+                double puntosExamen = 0.0;
+                if (aciertosExamen != null) {
+                    if (aciertosExamen instanceof Number) {
+                        puntosExamen = ((Number) aciertosExamen).doubleValue();
+                    } else if (aciertosExamen instanceof String && !((String) aciertosExamen).isEmpty()
+                               && !"-".equals(aciertosExamen)) {
+                        try {
+                            puntosExamen = Double.parseDouble((String) aciertosExamen);
+                        } catch (NumberFormatException e) {
+                            // Ignorar valores no numéricos
+                        }
+                    }
+                }
+
+                // Puntos Parcial = Portafolio + Puntos Examen (aciertos)
+                double puntosParcial = totalPortafolio + puntosExamen;
+
+                return new javafx.beans.property.SimpleStringProperty(
+                    String.format("%.2f", puntosParcial)
+                );
+            });
+
+            colPuntosParcial.setCellFactory(col -> new TableCell<java.util.Map<String, Object>, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle("");
+                    } else {
+                        setText(item);
+                        setStyle("-fx-alignment: CENTER; -fx-font-weight: bold; -fx-background-color: #e8f5e9; -fx-font-size: 14px;");
+                    }
+                }
+            });
+
+            tabla.getColumns().add(colPuntosParcial);
+
+            // Agregar columna Calificación Parcial (Puntos Parcial en escala de 10)
+            TableColumn<java.util.Map<String, Object>, String> colCalificacionParcial = new TableColumn<>("Calificación Parcial");
+            colCalificacionParcial.setPrefWidth(140);
+            colCalificacionParcial.setMinWidth(140);
+            colCalificacionParcial.setMaxWidth(140);
+            colCalificacionParcial.setResizable(false);
+            colCalificacionParcial.setStyle("-fx-alignment: CENTER;");
+
+            colCalificacionParcial.setCellValueFactory(cellData -> {
+                java.util.Map<String, Object> fila = cellData.getValue();
+                double totalPortafolio = 0.0;
+
+                // Sumar los puntos obtenidos de todos los criterios (Portafolio)
+                for (java.util.Map<String, Object> criterioInfo : criteriosInfo) {
+                    @SuppressWarnings("unchecked")
+                    List<Long> agregadoIds = (List<Long>) criterioInfo.get("agregadoIds");
+                    boolean esCheck = (Boolean) criterioInfo.get("esCheck");
+                    Double puntuacionMaxima = (Double) criterioInfo.get("puntuacionMaxima");
+
+                    double puntosObtenidosCriterio = 0.0;
+
+                    // Calcular puntos obtenidos de este criterio
+                    for (Long agregadoId : agregadoIds) {
+                        Object valor = fila.get("agregado_" + agregadoId);
+
+                        if (esCheck) {
+                            // Para tipo Check, cada checkbox marcado suma una parte proporcional
+                            if (valor instanceof Boolean && (Boolean) valor) {
+                                puntosObtenidosCriterio += puntuacionMaxima / agregadoIds.size();
+                            } else if (valor instanceof String) {
+                                String strValor = (String) valor;
+                                if ("true".equalsIgnoreCase(strValor) || "1".equals(strValor)) {
+                                    puntosObtenidosCriterio += puntuacionMaxima / agregadoIds.size();
+                                }
+                            }
+                        } else {
+                            // Para tipo Puntuación, sumar los valores numéricos
+                            if (valor instanceof Number) {
+                                puntosObtenidosCriterio += ((Number) valor).doubleValue();
+                            } else if (valor instanceof String && !((String) valor).isEmpty()) {
+                                try {
+                                    puntosObtenidosCriterio += Double.parseDouble((String) valor);
+                                } catch (NumberFormatException e) {
+                                    // Ignorar valores no numéricos
+                                }
+                            }
+                        }
+                    }
+
+                    totalPortafolio += puntosObtenidosCriterio;
+                }
+
+                // Obtener puntos del examen (aciertos/puntos examen, no calificación)
+                Object aciertosExamen = fila.get("aciertosExamen");
+                double puntosExamen = 0.0;
+                if (aciertosExamen != null) {
+                    if (aciertosExamen instanceof Number) {
+                        puntosExamen = ((Number) aciertosExamen).doubleValue();
+                    } else if (aciertosExamen instanceof String && !((String) aciertosExamen).isEmpty()
+                               && !"-".equals(aciertosExamen)) {
+                        try {
+                            puntosExamen = Double.parseDouble((String) aciertosExamen);
+                        } catch (NumberFormatException e) {
+                            // Ignorar valores no numéricos
+                        }
+                    }
+                }
+
+                // Puntos Parcial = Portafolio + Puntos Examen (aciertos)
+                double puntosParcial = totalPortafolio + puntosExamen;
+
+                // Calificación Parcial = (Puntos Parcial * 10) / 100
+                // Esto representa los puntos parcial en escala de 10
+                double calificacionParcial = (puntosParcial * 10.0) / 100.0;
+
+                return new javafx.beans.property.SimpleStringProperty(
+                    String.format("%.2f", calificacionParcial)
+                );
+            });
+
+            colCalificacionParcial.setCellFactory(col -> new TableCell<java.util.Map<String, Object>, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle("");
+                    } else {
+                        setText(item);
+                        setStyle("-fx-alignment: CENTER; -fx-font-weight: bold; -fx-background-color: #e8f5e9; -fx-font-size: 16px;");
+                    }
+                }
+            });
+
+            tabla.getColumns().add(colCalificacionParcial);
+
             // Llenar datos
             ObservableList<java.util.Map<String, Object>> datos = FXCollections.observableArrayList();
             int numero = 1;
+
+
             for (Alumno alumno : alumnos) {
                 java.util.Map<String, Object> fila = new java.util.HashMap<>();
                 fila.put("numero", numero++);
@@ -3830,14 +4136,57 @@ public class HomeController {
                 fila.put("nombreCompleto", alumno.getApellidoPaterno() + " " +
                         alumno.getApellidoMaterno() + " " + alumno.getNombre());
 
-                // Cargar calificaciones existentes
+                // Cargar calificaciones existentes desde CalificacionConcentrado
                 for (Criterio criterio : criterios) {
                     List<Agregado> agregados = agregadoService.obtenerAgregadosPorCriterio(criterio.getId());
+                    boolean esCheck = "Check".equalsIgnoreCase(criterio.getTipoEvaluacion());
+
                     for (Agregado agregado : agregados) {
-                        Optional<Calificacion> calificacion = calificacionService
-                                .obtenerCalificacionPorAlumnoYAgregado(alumno.getId(), agregado.getId());
-                        fila.put("agregado_" + agregado.getId(),
-                                calificacion.map(c -> String.valueOf(c.getPuntuacion())).orElse(""));
+                        Optional<CalificacionConcentrado> calificacion = calificacionConcentradoService
+                                .obtenerCalificacionPorAlumnoYAgregadoYFiltros(
+                                        alumno.getId(),
+                                        agregado.getId(),
+                                        grupo.getId(),
+                                        materia.getId(),
+                                        parcial
+                                );
+
+                        if (calificacion.isPresent()) {
+                            Double puntuacion = calificacion.get().getPuntuacion();
+                            if (esCheck) {
+                                // Para tipo Check, convertir a Boolean
+                                fila.put("agregado_" + agregado.getId(), puntuacion != null && puntuacion > 0);
+                            } else {
+                                // Para tipo Puntuacion, mantener como String
+                                fila.put("agregado_" + agregado.getId(), String.valueOf(puntuacion));
+                            }
+                        } else {
+                            // Si no hay calificación, poner valor por defecto según el tipo
+                            if (esCheck) {
+                                fila.put("agregado_" + agregado.getId(), false);
+                            } else {
+                                fila.put("agregado_" + agregado.getId(), "");
+                            }
+                        }
+                    }
+                }
+
+                // Cargar datos de examen si existe
+                if (examenOpt.isPresent()) {
+                    Examen examen = examenOpt.get();
+                    Optional<AlumnoExamen> alumnoExamenOpt = alumnoExamenService
+                            .obtenerAlumnoExamenPorAlumnoYExamen(alumno.getId(), examen.getId());
+
+                    if (alumnoExamenOpt.isPresent()) {
+                        AlumnoExamen alumnoExamen = alumnoExamenOpt.get();
+                        fila.put("aciertosExamen", alumnoExamen.getPuntosExamen());
+                        fila.put("porcentajeExamen", alumnoExamen.getPorcentaje());
+                        fila.put("calificacionExamen", alumnoExamen.getCalificacion());
+                    } else {
+                        // Sin datos de examen
+                        fila.put("aciertosExamen", null);
+                        fila.put("porcentajeExamen", null);
+                        fila.put("calificacionExamen", null);
                     }
                 }
 
@@ -3853,10 +4202,70 @@ public class HomeController {
     }
 
     // Método para guardar las calificaciones
-    private void guardarCalificaciones(TableView<java.util.Map<String, Object>> tabla) {
+    private void guardarCalificaciones(TableView<java.util.Map<String, Object>> tabla, Grupo grupo, Materia materia, Integer parcial) {
         try {
+            int totalGuardadas = 0;
+
+            // Obtener criterios para calcular el portafolio
+            List<Criterio> criterios = criterioService.obtenerCriteriosPorMateria(materia.getId()).stream()
+                    .filter(c -> c.getParcial() != null && c.getParcial().equals(parcial))
+                    .collect(java.util.stream.Collectors.toList());
+
+            // Obtener el examen si existe
+            Optional<Examen> examenOpt = examenService.obtenerExamenPorGrupoMateriaParcial(
+                    grupo.getId(), materia.getId(), parcial);
+
             for (java.util.Map<String, Object> fila : tabla.getItems()) {
                 Long alumnoId = (Long) fila.get("alumnoId");
+
+                // Calcular portafolio sumando todos los criterios del alumno
+                double totalPortafolio = 0.0;
+                for (Criterio criterio : criterios) {
+                    List<Agregado> agregados = agregadoService.obtenerAgregadosPorCriterio(criterio.getId());
+                    boolean esCheck = "Check".equalsIgnoreCase(criterio.getTipoEvaluacion());
+
+                    double puntosObtenidosCriterio = 0.0;
+                    for (Agregado agregado : agregados) {
+                        Object valor = fila.get("agregado_" + agregado.getId());
+
+                        if (esCheck) {
+                            if (valor instanceof Boolean && (Boolean) valor) {
+                                puntosObtenidosCriterio += criterio.getPuntuacionMaxima() / agregados.size();
+                            } else if (valor instanceof String) {
+                                String strValor = (String) valor;
+                                if ("true".equalsIgnoreCase(strValor) || "1".equals(strValor)) {
+                                    puntosObtenidosCriterio += criterio.getPuntuacionMaxima() / agregados.size();
+                                }
+                            }
+                        } else {
+                            if (valor instanceof Number) {
+                                puntosObtenidosCriterio += ((Number) valor).doubleValue();
+                            } else if (valor instanceof String && !((String) valor).isEmpty()) {
+                                try {
+                                    puntosObtenidosCriterio += Double.parseDouble((String) valor);
+                                } catch (NumberFormatException e) {
+                                    // Ignorar valores no numéricos
+                                }
+                            }
+                        }
+                    }
+                    totalPortafolio += puntosObtenidosCriterio;
+                }
+
+                // Obtener puntos del examen (aciertos)
+                double puntosExamen = 0.0;
+                if (examenOpt.isPresent()) {
+                    Optional<AlumnoExamen> alumnoExamenOpt = alumnoExamenService.obtenerAlumnoExamenPorAlumnoYExamen(
+                            alumnoId, examenOpt.get().getId());
+                    if (alumnoExamenOpt.isPresent()) {
+                        Integer aciertos = alumnoExamenOpt.get().getPuntosExamen();
+                        puntosExamen = aciertos != null ? aciertos.doubleValue() : 0.0;
+                    }
+                }
+
+                // Calcular puntos parcial y calificación parcial
+                double puntosParcial = totalPortafolio + puntosExamen;
+                double calificacionParcial = (puntosParcial * 10.0) / 100.0;
 
                 // Recorrer todas las claves que empiezan con "agregado_"
                 for (String clave : fila.keySet()) {
@@ -3888,13 +4297,27 @@ public class HomeController {
                                 }
 
                                 if (puntuacion != null) {
-                                    Calificacion calificacion = Calificacion.builder()
-                                            .alumnoId(alumnoId)
-                                            .agregadoId(agregadoId)
-                                            .puntuacion(puntuacion)
-                                            .build();
+                                    // Obtener el agregado para saber el criterioId
+                                    Optional<Agregado> agregadoOpt = agregadoService.obtenerAgregadoPorId(agregadoId);
+                                    if (agregadoOpt.isPresent()) {
+                                        Agregado agregado = agregadoOpt.get();
 
-                                    calificacionService.crearCalificacion(calificacion);
+                                        // Crear CalificacionConcentrado con todos los campos incluidos puntosParcial y calificacionParcial
+                                        CalificacionConcentrado calificacion = CalificacionConcentrado.builder()
+                                                .alumnoId(alumnoId)
+                                                .agregadoId(agregadoId)
+                                                .criterioId(agregado.getCriterioId())
+                                                .grupoId(grupo.getId())
+                                                .materiaId(materia.getId())
+                                                .parcial(parcial)
+                                                .puntuacion(puntuacion)
+                                                .puntosParcial(puntosParcial)
+                                                .calificacionParcial(calificacionParcial)
+                                                .build();
+
+                                        calificacionConcentradoService.crearCalificacion(calificacion);
+                                        totalGuardadas++;
+                                    }
                                 }
                             } catch (NumberFormatException e) {
                                 LOG.warn("Valor inválido para calificación: " + valor);
@@ -3903,6 +4326,7 @@ public class HomeController {
                     }
                 }
             }
+            LOG.info("Total de calificaciones guardadas: " + totalGuardadas);
         } catch (Exception e) {
             LOG.error("Error al guardar calificaciones", e);
             mostrarAlerta("Error", "Error al guardar las calificaciones: " + e.getMessage(), Alert.AlertType.ERROR);
@@ -4171,11 +4595,11 @@ public class HomeController {
             VBox tablaPanel = new VBox(15);
             tablaPanel.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 2);");
 
-            // Campo para Total de Aciertos del Examen
+            // Campo para Total de Puntos del Examen
             javafx.scene.layout.HBox totalAciertosBox = new javafx.scene.layout.HBox(10);
             totalAciertosBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
-            Label lblTotalAciertos = new Label("Total de aciertos de examen:");
+            Label lblTotalAciertos = new Label("Total de puntos de examen:");
             lblTotalAciertos.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #555;");
 
             TextField txtTotalAciertos = new TextField();
@@ -4224,8 +4648,8 @@ public class HomeController {
             });
             colNombreCompleto.setPrefWidth(300);
 
-            // Columna Aciertos
-            TableColumn<Alumno, String> colAciertos = new TableColumn<>("Aciertos");
+            // Columna Puntos Examen
+            TableColumn<Alumno, String> colAciertos = new TableColumn<>("Puntos Examen");
             colAciertos.setPrefWidth(100);
             colAciertos.setStyle("-fx-alignment: CENTER;");
 
@@ -4396,7 +4820,7 @@ public class HomeController {
                     if (examenExistente.isPresent()) {
                         // Actualizar el examen existente
                         examen = examenExistente.get();
-                        examen.setTotalAciertos(totalAciertosExamen);
+                        examen.setTotalPuntosExamen(totalAciertosExamen);
                         examen = examenService.actualizarExamen(examen);
                     } else {
                         // Crear nuevo examen
@@ -4404,12 +4828,12 @@ public class HomeController {
                             .grupoId(grupo.getId())
                             .materiaId(materia.getId())
                             .parcial(parcial)
-                            .totalAciertos(totalAciertosExamen)
+                            .totalPuntosExamen(totalAciertosExamen)
                             .build();
                         examen = examenService.crearExamen(examen);
                     }
 
-                    // Ahora guardar los aciertos de cada alumno en AlumnoExamen
+                    // Ahora guardar los puntos de examen de cada alumno en AlumnoExamen
                     int guardados = 0;
                     int actualizados = 0;
 
@@ -4429,7 +4853,7 @@ public class HomeController {
                         if (alumnoExamenExistente.isPresent()) {
                             // Actualizar
                             AlumnoExamen alumnoExamen = alumnoExamenExistente.get();
-                            alumnoExamen.setAciertos(aciertos);
+                            alumnoExamen.setPuntosExamen(aciertos);
                             alumnoExamen.setPorcentaje(porcentaje);
                             alumnoExamen.setCalificacion(calificacion);
                             alumnoExamenService.actualizarAlumnoExamen(alumnoExamen);
@@ -4439,7 +4863,7 @@ public class HomeController {
                             AlumnoExamen alumnoExamen = AlumnoExamen.builder()
                                 .alumnoId(alumno.getId())
                                 .examenId(examen.getId())
-                                .aciertos(aciertos)
+                                .puntosExamen(aciertos)
                                 .porcentaje(porcentaje)
                                 .calificacion(calificacion)
                                 .build();
@@ -4523,16 +4947,16 @@ public class HomeController {
                     // Establecer el totalAciertos en el campo de texto
                     if (examenOpt.isPresent()) {
                         Examen examen = examenOpt.get();
-                        if (examen.getTotalAciertos() != null) {
-                            txtTotalAciertos.setText(String.valueOf(examen.getTotalAciertos()));
+                        if (examen.getTotalPuntosExamen() != null) {
+                            txtTotalAciertos.setText(String.valueOf(examen.getTotalPuntosExamen()));
                         } else {
                             txtTotalAciertos.setText("");
                         }
 
-                        // Cargar los aciertos de cada alumno desde AlumnoExamen
+                        // Cargar los puntos de examen de cada alumno desde AlumnoExamen
                         List<AlumnoExamen> alumnoExamenes = alumnoExamenService.obtenerAlumnoExamenPorExamen(examen.getId());
                         for (AlumnoExamen ae : alumnoExamenes) {
-                            aciertosPorAlumno.put(ae.getAlumnoId(), String.valueOf(ae.getAciertos()));
+                            aciertosPorAlumno.put(ae.getAlumnoId(), String.valueOf(ae.getPuntosExamen()));
                         }
                     } else {
                         txtTotalAciertos.setText("");

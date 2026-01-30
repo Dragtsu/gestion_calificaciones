@@ -14,7 +14,7 @@ public class Examen {
     private Long grupoId;
     private Long materiaId;
     private Integer parcial;  // 1, 2 o 3
-    private Integer totalAciertos;  // Total de aciertos del examen (máximo de aciertos posibles)
+    private Integer totalPuntosExamen;  // Total de puntos del examen (máximo de puntos posibles)
 
     // Campos opcionales para mostrar información
     private String nombreMateria;
