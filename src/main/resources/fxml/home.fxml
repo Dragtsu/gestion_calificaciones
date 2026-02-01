@@ -175,6 +175,15 @@
                     </graphic>
                 </Button>
 
+                <!-- Informe de concentrado -->
+                <Button fx:id="btnMenuInformeConcentrado" text="Informe de concentrado" onAction="#handleMenuInformeConcentrado"
+                        styleClass="menu-item" maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 15 30 15 60; -fx-font-size: 14px; -fx-cursor: hand;">
+                    <graphic>
+                        <Label text="📄" style="-fx-font-size: 16px; -fx-text-fill: white;"/>
+                    </graphic>
+                </Button>
+
                 <!-- Exámenes -->
                 <Button fx:id="btnMenuExamenes" text="Exámenes" onAction="#handleMenuExamenes"
                         styleClass="menu-item" maxWidth="Infinity"
