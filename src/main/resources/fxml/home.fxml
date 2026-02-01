@@ -88,8 +88,8 @@
         <!-- Items del Menú -->
         <VBox spacing="0" VBox.vgrow="ALWAYS" style="-fx-padding: 10 0;">
 
-            <!-- Estudiantes -->
-            <Button fx:id="btnMenuEstudiantes" text="Estudiantes" onAction="#handleMenuEstudiantes"
+            <!-- Alumnos -->
+            <Button fx:id="btnMenuEstudiantes" text="Alumnos" onAction="#handleMenuEstudiantes"
                     styleClass="menu-item" maxWidth="Infinity"
                     style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 20 30; -fx-font-size: 16px; -fx-cursor: hand;">
                 <graphic>

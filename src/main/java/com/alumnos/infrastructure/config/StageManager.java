@@ -77,6 +77,18 @@ public class StageManager {
         return rootNode;
     }
 
+    public Stage showModal(final FxmlView view) {
+        Parent viewRootNodeHierarchy = loadViewNodeHierarchy(view.getFxmlFile());
+        Stage stage = new Stage();
+        stage.initOwner(primaryStage);
+        stage.initStyle(javafx.stage.StageStyle.UNDECORATED);
+        stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        stage.setTitle(view.getTitle());
+        stage.setScene(new Scene(viewRootNodeHierarchy));
+        stage.centerOnScreen();
+        return stage;
+    }
+
     private void logAndExit(String errorMsg, Exception exception) {
         LOG.error(errorMsg, exception);
         Platform.exit();
