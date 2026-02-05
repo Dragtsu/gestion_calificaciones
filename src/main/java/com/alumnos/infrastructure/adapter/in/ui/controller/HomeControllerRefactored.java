@@ -59,6 +59,7 @@ public class HomeControllerRefactored {
     private final CriteriosController criteriosController;
     private final AgregadosController agregadosController;
     private final ConcentradoController concentradoController;
+    private final InformeConcentradoController informeConcentradoController;
     private final ExamenesController examenesController;
 
     // Vistas cacheadas
@@ -82,6 +83,7 @@ public class HomeControllerRefactored {
             CriteriosController criteriosController,
             AgregadosController agregadosController,
             ConcentradoController concentradoController,
+            InformeConcentradoController informeConcentradoController,
             ExamenesController examenesController) {
         this.estudiantesController = estudiantesController;
         this.gruposController = gruposController;
@@ -90,6 +92,7 @@ public class HomeControllerRefactored {
         this.criteriosController = criteriosController;
         this.agregadosController = agregadosController;
         this.concentradoController = concentradoController;
+        this.informeConcentradoController = informeConcentradoController;
         this.examenesController = examenesController;
     }
 
@@ -120,8 +123,8 @@ public class HomeControllerRefactored {
             vistaAsignaciones = asignacionesController.crearVista();
             vistaCriterios = criteriosController.crearVista();
             vistaAgregados = agregadosController.crearVista();
-            vistaConcentrado = concentradoController.crearVistaConcentradoCompleta();
-            vistaInformeConcentrado = concentradoController.crearVistaInformeConcentrado();
+            vistaConcentrado = concentradoController.crearVistaConcentrado();
+            vistaInformeConcentrado = informeConcentradoController.crearVista();
             vistaExamenes = examenesController.crearVista();
 
             // Ocultar todas inicialmente
