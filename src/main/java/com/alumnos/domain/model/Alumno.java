@@ -16,4 +16,10 @@ public class Alumno {
     private String apellidoMaterno;
     private Long grupoId;  // Clave foránea al grupo
     private Integer numeroLista;  // Número de lista dinámico basado en grupo y orden alfabético
+
+    @Override
+    public String toString() {
+        return nombre + " " + apellidoPaterno +
+               (apellidoMaterno != null ? " " + apellidoMaterno : "");
+    }
 }

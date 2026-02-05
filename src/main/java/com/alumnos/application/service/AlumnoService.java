@@ -2,6 +2,9 @@ package com.alumnos.application.service;
 
 import com.alumnos.domain.model.Alumno;
 import com.alumnos.domain.port.in.AlumnoServicePort;
+import com.alumnos.domain.port.in.CalificacionServicePort;
+import com.alumnos.domain.port.in.CalificacionConcentradoServicePort;
+import com.alumnos.domain.port.in.AlumnoExamenServicePort;
 import com.alumnos.domain.port.out.AlumnoRepositoryPort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,16 +13,25 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@Transactional
 public class AlumnoService implements AlumnoServicePort {
 
     private final AlumnoRepositoryPort alumnoRepositoryPort;
+    private final CalificacionServicePort calificacionService;
+    private final CalificacionConcentradoServicePort calificacionConcentradoService;
+    private final AlumnoExamenServicePort alumnoExamenService;
 
-    public AlumnoService(AlumnoRepositoryPort alumnoRepositoryPort) {
+    public AlumnoService(AlumnoRepositoryPort alumnoRepositoryPort,
+                         CalificacionServicePort calificacionService,
+                         CalificacionConcentradoServicePort calificacionConcentradoService,
+                         AlumnoExamenServicePort alumnoExamenService) {
         this.alumnoRepositoryPort = alumnoRepositoryPort;
+        this.calificacionService = calificacionService;
+        this.calificacionConcentradoService = calificacionConcentradoService;
+        this.alumnoExamenService = alumnoExamenService;
     }
 
     @Override
+    @Transactional
     public Alumno crearAlumno(Alumno alumno) {
         // Calcular el número de lista antes de guardar
         calcularNumeroLista(alumno);
@@ -34,16 +46,19 @@ public class AlumnoService implements AlumnoServicePort {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Alumno> obtenerAlumnoPorId(Long id) {
         return alumnoRepositoryPort.findById(id);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Alumno> obtenerTodosLosAlumnos() {
         return alumnoRepositoryPort.findAll();
     }
 
     @Override
+    @Transactional
     public Alumno actualizarAlumno(Alumno alumno) {
         if (alumno.getId() == null) {
             throw new IllegalArgumentException("El ID del alumno no puede ser nulo");
@@ -71,7 +86,23 @@ public class AlumnoService implements AlumnoServicePort {
     }
 
     @Override
+    @Transactional
     public void eliminarAlumno(Long id) {
+        // Verificar si el alumno tiene calificaciones asociadas
+        if (!calificacionService.obtenerCalificacionesPorAlumno(id).isEmpty()) {
+            throw new IllegalStateException("No se puede eliminar el alumno porque tiene calificaciones registradas");
+        }
+
+        // Verificar si el alumno tiene calificaciones en el concentrado
+        if (!calificacionConcentradoService.obtenerCalificacionesPorAlumno(id).isEmpty()) {
+            throw new IllegalStateException("No se puede eliminar el alumno porque tiene calificaciones en el concentrado");
+        }
+
+        // Verificar si el alumno tiene exámenes asociados
+        if (!alumnoExamenService.obtenerAlumnoExamenPorAlumno(id).isEmpty()) {
+            throw new IllegalStateException("No se puede eliminar el alumno porque tiene exámenes registrados");
+        }
+
         // Obtener el grupo antes de eliminar para recalcular
         Optional<Alumno> alumno = alumnoRepositoryPort.findById(id);
         Long grupoId = alumno.map(Alumno::getGrupoId).orElse(null);
@@ -85,6 +116,7 @@ public class AlumnoService implements AlumnoServicePort {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Alumno> buscarPorNombre(String nombre) {
         // Agregar comodines % al inicio y final para búsqueda parcial
         String nombreConComodines = "%" + nombre + "%";

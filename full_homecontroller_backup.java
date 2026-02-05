@@ -1,4 +1,4 @@
-package com.alumnos.infrastructure.adapter.in.ui.controller;
+﻿package com.alumnos.infrastructure.adapter.in.ui.controller;
 
 import com.alumnos.application.service.WordExportService;
 import com.alumnos.domain.model.Alumno;
@@ -94,7 +94,7 @@ public class HomeController {
     @FXML
     private VBox submenuConcentrado;
 
-    // Componentes creados dinámicamente (no están en FXML)
+    // Componentes creados din├ímicamente (no est├ín en FXML)
     private TextField txtNombre;
     private TextField txtApellido;
     private TextField txtEmail;
@@ -106,7 +106,7 @@ public class HomeController {
     private Button btnLimpiar;
     private Button btnBuscar;
     private TableView<Alumno> tblAlumnos;
-    private Long alumnoIdEnEdicion = null;  // ID del alumno que se está editando
+    private Long alumnoIdEnEdicion = null;  // ID del alumno que se est├í editando
     private TableColumn<Alumno, Long> colId;
     private TableColumn<Alumno, String> colNombre;
     private TableColumn<Alumno, String> colApellidoPaterno;
@@ -172,7 +172,7 @@ public class HomeController {
     public void initialize() {
         // Verificar que no se haya inicializado previamente
         if (vistaEstudiantes != null || vistaGrupos != null) {
-            LOG.warn("initialize() ya fue llamado previamente. Saltando creación de vistas.");
+            LOG.warn("initialize() ya fue llamado previamente. Saltando creaci├│n de vistas.");
             return;
         }
 
@@ -254,7 +254,7 @@ public class HomeController {
                 LOG.error("Error: vistaInformeConcentrado es null");
             }
 
-            // Crear vista de exámenes
+            // Crear vista de ex├ímenes
             vistaExamenes = crearVistaExamenesCompleta();
             if (vistaExamenes != null) {
                 vistaExamenes.setVisible(false); // Inicialmente oculta
@@ -271,7 +271,7 @@ public class HomeController {
                                                      vistaConcentrado, vistaInformeConcentrado, vistaExamenes);
             } else {
                 LOG.error("Error: No se pudieron crear todas las vistas");
-                // Crear al menos una vista vacía para evitar errores
+                // Crear al menos una vista vac├¡a para evitar errores
                 if (vistaEstudiantes == null) {
                     vistaEstudiantes = new VBox();
                     vistaEstudiantes.setVisible(false);
@@ -315,7 +315,7 @@ public class HomeController {
         } catch (Exception e) {
             LOG.error("Error al crear las vistas", e);
             e.printStackTrace();
-            // Crear vistas vacías para evitar null pointer
+            // Crear vistas vac├¡as para evitar null pointer
             vistaEstudiantes = new VBox();
             vistaGrupos = new VBox();
             vistaMaterias = new VBox();
@@ -345,7 +345,7 @@ public class HomeController {
         if (vistaEstudiantes == null || vistaGrupos == null || vistaMaterias == null ||
             vistaAsignaciones == null || vistaCriterios == null || vistaAgregados == null ||
             vistaConcentrado == null || vistaInformeConcentrado == null || vistaExamenes == null) {
-            LOG.error("Error: Las vistas no están inicializadas correctamente");
+            LOG.error("Error: Las vistas no est├ín inicializadas correctamente");
             return;
         }
 
@@ -410,20 +410,20 @@ public class HomeController {
         }
     }
 
-    // Método para abrir/cerrar el menú drawer
+    // M├⌐todo para abrir/cerrar el men├║ drawer
     @FXML
     private void toggleMenu() {
         TranslateTransition transition = new TranslateTransition(Duration.millis(300), drawerMenu);
         FadeTransition fadeTransition = new FadeTransition(Duration.millis(300), overlay);
 
         if (menuAbierto) {
-            // Cerrar menú
+            // Cerrar men├║
             transition.setToX(-280);
             fadeTransition.setToValue(0);
             fadeTransition.setOnFinished(e -> overlay.setVisible(false));
             menuAbierto = false;
         } else {
-            // Abrir menú
+            // Abrir men├║
             overlay.setVisible(true);
             transition.setToX(0);
             fadeTransition.setFromValue(0);
@@ -435,7 +435,7 @@ public class HomeController {
         fadeTransition.play();
     }
 
-    // Método para cerrar el menú al hacer clic en el overlay
+    // M├⌐todo para cerrar el men├║ al hacer clic en el overlay
     @FXML
     private void closeMenu() {
         if (menuAbierto) {
@@ -443,14 +443,14 @@ public class HomeController {
         }
     }
 
-    // Método para minimizar la ventana
+    // M├⌐todo para minimizar la ventana
     @FXML
     private void minimizeWindow() {
         javafx.stage.Stage stage = (javafx.stage.Stage) lblTitulo.getScene().getWindow();
         stage.setIconified(true);
     }
 
-    // Método para cerrar la ventana
+    // M├⌐todo para cerrar la ventana
     @FXML
     private void closeWindow() {
         javafx.stage.Stage stage = (javafx.stage.Stage) lblTitulo.getScene().getWindow();
@@ -458,10 +458,10 @@ public class HomeController {
         javafx.application.Platform.exit();
     }
 
-    // Handlers para los items del menú
+    // Handlers para los items del men├║
     @FXML
     private void handleMenuEstudiantes() {
-        lblTitulo.setText("Alumnos - Sistema de Gestión");
+        lblTitulo.setText("Alumnos - Sistema de Gesti├│n");
         mostrarVista("estudiantes");
         toggleMenu();
     }
@@ -469,37 +469,37 @@ public class HomeController {
 
     @FXML
     private void handleMenuGrupos() {
-        lblTitulo.setText("Grupos - Sistema de Gestión");
+        lblTitulo.setText("Grupos - Sistema de Gesti├│n");
         mostrarVista("grupos");
         toggleMenu();
     }
 
     @FXML
     private void handleMenuMaterias() {
-        lblTitulo.setText("Materias - Sistema de Gestión");
+        lblTitulo.setText("Materias - Sistema de Gesti├│n");
         mostrarVista("materias");
         toggleMenu();
     }
 
     @FXML
     private void handleMenuAsignaciones() {
-        lblTitulo.setText("Asignación de Materias - Sistema de Gestión");
+        lblTitulo.setText("Asignaci├│n de Materias - Sistema de Gesti├│n");
         mostrarVista("asignaciones");
         toggleMenu();
     }
 
     @FXML
     private void handleMenuConfiguracion() {
-        lblTitulo.setText("Configuración - Sistema de Gestión");
+        lblTitulo.setText("Configuraci├│n - Sistema de Gesti├│n");
 
-        // Obtener y mostrar la configuración actual
+        // Obtener y mostrar la configuraci├│n actual
         configuracionService.obtenerConfiguracion().ifPresentOrElse(
             config -> {
-                String mensaje = "Configuración actual:\n\n" +
+                String mensaje = "Configuraci├│n actual:\n\n" +
                                 "Nombre del Maestro: " + config.getNombreMaestro();
-                mostrarAlerta("Configuración", mensaje, Alert.AlertType.INFORMATION);
+                mostrarAlerta("Configuraci├│n", mensaje, Alert.AlertType.INFORMATION);
             },
-            () -> mostrarAlerta("Configuración", "No hay configuración guardada", Alert.AlertType.WARNING)
+            () -> mostrarAlerta("Configuraci├│n", "No hay configuraci├│n guardada", Alert.AlertType.WARNING)
         );
 
         toggleMenu();
@@ -508,7 +508,7 @@ public class HomeController {
     @FXML
     private void handleMenuAcercaDe() {
         mostrarAlerta("Acerca de",
-            "Sistema de Gestión de Alumnos v1.0\n\n" +
+            "Sistema de Gesti├│n de Alumnos v1.0\n\n" +
             "Desarrollado con:\n" +
             "- Spring Boot\n" +
             "- JavaFX\n" +
@@ -538,35 +538,35 @@ public class HomeController {
 
     @FXML
     private void handleMenuCriteriosLista() {
-        lblTitulo.setText("Criterios de Evaluación - Sistema de Gestión");
+        lblTitulo.setText("Criterios de Evaluaci├│n - Sistema de Gesti├│n");
         mostrarVista("criterios");
         toggleMenu();
     }
 
     @FXML
     private void handleMenuAgregados() {
-        lblTitulo.setText("Agregados - Sistema de Gestión");
+        lblTitulo.setText("Agregados - Sistema de Gesti├│n");
         mostrarVista("agregados");
         toggleMenu();
     }
 
     @FXML
     private void handleMenuConcentrado() {
-        lblTitulo.setText("Concentrado de calificaciones - Sistema de Gestión");
+        lblTitulo.setText("Concentrado de calificaciones - Sistema de Gesti├│n");
         mostrarVista("concentrado");
         toggleMenu();
     }
 
     @FXML
     private void handleMenuInformeConcentrado() {
-        lblTitulo.setText("Informe de concentrado - Sistema de Gestión");
+        lblTitulo.setText("Informe de concentrado - Sistema de Gesti├│n");
         mostrarVista("informeconcentrado");
         toggleMenu();
     }
 
     @FXML
     private void handleMenuExamenes() {
-        lblTitulo.setText("Exámenes - Sistema de Gestión");
+        lblTitulo.setText("Ex├ímenes - Sistema de Gesti├│n");
         mostrarVista("examenes");
         toggleMenu();
     }
@@ -577,7 +577,7 @@ public class HomeController {
         try {
             if (validarCampos()) {
                 Alumno alumno = Alumno.builder()
-                        .id(alumnoIdEnEdicion)  // Si es null, es una creación; si tiene valor, es actualización
+                        .id(alumnoIdEnEdicion)  // Si es null, es una creaci├│n; si tiene valor, es actualizaci├│n
                         .nombre(capitalizarPrimeraLetra(txtNombre.getText().trim()))
                         .apellidoPaterno(capitalizarPrimeraLetra(txtApellido.getText().trim()))
                         .apellidoMaterno(capitalizarPrimeraLetra(txtEmail.getText().trim()))
@@ -587,11 +587,11 @@ public class HomeController {
                 if (alumnoIdEnEdicion == null) {
                     // Crear nuevo alumno
                     alumnoService.crearAlumno(alumno);
-                    mostrarAlerta("Éxito", "Alumno creado correctamente", Alert.AlertType.INFORMATION);
+                    mostrarAlerta("├ëxito", "Alumno creado correctamente", Alert.AlertType.INFORMATION);
                 } else {
                     // Actualizar alumno existente
                     alumnoService.actualizarAlumno(alumno);
-                    mostrarAlerta("Éxito", "Alumno actualizado correctamente", Alert.AlertType.INFORMATION);
+                    mostrarAlerta("├ëxito", "Alumno actualizado correctamente", Alert.AlertType.INFORMATION);
                 }
 
                 limpiarFormulario();
@@ -636,7 +636,7 @@ public class HomeController {
             List<Alumno> alumnosDelGrupo = alumnoService.obtenerTodosLosAlumnos().stream()
                 .filter(alumno -> alumno.getGrupoId() != null && alumno.getGrupoId().equals(grupoId))
                 .sorted((a1, a2) -> {
-                    // Ordenar por número de lista
+                    // Ordenar por n├║mero de lista
                     if (a1.getNumeroLista() == null) return 1;
                     if (a2.getNumeroLista() == null) return -1;
                     return a1.getNumeroLista().compareTo(a2.getNumeroLista());
@@ -648,7 +648,7 @@ public class HomeController {
     }
 
     private void cargarAlumnoEnFormulario(Alumno alumno) {
-        alumnoIdEnEdicion = alumno.getId();  // Establecer ID para modo edición
+        alumnoIdEnEdicion = alumno.getId();  // Establecer ID para modo edici├│n
         txtNombre.setText(alumno.getNombre());
         txtApellido.setText(alumno.getApellidoPaterno());
         txtEmail.setText(alumno.getApellidoMaterno());
@@ -665,14 +665,14 @@ public class HomeController {
             cmbGrupo.setValue(null);
         }
 
-        // Cambiar texto del botón a "Actualizar"
+        // Cambiar texto del bot├│n a "Actualizar"
         if (btnGuardar != null) {
             btnGuardar.setText("Actualizar");
         }
     }
 
     private void limpiarFormulario() {
-        alumnoIdEnEdicion = null;  // Limpiar ID de edición
+        alumnoIdEnEdicion = null;  // Limpiar ID de edici├│n
         txtNombre.clear();
         txtApellido.clear();
         txtEmail.clear();  // Se usa para apellido materno
@@ -686,29 +686,29 @@ public class HomeController {
 
     private boolean validarCampos() {
         if (txtNombre.getText() == null || txtNombre.getText().trim().isEmpty()) {
-            mostrarAlerta("Validación", "El nombre es requerido", Alert.AlertType.WARNING);
+            mostrarAlerta("Validaci├│n", "El nombre es requerido", Alert.AlertType.WARNING);
             return false;
         }
         if (txtApellido.getText() == null || txtApellido.getText().trim().isEmpty()) {
-            mostrarAlerta("Validación", "El apellido paterno es requerido", Alert.AlertType.WARNING);
+            mostrarAlerta("Validaci├│n", "El apellido paterno es requerido", Alert.AlertType.WARNING);
             return false;
         }
         // Validar que apellido paterno contenga solo una palabra
         if (txtApellido.getText().trim().contains(" ")) {
-            mostrarAlerta("Validación", "El apellido paterno debe contener solo una palabra", Alert.AlertType.WARNING);
+            mostrarAlerta("Validaci├│n", "El apellido paterno debe contener solo una palabra", Alert.AlertType.WARNING);
             return false;
         }
         if (txtEmail.getText() == null || txtEmail.getText().trim().isEmpty()) {
-            mostrarAlerta("Validación", "El apellido materno es requerido", Alert.AlertType.WARNING);
+            mostrarAlerta("Validaci├│n", "El apellido materno es requerido", Alert.AlertType.WARNING);
             return false;
         }
         // Validar que apellido materno contenga solo una palabra
         if (txtEmail.getText().trim().contains(" ")) {
-            mostrarAlerta("Validación", "El apellido materno debe contener solo una palabra", Alert.AlertType.WARNING);
+            mostrarAlerta("Validaci├│n", "El apellido materno debe contener solo una palabra", Alert.AlertType.WARNING);
             return false;
         }
         if (cmbGrupo == null || cmbGrupo.getValue() == null) {
-            mostrarAlerta("Validación", "Debe seleccionar un grupo", Alert.AlertType.WARNING);
+            mostrarAlerta("Validaci├│n", "Debe seleccionar un grupo", Alert.AlertType.WARNING);
             return false;
         }
         return true;
@@ -727,7 +727,7 @@ public class HomeController {
         alert.showAndWait();
     }
 
-    // Método para crear la vista completa de estudiantes
+    // M├⌐todo para crear la vista completa de estudiantes
     private VBox crearVistaEstudiantesCompleta() {
         try {
             // Crear layout principal para estudiantes
@@ -746,7 +746,7 @@ public class HomeController {
         } catch (Exception e) {
             LOG.error("Error al crear vista de estudiantes", e);
             e.printStackTrace();
-            // Retornar una vista vacía en caso de error
+            // Retornar una vista vac├¡a en caso de error
             VBox vistaError = new VBox();
             Label lblError = new Label("Error al cargar la vista de estudiantes: " + e.getMessage());
             lblError.setStyle("-fx-text-fill: red; -fx-padding: 20;");
@@ -799,7 +799,7 @@ public class HomeController {
             cmbGrupo.setItems(FXCollections.observableArrayList());
         }
 
-        // Configurar cómo se muestra el grupo en el ComboBox
+        // Configurar c├│mo se muestra el grupo en el ComboBox
         cmbGrupo.setCellFactory(param -> new ListCell<Grupo>() {
             @Override
             protected void updateItem(Grupo item, boolean empty) {
@@ -855,7 +855,7 @@ public class HomeController {
         Label lblTableTitle = new Label("Lista de Alumnos");
         lblTableTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
-        // Búsqueda y filtros
+        // B├║squeda y filtros
         javafx.scene.layout.HBox searchBox = new javafx.scene.layout.HBox(10);
         searchBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
         txtBuscar = new TextField();
@@ -882,7 +882,7 @@ public class HomeController {
             LOG.error("Error al cargar grupos para filtro", e);
         }
 
-        // Configurar cómo se muestran los grupos
+        // Configurar c├│mo se muestran los grupos
         cmbFiltroGrupo.setCellFactory(param -> new ListCell<Grupo>() {
             @Override
             protected void updateItem(Grupo item, boolean empty) {
@@ -908,7 +908,7 @@ public class HomeController {
             }
         });
 
-        // Botón para limpiar filtro
+        // Bot├│n para limpiar filtro
         Button btnLimpiarFiltroGrupo = new Button("Limpiar");
         btnLimpiarFiltroGrupo.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8 20; -fx-cursor: hand;");
         btnLimpiarFiltroGrupo.setOnAction(event -> {
@@ -939,13 +939,13 @@ public class HomeController {
         colApellidoMaterno.setCellValueFactory(new PropertyValueFactory<>("apellidoMaterno"));
         colApellidoMaterno.setPrefWidth(200);
 
-        // Columna Número de Lista
-        TableColumn<Alumno, Integer> colNumeroLista = new TableColumn<>("N° Lista");
+        // Columna N├║mero de Lista
+        TableColumn<Alumno, Integer> colNumeroLista = new TableColumn<>("N┬░ Lista");
         colNumeroLista.setCellValueFactory(new PropertyValueFactory<>("numeroLista"));
         colNumeroLista.setPrefWidth(80);
         colNumeroLista.setStyle("-fx-alignment: CENTER;");
 
-        // Columna Grupo - mostrar código del grupo basado en grupoId
+        // Columna Grupo - mostrar c├│digo del grupo basado en grupoId
         TableColumn<Alumno, String> colGrupo = new TableColumn<>("Grupo");
         colGrupo.setPrefWidth(150);
         colGrupo.setCellValueFactory(cellData -> {
@@ -982,9 +982,9 @@ public class HomeController {
                 btnEliminar.setOnAction(event -> {
                     Alumno alumno = getTableView().getItems().get(getIndex());
                     Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
-                    confirmacion.setTitle("Confirmar eliminación");
+                    confirmacion.setTitle("Confirmar eliminaci├│n");
                     confirmacion.setHeaderText(null);
-                    confirmacion.setContentText("¿Está seguro de eliminar al estudiante " + alumno.getNombre() + " " + alumno.getApellidoPaterno() + "?");
+                    confirmacion.setContentText("┬┐Est├í seguro de eliminar al estudiante " + alumno.getNombre() + " " + alumno.getApellidoPaterno() + "?");
 
                     confirmacion.showAndWait().ifPresent(response -> {
                         if (response == ButtonType.OK) {
@@ -992,7 +992,7 @@ public class HomeController {
                                 alumnoService.eliminarAlumno(alumno.getId());
                                 cargarAlumnos();
                                 actualizarEstadisticas();
-                                mostrarAlerta("Éxito", "Estudiante eliminado correctamente", Alert.AlertType.INFORMATION);
+                                mostrarAlerta("├ëxito", "Estudiante eliminado correctamente", Alert.AlertType.INFORMATION);
                             } catch (Exception e) {
                                 mostrarAlerta("Error", "Error al eliminar: " + e.getMessage(), Alert.AlertType.ERROR);
                             }
@@ -1037,7 +1037,7 @@ public class HomeController {
         return tablePanel;
     }
 
-    // Método para crear la vista completa de grupos
+    // M├⌐todo para crear la vista completa de grupos
     private VBox crearVistaGruposCompleta() {
         try {
             // Crear layout principal para grupos
@@ -1056,13 +1056,13 @@ public class HomeController {
             gridForm.setHgap(15);
             gridForm.setVgap(10);
 
-            // Campo ID (editable - código del grupo, entero)
-            Label lblId = new Label("Código del Grupo:");
+            // Campo ID (editable - c├│digo del grupo, entero)
+            Label lblId = new Label("C├│digo del Grupo:");
             TextField txtIdGrupo = new TextField();
-            txtIdGrupo.setPromptText("Código del grupo (número entero)");
+            txtIdGrupo.setPromptText("C├│digo del grupo (n├║mero entero)");
             txtIdGrupo.setPrefWidth(150);
 
-            // Validación para solo números enteros
+            // Validaci├│n para solo n├║meros enteros
             txtIdGrupo.textProperty().addListener((observable, oldValue, newValue) -> {
                 if (!newValue.matches("\\d*")) {
                     txtIdGrupo.setText(oldValue);
@@ -1095,7 +1095,7 @@ public class HomeController {
         TableView<Grupo> tblGrupos = new TableView<>();
         tblGrupos.setPrefHeight(300);
 
-        TableColumn<Grupo, Long> colIdGrupo = new TableColumn<>("Código del Grupo");
+        TableColumn<Grupo, Long> colIdGrupo = new TableColumn<>("C├│digo del Grupo");
         colIdGrupo.setCellValueFactory(new PropertyValueFactory<>("id"));
         colIdGrupo.setPrefWidth(500);
 
@@ -1110,16 +1110,16 @@ public class HomeController {
                 btnEliminar.setOnAction(event -> {
                     Grupo grupo = getTableView().getItems().get(getIndex());
                     Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
-                    confirmacion.setTitle("Confirmar eliminación");
+                    confirmacion.setTitle("Confirmar eliminaci├│n");
                     confirmacion.setHeaderText(null);
-                    confirmacion.setContentText("¿Está seguro de eliminar el grupo " + grupo.getId() + "?");
+                    confirmacion.setContentText("┬┐Est├í seguro de eliminar el grupo " + grupo.getId() + "?");
 
                     confirmacion.showAndWait().ifPresent(response -> {
                         if (response == ButtonType.OK) {
                             try {
                                 grupoService.eliminarGrupo(grupo.getId());
                                 cargarGrupos(tblGrupos);
-                                mostrarAlerta("Éxito", "Grupo eliminado correctamente", Alert.AlertType.INFORMATION);
+                                mostrarAlerta("├ëxito", "Grupo eliminado correctamente", Alert.AlertType.INFORMATION);
                             } catch (Exception e) {
                                 mostrarAlerta("Error", "Error al eliminar: " + e.getMessage(), Alert.AlertType.ERROR);
                             }
@@ -1141,7 +1141,7 @@ public class HomeController {
 
         tblGrupos.getColumns().addAll(colIdGrupo, colAcciones);
 
-        // Estadísticas
+        // Estad├¡sticas
         Label lblEstadisticaGrupos = new Label("Total de grupos: 0");
         lblEstadisticaGrupos.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #666;");
 
@@ -1161,7 +1161,7 @@ public class HomeController {
             try {
                 // Validaciones
                 if (txtIdGrupo.getText() == null || txtIdGrupo.getText().trim().isEmpty()) {
-                    mostrarAlerta("Validación", "El código del grupo es requerido", Alert.AlertType.WARNING);
+                    mostrarAlerta("Validaci├│n", "El c├│digo del grupo es requerido", Alert.AlertType.WARNING);
                     return;
                 }
 
@@ -1172,7 +1172,7 @@ public class HomeController {
                         .build();
 
                 Grupo grupoGuardado = grupoService.crearGrupo(grupo);
-                mostrarAlerta("Éxito", "Grupo guardado correctamente con código: " + grupoGuardado.getId(), Alert.AlertType.INFORMATION);
+                mostrarAlerta("├ëxito", "Grupo guardado correctamente con c├│digo: " + grupoGuardado.getId(), Alert.AlertType.INFORMATION);
 
                 // Limpiar campos
                 txtIdGrupo.clear();
@@ -1185,7 +1185,7 @@ public class HomeController {
                 recargarGruposEnComboBox();
 
             } catch (NumberFormatException e) {
-                mostrarAlerta("Error", "El código debe ser un número entero válido", Alert.AlertType.ERROR);
+                mostrarAlerta("Error", "El c├│digo debe ser un n├║mero entero v├ílido", Alert.AlertType.ERROR);
             } catch (IllegalArgumentException e) {
                 // Capturar el mensaje "El grupo ya existe"
                 mostrarAlerta("Error", e.getMessage(), Alert.AlertType.ERROR);
@@ -1207,7 +1207,7 @@ public class HomeController {
         } catch (Exception e) {
             LOG.error("Error al crear vista de grupos", e);
             e.printStackTrace();
-            // Retornar una vista vacía en caso de error
+            // Retornar una vista vac├¡a en caso de error
             VBox vistaError = new VBox();
             Label lblError = new Label("Error al cargar la vista de grupos: " + e.getMessage());
             lblError.setStyle("-fx-text-fill: red; -fx-padding: 20;");
@@ -1234,12 +1234,12 @@ public class HomeController {
             LOG.info("Grupos cargados correctamente: {} grupos", gruposList.size());
         } catch (Exception e) {
             LOG.error("Error al cargar grupos en la tabla", e);
-            // Mostrar tabla vacía en caso de error
+            // Mostrar tabla vac├¡a en caso de error
             tabla.setItems(FXCollections.observableArrayList());
         }
     }
 
-    // Método para crear la vista completa de materias
+    // M├⌐todo para crear la vista completa de materias
     private VBox crearVistaMateriasCompleta() {
         try {
             VBox vista = new VBox(20);
@@ -1256,10 +1256,10 @@ public class HomeController {
             gridForm.setHgap(15);
             gridForm.setVgap(10);
 
-            // Campo ID (solo lectura - muestra el próximo ID)
+            // Campo ID (solo lectura - muestra el pr├│ximo ID)
             Label lblId = new Label("ID:");
             TextField txtId = new TextField();
-            txtId.setPromptText("Se asignará automáticamente");
+            txtId.setPromptText("Se asignar├í autom├íticamente");
             txtId.setPrefWidth(150);
             txtId.setEditable(false);  // No editable
             txtId.setStyle("-fx-background-color: #f0f0f0;");  // Gris claro para indicar que no es editable
@@ -1293,7 +1293,7 @@ public class HomeController {
             Label lblTableTitle = new Label("Lista de Materias");
             lblTableTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
-            // Búsqueda
+            // B├║squeda
             javafx.scene.layout.HBox searchBox = new javafx.scene.layout.HBox(10);
             TextField txtBuscar = new TextField();
             txtBuscar.setPromptText("Buscar por nombre...");
@@ -1328,16 +1328,16 @@ public class HomeController {
                     btnEliminar.setOnAction(event -> {
                         Materia materia = getTableView().getItems().get(getIndex());
                         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
-                        confirmacion.setTitle("Confirmar eliminación");
+                        confirmacion.setTitle("Confirmar eliminaci├│n");
                         confirmacion.setHeaderText(null);
-                        confirmacion.setContentText("¿Está seguro de eliminar la materia " + materia.getId() + " - " + materia.getNombre() + "?");
+                        confirmacion.setContentText("┬┐Est├í seguro de eliminar la materia " + materia.getId() + " - " + materia.getNombre() + "?");
 
                         confirmacion.showAndWait().ifPresent(response -> {
                             if (response == ButtonType.OK) {
                                 try {
                                     materiaService.eliminarMateria(materia.getId());
                                     cargarMaterias(tblMaterias);
-                                    mostrarAlerta("Éxito", "Materia eliminada correctamente", Alert.AlertType.INFORMATION);
+                                    mostrarAlerta("├ëxito", "Materia eliminada correctamente", Alert.AlertType.INFORMATION);
                                 } catch (Exception e) {
                                     mostrarAlerta("Error", "Error al eliminar: " + e.getMessage(), Alert.AlertType.ERROR);
                                 }
@@ -1364,11 +1364,11 @@ public class HomeController {
 
             tablePanel.getChildren().addAll(lblTableTitle, new Separator(), searchBox, tblMaterias, lblEstadisticas);
 
-            // Cargar materias inicialmente y calcular próximo ID
+            // Cargar materias inicialmente y calcular pr├│ximo ID
             try {
                 cargarMaterias(tblMaterias);
                 lblEstadisticas.setText("Total de materias: " + tblMaterias.getItems().size());
-                // Mostrar el próximo ID que le tocaría
+                // Mostrar el pr├│ximo ID que le tocar├¡a
                 actualizarProximoId(txtId, tblMaterias);
             } catch (Exception e) {
                 LOG.error("Error al cargar materias inicialmente", e);
@@ -1379,7 +1379,7 @@ public class HomeController {
             btnGuardar.setOnAction(event -> {
                 try {
                     if (txtNombre.getText() == null || txtNombre.getText().trim().isEmpty()) {
-                        mostrarAlerta("Validación", "El nombre es requerido", Alert.AlertType.WARNING);
+                        mostrarAlerta("Validaci├│n", "El nombre es requerido", Alert.AlertType.WARNING);
                         return;
                     }
 
@@ -1388,14 +1388,14 @@ public class HomeController {
                             .build();
 
                     Materia materiaGuardada = materiaService.crearMateria(materia);
-                    mostrarAlerta("Éxito", "Materia guardada correctamente con ID: " + materiaGuardada.getId(), Alert.AlertType.INFORMATION);
+                    mostrarAlerta("├ëxito", "Materia guardada correctamente con ID: " + materiaGuardada.getId(), Alert.AlertType.INFORMATION);
 
                     txtId.clear();
                     txtNombre.clear();
 
                     cargarMaterias(tblMaterias);
                     lblEstadisticas.setText("Total de materias: " + tblMaterias.getItems().size());
-                    // Actualizar el próximo ID
+                    // Actualizar el pr├│ximo ID
                     actualizarProximoId(txtId, tblMaterias);
                 } catch (Exception e) {
                     mostrarAlerta("Error", "Error al guardar: " + e.getMessage(), Alert.AlertType.ERROR);
@@ -1405,7 +1405,7 @@ public class HomeController {
             btnLimpiar.setOnAction(event -> {
                 txtId.clear();
                 txtNombre.clear();
-                // Recalcular el próximo ID
+                // Recalcular el pr├│ximo ID
                 actualizarProximoId(txtId, tblMaterias);
             });
 
@@ -1468,7 +1468,7 @@ public class HomeController {
         }
     }
 
-    // Método auxiliar para calcular y mostrar el próximo ID
+    // M├⌐todo auxiliar para calcular y mostrar el pr├│ximo ID
     private void actualizarProximoId(TextField txtId, TableView<Materia> tabla) {
         try {
             if (tabla.getItems().isEmpty()) {
@@ -1481,12 +1481,12 @@ public class HomeController {
                 txtId.setText(String.valueOf(maxId + 1));
             }
         } catch (Exception e) {
-            LOG.error("Error al calcular próximo ID", e);
+            LOG.error("Error al calcular pr├│ximo ID", e);
             txtId.setText("?");
         }
     }
 
-    // Método para recargar los grupos en el ComboBox
+    // M├⌐todo para recargar los grupos en el ComboBox
     private void recargarGruposEnComboBox() {
         if (cmbGrupo != null && grupoService != null) {
             try {
@@ -1499,7 +1499,7 @@ public class HomeController {
         }
     }
 
-    // Método para crear la vista completa de asignaciones de materias a grupos
+    // M├⌐todo para crear la vista completa de asignaciones de materias a grupos
     private VBox crearVistaAsignacionesCompleta() {
         VBox vista = new VBox(20);
         vista.setStyle("-fx-padding: 20; -fx-background-color: #f5f5f5;");
@@ -1649,16 +1649,16 @@ public class HomeController {
                     btnEliminar.setOnAction(event -> {
                         GrupoMateria asignacion = getTableView().getItems().get(getIndex());
                         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
-                        confirmacion.setTitle("Confirmar eliminación");
+                        confirmacion.setTitle("Confirmar eliminaci├│n");
                         confirmacion.setHeaderText(null);
-                        confirmacion.setContentText("¿Está seguro de eliminar esta asignación?");
+                        confirmacion.setContentText("┬┐Est├í seguro de eliminar esta asignaci├│n?");
 
                         confirmacion.showAndWait().ifPresent(response -> {
                             if (response == ButtonType.OK) {
                                 try {
                                     grupoMateriaService.eliminarAsignacion(asignacion.getId());
                                     cargarAsignaciones(tblAsignaciones);
-                                    mostrarAlerta("Éxito", "Asignación eliminada correctamente", Alert.AlertType.INFORMATION);
+                                    mostrarAlerta("├ëxito", "Asignaci├│n eliminada correctamente", Alert.AlertType.INFORMATION);
                                 } catch (Exception e) {
                                     mostrarAlerta("Error", "Error al eliminar: " + e.getMessage(), Alert.AlertType.ERROR);
                                 }
@@ -1693,11 +1693,11 @@ public class HomeController {
             btnAsignar.setOnAction(event -> {
                 try {
                     if (cmbGrupoAsignacion.getValue() == null) {
-                        mostrarAlerta("Validación", "Debe seleccionar un grupo", Alert.AlertType.WARNING);
+                        mostrarAlerta("Validaci├│n", "Debe seleccionar un grupo", Alert.AlertType.WARNING);
                         return;
                     }
                     if (cmbMateriaAsignacion.getValue() == null) {
-                        mostrarAlerta("Validación", "Debe seleccionar una materia", Alert.AlertType.WARNING);
+                        mostrarAlerta("Validaci├│n", "Debe seleccionar una materia", Alert.AlertType.WARNING);
                         return;
                     }
 
@@ -1707,7 +1707,7 @@ public class HomeController {
                             .build();
 
                     grupoMateriaService.asignarMateriaAGrupo(asignacion);
-                    mostrarAlerta("Éxito", "Materia asignada al grupo correctamente", Alert.AlertType.INFORMATION);
+                    mostrarAlerta("├ëxito", "Materia asignada al grupo correctamente", Alert.AlertType.INFORMATION);
 
                     cmbGrupoAsignacion.setValue(null);
                     cmbMateriaAsignacion.setValue(null);
@@ -1735,7 +1735,7 @@ public class HomeController {
         return vista;
     }
 
-    // Método para cargar asignaciones en la tabla
+    // M├⌐todo para cargar asignaciones en la tabla
     private void cargarAsignaciones(TableView<GrupoMateria> tabla) {
         try {
             ObservableList<GrupoMateria> asignacionesList = FXCollections.observableArrayList(
@@ -1749,7 +1749,7 @@ public class HomeController {
         }
     }
 
-    // Método para crear la vista completa de criterios de evaluación
+    // M├⌐todo para crear la vista completa de criterios de evaluaci├│n
     private VBox crearVistaCriteriosCompleta() {
         VBox vista = new VBox(20);
         vista.setStyle("-fx-padding: 20; -fx-background-color: #f5f5f5;");
@@ -1767,7 +1767,7 @@ public class HomeController {
             gridForm.setHgap(15);
             gridForm.setVgap(10);
 
-            // COLUMNA 1: Nombre, Tipo de Evaluación, Puntuación Máxima
+            // COLUMNA 1: Nombre, Tipo de Evaluaci├│n, Puntuaci├│n M├íxima
 
             // Campo Nombre
             Label lblNombre = new Label("Nombre:");
@@ -1775,24 +1775,24 @@ public class HomeController {
             txtNombre.setPromptText("Nombre del criterio");
             txtNombre.setPrefWidth(250);
 
-            // ComboBox Tipo de Evaluación
-            Label lblTipoEval = new Label("Tipo de Evaluación:");
+            // ComboBox Tipo de Evaluaci├│n
+            Label lblTipoEval = new Label("Tipo de Evaluaci├│n:");
             ComboBox<String> cmbTipoEval = new ComboBox<>();
             cmbTipoEval.getItems().addAll("Check", "Puntuacion");
             cmbTipoEval.setPromptText("Seleccione tipo");
             cmbTipoEval.setPrefWidth(250);
 
-            // Campo Puntuación Máxima
-            Label lblPuntMax = new Label("Puntuación Máxima:");
+            // Campo Puntuaci├│n M├íxima
+            Label lblPuntMax = new Label("Puntuaci├│n M├íxima:");
             TextField txtPuntMax = new TextField();
-            txtPuntMax.setPromptText("Máx. 99");
+            txtPuntMax.setPromptText("M├íx. 99");
             txtPuntMax.setPrefWidth(150);
-            // Campo siempre habilitado/editable independientemente del tipo de evaluación
+            // Campo siempre habilitado/editable independientemente del tipo de evaluaci├│n
 
-            // Validación para máximo 2 dígitos
+            // Validaci├│n para m├íximo 2 d├¡gitos
             txtPuntMax.textProperty().addListener((observable, oldValue, newValue) -> {
                 if (newValue != null && !newValue.isEmpty()) {
-                    // Solo permitir números y máximo 2 dígitos
+                    // Solo permitir n├║meros y m├íximo 2 d├¡gitos
                     if (!newValue.matches("\\d{0,2}")) {
                         txtPuntMax.setText(oldValue);
                     }
@@ -1835,7 +1835,7 @@ public class HomeController {
             cmbParcial.setPrefWidth(250);
             cmbParcial.setItems(FXCollections.observableArrayList(1, 2, 3));
 
-            // El campo de puntuación máxima siempre está habilitado/editable
+            // El campo de puntuaci├│n m├íxima siempre est├í habilitado/editable
 
             // Distribuir en 2 columnas:
             // Columna 1 (0-1): Nombre, Tipo Eval, Punt Max
@@ -1939,10 +1939,10 @@ public class HomeController {
             colTipo.setCellValueFactory(new PropertyValueFactory<>("tipoEvaluacion"));
             colTipo.setPrefWidth(100);
 
-            TableColumn<Criterio, Double> colPuntMax = new TableColumn<>("Punt. Máx.");
+            TableColumn<Criterio, Double> colPuntMax = new TableColumn<>("Punt. M├íx.");
             colPuntMax.setCellValueFactory(new PropertyValueFactory<>("puntuacionMaxima"));
             colPuntMax.setPrefWidth(100);
-            // Formatear a dos dígitos
+            // Formatear a dos d├¡gitos
             colPuntMax.setCellFactory(column -> new TableCell<Criterio, Double>() {
                 @Override
                 protected void updateItem(Double item, boolean empty) {
@@ -1987,8 +1987,8 @@ public class HomeController {
             TableColumn<Criterio, Void> colOrdenAcciones = new TableColumn<>("Mover");
             colOrdenAcciones.setPrefWidth(100);
             colOrdenAcciones.setCellFactory(col -> new TableCell<>() {
-                private final Button btnSubir = new Button("↑");
-                private final Button btnBajar = new Button("↓");
+                private final Button btnSubir = new Button("Γåæ");
+                private final Button btnBajar = new Button("Γåô");
 
                 {
                     btnSubir.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 5 10; -fx-cursor: hand; -fx-font-weight: bold;");
@@ -2028,7 +2028,7 @@ public class HomeController {
                         return;
                     }
 
-                    // Mostrar controles solo cuando ambos filtros (materia y parcial) están seleccionados
+                    // Mostrar controles solo cuando ambos filtros (materia y parcial) est├ín seleccionados
                     boolean filtrosCompletos = cmbFiltroMateria.getValue() != null && cmbFiltroParcial.getValue() != null;
                     if (!filtrosCompletos) {
                         setGraphic(null);
@@ -2052,10 +2052,10 @@ public class HomeController {
                     javafx.scene.layout.HBox.setHgrow(rightSpacer, javafx.scene.layout.Priority.ALWAYS);
 
                     if (index == 0) {
-                        // Primer registro: botón bajar alineado a la derecha
+                        // Primer registro: bot├│n bajar alineado a la derecha
                         contenedor.getChildren().setAll(leftSpacer, btnBajar);
                     } else if (index == totalItems - 1) {
-                        // Último registro: botón subir alineado a la izquierda
+                        // ├Ültimo registro: bot├│n subir alineado a la izquierda
                         contenedor.getChildren().setAll(btnSubir, rightSpacer);
                     } else {
                         // Registros intermedios: ambos botones centrados
@@ -2084,7 +2084,7 @@ public class HomeController {
                         txtNombre.setText(criterio.getNombre());
                         cmbTipoEval.setValue(criterio.getTipoEvaluacion());
 
-                        // Llenar el campo de puntuación si existe
+                        // Llenar el campo de puntuaci├│n si existe
                         if (criterio.getPuntuacionMaxima() != null) {
                             txtPuntMax.setText(String.valueOf(criterio.getPuntuacionMaxima().intValue()));
                         } else {
@@ -2111,16 +2111,16 @@ public class HomeController {
                     btnEliminar.setOnAction(event -> {
                         Criterio criterio = getTableView().getItems().get(getIndex());
                         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
-                        confirmacion.setTitle("Confirmar eliminación");
+                        confirmacion.setTitle("Confirmar eliminaci├│n");
                         confirmacion.setHeaderText(null);
-                        confirmacion.setContentText("¿Está seguro de eliminar este criterio?");
+                        confirmacion.setContentText("┬┐Est├í seguro de eliminar este criterio?");
 
                         confirmacion.showAndWait().ifPresent(response -> {
                             if (response == ButtonType.OK) {
                                 try {
                                     criterioService.eliminarCriterio(criterio.getId());
                                     cargarCriterios(tblCriterios);
-                                    mostrarAlerta("Éxito", "Criterio eliminado correctamente", Alert.AlertType.INFORMATION);
+                                    mostrarAlerta("├ëxito", "Criterio eliminado correctamente", Alert.AlertType.INFORMATION);
                                 } catch (Exception e) {
                                     mostrarAlerta("Error", "Error al eliminar: " + e.getMessage(), Alert.AlertType.ERROR);
                                 }
@@ -2176,7 +2176,7 @@ public class HomeController {
                     ObservableList<Criterio> criteriosOrdenados = tblCriterios.getItems();
 
                     if (criteriosOrdenados.isEmpty()) {
-                        mostrarAlerta("Información", "No hay criterios para ordenar", Alert.AlertType.INFORMATION);
+                        mostrarAlerta("Informaci├│n", "No hay criterios para ordenar", Alert.AlertType.INFORMATION);
                         return;
                     }
 
@@ -2203,13 +2203,13 @@ public class HomeController {
                         }
                     }
 
-                    // Actualizar el orden en la base de datos según la posición actual en la tabla
+                    // Actualizar el orden en la base de datos seg├║n la posici├│n actual en la tabla
                     int nuevoOrden = 1;
                     for (Criterio criterio : criteriosOrdenados) {
                         criterioService.actualizarOrdenCriterio(criterio.getId(), nuevoOrden++);
                     }
 
-                    mostrarAlerta("Éxito", "El orden de los criterios de la materia '" + materiaFiltro.getNombre() + "' (Parcial " + primerParcial + ") se guardó correctamente", Alert.AlertType.INFORMATION);
+                    mostrarAlerta("├ëxito", "El orden de los criterios de la materia '" + materiaFiltro.getNombre() + "' (Parcial " + primerParcial + ") se guard├│ correctamente", Alert.AlertType.INFORMATION);
 
                     // Recargar la tabla manteniendo el filtro
                     //filtrarCriteriosPorMateria(tblCriterios, materiaId);
@@ -2226,39 +2226,39 @@ public class HomeController {
             btnGuardar.setOnAction(event -> {
                 try {
                     if (txtNombre.getText() == null || txtNombre.getText().trim().isEmpty()) {
-                        mostrarAlerta("Validación", "El nombre es requerido", Alert.AlertType.WARNING);
+                        mostrarAlerta("Validaci├│n", "El nombre es requerido", Alert.AlertType.WARNING);
                         return;
                     }
                     if (cmbTipoEval.getValue() == null) {
-                        mostrarAlerta("Validación", "Debe seleccionar un tipo de evaluación", Alert.AlertType.WARNING);
+                        mostrarAlerta("Validaci├│n", "Debe seleccionar un tipo de evaluaci├│n", Alert.AlertType.WARNING);
                         return;
                     }
                     if (cmbMateria.getValue() == null) {
-                        mostrarAlerta("Validación", "Debe seleccionar una materia", Alert.AlertType.WARNING);
+                        mostrarAlerta("Validaci├│n", "Debe seleccionar una materia", Alert.AlertType.WARNING);
                         return;
                     }
                     if (cmbParcial.getValue() == null) {
-                        mostrarAlerta("Validación", "Debe seleccionar un parcial", Alert.AlertType.WARNING);
+                        mostrarAlerta("Validaci├│n", "Debe seleccionar un parcial", Alert.AlertType.WARNING);
                         return;
                     }
 
-                    // Validar que la puntuación máxima no esté vacía
+                    // Validar que la puntuaci├│n m├íxima no est├⌐ vac├¡a
                     if (txtPuntMax.getText() == null || txtPuntMax.getText().trim().isEmpty()) {
-                        mostrarAlerta("Validación", "La puntuación máxima es requerida", Alert.AlertType.WARNING);
+                        mostrarAlerta("Validaci├│n", "La puntuaci├│n m├íxima es requerida", Alert.AlertType.WARNING);
                         return;
                     }
 
-                    // Procesar puntuación máxima - independientemente del tipo de evaluación
+                    // Procesar puntuaci├│n m├íxima - independientemente del tipo de evaluaci├│n
                     Double puntuacionMax = null;
                     try {
                         int valor = Integer.parseInt(txtPuntMax.getText().trim());
                         if (valor <= 0 || valor > 99) {
-                            mostrarAlerta("Error", "La puntuación máxima debe ser entre 1 y 99", Alert.AlertType.ERROR);
+                            mostrarAlerta("Error", "La puntuaci├│n m├íxima debe ser entre 1 y 99", Alert.AlertType.ERROR);
                             return;
                         }
                         puntuacionMax = (double) valor;
                     } catch (NumberFormatException e) {
-                        mostrarAlerta("Error", "La puntuación máxima debe ser un número válido", Alert.AlertType.ERROR);
+                        mostrarAlerta("Error", "La puntuaci├│n m├íxima debe ser un n├║mero v├ílido", Alert.AlertType.ERROR);
                         return;
                     }
 
@@ -2274,12 +2274,12 @@ public class HomeController {
                         builder.id((Long) btnGuardar.getUserData());
                         Criterio criterio = builder.build();
                         criterioService.actualizarCriterio(criterio);
-                        mostrarAlerta("Éxito", "Criterio actualizado correctamente", Alert.AlertType.INFORMATION);
+                        mostrarAlerta("├ëxito", "Criterio actualizado correctamente", Alert.AlertType.INFORMATION);
                     } else {
                         // Crear
                         Criterio criterio = builder.build();
                         criterioService.crearCriterio(criterio);
-                        mostrarAlerta("Éxito", "Criterio creado correctamente", Alert.AlertType.INFORMATION);
+                        mostrarAlerta("├ëxito", "Criterio creado correctamente", Alert.AlertType.INFORMATION);
                     }
 
                     // Limpiar formulario
@@ -2320,7 +2320,7 @@ public class HomeController {
         return vista;
     }
 
-    // Método para cargar criterios en la tabla
+    // M├⌐todo para cargar criterios en la tabla
     private void cargarCriterios(TableView<Criterio> tabla) {
         try {
             ObservableList<Criterio> criteriosList = FXCollections.observableArrayList(
@@ -2338,7 +2338,7 @@ public class HomeController {
         }
     }
 
-    // Método para crear la vista completa de agregados
+    // M├⌐todo para crear la vista completa de agregados
     private VBox crearVistaAgregadosCompleta() {
         VBox vista = new VBox(20);
         vista.setStyle("-fx-padding: 20; -fx-background-color: #f5f5f5;");
@@ -2349,7 +2349,7 @@ public class HomeController {
             VBox formPanel = new VBox(15);
             formPanel.setStyle("-fx-padding: 20; -fx-background-color: white; -fx-background-radius: 5;");
 
-            Label lblFormTitle = new Label("Información del Agregado");
+            Label lblFormTitle = new Label("Informaci├│n del Agregado");
             lblFormTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
 
             javafx.scene.layout.GridPane gridForm = new javafx.scene.layout.GridPane();
@@ -2449,8 +2449,8 @@ public class HomeController {
             cmbParcial.setDisable(true);
             cmbParcial.setItems(FXCollections.observableArrayList(1, 2, 3));
 
-            // ComboBox Criterio de Evaluación
-            Label lblCriterio = new Label("Criterio de Evaluación:");
+            // ComboBox Criterio de Evaluaci├│n
+            Label lblCriterio = new Label("Criterio de Evaluaci├│n:");
             ComboBox<Criterio> cmbCriterio = new ComboBox<>();
             cmbCriterio.setPromptText("Seleccione primero un parcial");
             cmbCriterio.setPrefWidth(400);
@@ -2757,7 +2757,7 @@ public class HomeController {
             colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
             colNombre.setPrefWidth(200);
 
-            TableColumn<Agregado, String> colCriterio = new TableColumn<>("Criterio de Evaluación");
+            TableColumn<Agregado, String> colCriterio = new TableColumn<>("Criterio de Evaluaci├│n");
             colCriterio.setPrefWidth(250);
             colCriterio.setCellValueFactory(cellData -> {
                 Agregado agregado = cellData.getValue();
@@ -2803,8 +2803,8 @@ public class HomeController {
             TableColumn<Agregado, Void> colOrdenAcciones = new TableColumn<>("Mover");
             colOrdenAcciones.setPrefWidth(100);
             colOrdenAcciones.setCellFactory(col -> new TableCell<>() {
-                private final Button btnSubir = new Button("↑");
-                private final Button btnBajar = new Button("↓");
+                private final Button btnSubir = new Button("Γåæ");
+                private final Button btnBajar = new Button("Γåô");
 
                 {
                     btnSubir.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 5 10; -fx-cursor: hand; -fx-font-weight: bold;");
@@ -2842,7 +2842,7 @@ public class HomeController {
                         return;
                     }
 
-                    // Mostrar controles solo cuando ambos filtros (materia y cuatrimestre) están seleccionados
+                    // Mostrar controles solo cuando ambos filtros (materia y cuatrimestre) est├ín seleccionados
                     boolean filtrosCompletos = cmbFiltroMateriaAgregados.getValue() != null && cmbFiltroCriterioAgregados.getValue() != null;
                     if (!filtrosCompletos) {
                         setGraphic(null);
@@ -2866,10 +2866,10 @@ public class HomeController {
                     javafx.scene.layout.HBox.setHgrow(rightSpacer, javafx.scene.layout.Priority.ALWAYS);
 
                     if (index == 0) {
-                        // Primer registro: botón bajar alineado a la derecha
+                        // Primer registro: bot├│n bajar alineado a la derecha
                         contenedor.getChildren().setAll(leftSpacer, btnBajar);
                     } else if (index == totalItems - 1) {
-                        // Último registro: botón subir alineado a la izquierda
+                        // ├Ültimo registro: bot├│n subir alineado a la izquierda
                         contenedor.getChildren().setAll(btnSubir, rightSpacer);
                     } else {
                         // Registros intermedios: ambos botones centrados
@@ -2955,16 +2955,16 @@ public class HomeController {
                     btnEliminar.setOnAction(event -> {
                         Agregado agregado = getTableView().getItems().get(getIndex());
                         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
-                        confirmacion.setTitle("Confirmar eliminación");
+                        confirmacion.setTitle("Confirmar eliminaci├│n");
                         confirmacion.setHeaderText(null);
-                        confirmacion.setContentText("¿Está seguro de eliminar el agregado: " + agregado.getNombre() + "?");
+                        confirmacion.setContentText("┬┐Est├í seguro de eliminar el agregado: " + agregado.getNombre() + "?");
 
                         confirmacion.showAndWait().ifPresent(response -> {
                             if (response == ButtonType.OK) {
                                 try {
                                     agregadoService.eliminarAgregado(agregado.getId());
                                     cargarAgregados(tblAgregados);
-                                    mostrarAlerta("Éxito", "Agregado eliminado correctamente", Alert.AlertType.INFORMATION);
+                                    mostrarAlerta("├ëxito", "Agregado eliminado correctamente", Alert.AlertType.INFORMATION);
                                 } catch (Exception e) {
                                     LOG.error("Error al eliminar agregado", e);
                                     mostrarAlerta("Error", "Error al eliminar: " + e.getMessage(), Alert.AlertType.ERROR);
@@ -3088,7 +3088,7 @@ public class HomeController {
                             cmbFiltroCriterioAgregados.setItems(FXCollections.observableArrayList());
                             cmbFiltroCriterioAgregados.setValue(null);
                             cmbFiltroCriterioAgregados.setDisable(true);
-                            cmbFiltroCriterioAgregados.setPromptText("No hay criterios para esta combinación");
+                            cmbFiltroCriterioAgregados.setPromptText("No hay criterios para esta combinaci├│n");
                         } else {
                             cmbFiltroCriterioAgregados.setItems(FXCollections.observableArrayList(criteriosFiltrados));
                             cmbFiltroCriterioAgregados.setValue(null);
@@ -3145,7 +3145,7 @@ public class HomeController {
                     ObservableList<Agregado> agregadosOrdenados = tblAgregados.getItems();
 
                     if (agregadosOrdenados.isEmpty()) {
-                        mostrarAlerta("Información", "No hay agregados para ordenar", Alert.AlertType.INFORMATION);
+                        mostrarAlerta("Informaci├│n", "No hay agregados para ordenar", Alert.AlertType.INFORMATION);
                         return;
                     }
 
@@ -3157,7 +3157,7 @@ public class HomeController {
                     if (!todosMismoCriterio) {
                         mostrarAlerta("Advertencia",
                             "Los agregados visibles pertenecen a diferentes criterios.\n" +
-                            "Para guardar el orden, asegúrese de que todos los agregados mostrados sean del mismo criterio.\n\n" +
+                            "Para guardar el orden, aseg├║rese de que todos los agregados mostrados sean del mismo criterio.\n\n" +
                             "Sugerencia: Use el filtro por materia para ver agregados agrupados por criterio.",
                             Alert.AlertType.WARNING);
                         return;
@@ -3167,13 +3167,13 @@ public class HomeController {
                     Criterio criterio = criterioService.obtenerCriterioPorId(primerCriterioId).orElse(null);
                     String nombreCriterio = criterio != null ? criterio.getNombre() : "Criterio " + primerCriterioId;
 
-                    // Actualizar el orden en la base de datos según la posición actual en la tabla
+                    // Actualizar el orden en la base de datos seg├║n la posici├│n actual en la tabla
                     int nuevoOrden = 1;
                     for (Agregado agregado : agregadosOrdenados) {
                         agregadoService.actualizarOrdenAgregado(agregado.getId(), nuevoOrden++);
                     }
 
-                    mostrarAlerta("Éxito", "El orden de los agregados del criterio '" + nombreCriterio + "' se guardó correctamente", Alert.AlertType.INFORMATION);
+                    mostrarAlerta("├ëxito", "El orden de los agregados del criterio '" + nombreCriterio + "' se guard├│ correctamente", Alert.AlertType.INFORMATION);
 
                     // Recargar la tabla manteniendo el filtro
                     /*Materia materiaFiltro = cmbFiltroMateriaAgregados.getValue();
@@ -3197,11 +3197,11 @@ public class HomeController {
             btnGuardar.setOnAction(event -> {
                 try {
                     if (txtNombre.getText() == null || txtNombre.getText().trim().isEmpty()) {
-                        mostrarAlerta("Validación", "El nombre es requerido", Alert.AlertType.WARNING);
+                        mostrarAlerta("Validaci├│n", "El nombre es requerido", Alert.AlertType.WARNING);
                         return;
                     }
                     if (cmbCriterio.getValue() == null) {
-                        mostrarAlerta("Validación", "Debe seleccionar un criterio de evaluación", Alert.AlertType.WARNING);
+                        mostrarAlerta("Validaci├│n", "Debe seleccionar un criterio de evaluaci├│n", Alert.AlertType.WARNING);
                         return;
                     }
 
@@ -3214,12 +3214,12 @@ public class HomeController {
                         builder.id((Long) btnGuardar.getUserData());
                         Agregado agregado = builder.build();
                         agregadoService.actualizarAgregado(agregado);
-                        mostrarAlerta("Éxito", "Agregado actualizado correctamente", Alert.AlertType.INFORMATION);
+                        mostrarAlerta("├ëxito", "Agregado actualizado correctamente", Alert.AlertType.INFORMATION);
                     } else {
                         // Crear
                         Agregado agregado = builder.build();
                         agregadoService.crearAgregado(agregado);
-                        mostrarAlerta("Éxito", "Agregado creado correctamente", Alert.AlertType.INFORMATION);
+                        mostrarAlerta("├ëxito", "Agregado creado correctamente", Alert.AlertType.INFORMATION);
                     }
 
                     // Limpiar formulario
@@ -3241,7 +3241,7 @@ public class HomeController {
                     lblEstadisticas.setText("Total de agregados: " + tblAgregados.getItems().size());
 
                 } catch (IllegalArgumentException e) {
-                    mostrarAlerta("Validación", e.getMessage(), Alert.AlertType.WARNING);
+                    mostrarAlerta("Validaci├│n", e.getMessage(), Alert.AlertType.WARNING);
                 } catch (Exception e) {
                     LOG.error("Error al guardar agregado", e);
                     mostrarAlerta("Error", "Error al guardar: " + e.getMessage(), Alert.AlertType.ERROR);
@@ -3273,7 +3273,7 @@ public class HomeController {
         return vista;
     }
 
-    // Método para crear la vista completa de Concentrado de calificaciones
+    // M├⌐todo para crear la vista completa de Concentrado de calificaciones
     private VBox crearVistaConcentradoCompleta() {
         VBox vista = new VBox(20);
         vista.setStyle("-fx-padding: 20; -fx-background-color: #f5f5f5;");
@@ -3357,7 +3357,7 @@ public class HomeController {
             cmbParcial.setItems(FXCollections.observableArrayList(1, 2, 3));
             parcialContainer.getChildren().addAll(lblParcial, cmbParcial);
 
-            // Botón Buscar (antes "Generar Tabla") - en la misma fila que los inputs
+            // Bot├│n Buscar (antes "Generar Tabla") - en la misma fila que los inputs
             VBox buscarContainer = new VBox(5);
             Label lblEspacio = new Label(" "); // Espacio para alinear con los otros labels
             Button btnBuscar = new Button("Buscar");
@@ -3400,7 +3400,7 @@ public class HomeController {
             scrollPane.setContent(tblCalificaciones);
             tablaPanel.getChildren().addAll(botonesTablaBox, scrollPane);
 
-            // Lógica para cargar materias cuando se selecciona un grupo
+            // L├│gica para cargar materias cuando se selecciona un grupo
             cmbGrupo.setOnAction(event -> {
                 Grupo grupoSeleccionado = cmbGrupo.getValue();
                 if (grupoSeleccionado != null) {
@@ -3422,10 +3422,10 @@ public class HomeController {
                 }
             });
 
-            // Evento del botón Buscar (antes "Generar Tabla")
+            // Evento del bot├│n Buscar (antes "Generar Tabla")
             btnBuscar.setOnAction(event -> {
                 if (cmbGrupo.getValue() == null || cmbMateria.getValue() == null || cmbParcial.getValue() == null) {
-                    mostrarAlerta("Validación", "Debe seleccionar Grupo, Materia y Parcial", Alert.AlertType.WARNING);
+                    mostrarAlerta("Validaci├│n", "Debe seleccionar Grupo, Materia y Parcial", Alert.AlertType.WARNING);
                     return;
                 }
 
@@ -3434,20 +3434,20 @@ public class HomeController {
                 btnGenerarArchivo.setDisable(false);
             });
 
-            // Evento del botón Guardar (antes "Guardar Calificaciones")
+            // Evento del bot├│n Guardar (antes "Guardar Calificaciones")
             btnGuardar.setOnAction(event -> {
                 if (cmbGrupo.getValue() == null || cmbMateria.getValue() == null || cmbParcial.getValue() == null) {
-                    mostrarAlerta("Validación", "Debe seleccionar Grupo, Materia y Parcial", Alert.AlertType.WARNING);
+                    mostrarAlerta("Validaci├│n", "Debe seleccionar Grupo, Materia y Parcial", Alert.AlertType.WARNING);
                     return;
                 }
                 guardarCalificaciones(tblCalificaciones, cmbGrupo.getValue(), cmbMateria.getValue(), cmbParcial.getValue());
-                mostrarAlerta("Éxito", "Calificaciones guardadas correctamente", Alert.AlertType.INFORMATION);
+                mostrarAlerta("├ëxito", "Calificaciones guardadas correctamente", Alert.AlertType.INFORMATION);
             });
 
-            // Evento del botón Generar archivo
+            // Evento del bot├│n Generar archivo
             btnGenerarArchivo.setOnAction(event -> {
                 if (cmbGrupo.getValue() == null || cmbMateria.getValue() == null || cmbParcial.getValue() == null) {
-                    mostrarAlerta("Validación", "Debe seleccionar Grupo, Materia y Parcial", Alert.AlertType.WARNING);
+                    mostrarAlerta("Validaci├│n", "Debe seleccionar Grupo, Materia y Parcial", Alert.AlertType.WARNING);
                     return;
                 }
                 generarArchivoConcentrado(tblCalificaciones, cmbGrupo.getValue(), cmbMateria.getValue(), cmbParcial.getValue());
@@ -3462,7 +3462,7 @@ public class HomeController {
         return vista;
     }
 
-    // Método para crear la vista de Informe de Concentrado (Solo Lectura)
+    // M├⌐todo para crear la vista de Informe de Concentrado (Solo Lectura)
     private VBox crearVistaInformeConcentrado() {
         VBox vista = new VBox(20);
         vista.setStyle("-fx-padding: 20; -fx-background-color: #f5f5f5;");
@@ -3546,14 +3546,14 @@ public class HomeController {
             cmbParcial.setItems(FXCollections.observableArrayList(1, 2, 3));
             parcialContainer.getChildren().addAll(lblParcial, cmbParcial);
 
-            // Botón Buscar
+            // Bot├│n Buscar
             VBox buscarContainer = new VBox(5);
             Label lblEspacio = new Label(" "); // Espacio para alinear con los otros labels
             Button btnBuscar = new Button("Buscar");
             btnBuscar.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;");
             buscarContainer.getChildren().addAll(lblEspacio, btnBuscar);
 
-            // Botón Limpiar
+            // Bot├│n Limpiar
             VBox limpiarContainer = new VBox(5);
             Label lblEspacio2 = new Label(" "); // Espacio para alinear con los otros labels
             Button btnLimpiar = new Button("Limpiar");
@@ -3618,7 +3618,7 @@ public class HomeController {
             scrollPane.setContent(tblInforme);
             tablaPanel.getChildren().addAll(scrollPane);
 
-            // Lógica para cargar materias cuando se selecciona un grupo
+            // L├│gica para cargar materias cuando se selecciona un grupo
             cmbGrupo.setOnAction(event -> {
                 Grupo grupoSeleccionado = cmbGrupo.getValue();
                 if (grupoSeleccionado != null) {
@@ -3668,10 +3668,10 @@ public class HomeController {
                 }
             });
 
-            // Evento del botón Buscar
+            // Evento del bot├│n Buscar
             btnBuscar.setOnAction(event -> {
                 if (cmbGrupo.getValue() == null || cmbMateria.getValue() == null || cmbParcial.getValue() == null) {
-                    mostrarAlerta("Validación", "Debe seleccionar Grupo, Materia y Parcial", Alert.AlertType.WARNING);
+                    mostrarAlerta("Validaci├│n", "Debe seleccionar Grupo, Materia y Parcial", Alert.AlertType.WARNING);
                     return;
                 }
 
@@ -3684,7 +3684,7 @@ public class HomeController {
                         nombre, apellidoPaterno, apellidoMaterno);
             });
 
-            // Evento del botón Limpiar
+            // Evento del bot├│n Limpiar
             btnLimpiar.setOnAction(event -> {
                 // Limpiar ComboBoxes
                 cmbGrupo.setValue(null);
@@ -3714,7 +3714,7 @@ public class HomeController {
         return vista;
     }
 
-    // Método para generar la tabla de informe (solo lectura) - similar a generarTablaCalificaciones pero sin edición
+    // M├⌐todo para generar la tabla de informe (solo lectura) - similar a generarTablaCalificaciones pero sin edici├│n
     private void generarTablaInformeConcentrado(TableView<java.util.Map<String, Object>> tabla, Grupo grupo, Materia materia, Integer parcial,
                                                 String filtroNombre, String filtroApellidoPaterno, String filtroApellidoMaterno) {
         try {
@@ -3742,7 +3742,7 @@ public class HomeController {
                     .collect(java.util.stream.Collectors.toList());
 
             if (alumnos.isEmpty()) {
-                mostrarAlerta("Información", "No hay alumnos que coincidan con los filtros", Alert.AlertType.INFORMATION);
+                mostrarAlerta("Informaci├│n", "No hay alumnos que coincidan con los filtros", Alert.AlertType.INFORMATION);
                 return;
             }
 
@@ -3758,7 +3758,7 @@ public class HomeController {
                     .collect(java.util.stream.Collectors.toList());
 
             if (criterios.isEmpty()) {
-                mostrarAlerta("Información", "No hay criterios para esta materia y parcial", Alert.AlertType.INFORMATION);
+                mostrarAlerta("Informaci├│n", "No hay criterios para esta materia y parcial", Alert.AlertType.INFORMATION);
                 return;
             }
 
@@ -3790,10 +3790,10 @@ public class HomeController {
             });
             tabla.getColumns().add(colNombre);
 
-            // Lista para recopilar información de todos los agregados de todos los criterios
+            // Lista para recopilar informaci├│n de todos los agregados de todos los criterios
             List<java.util.Map<String, Object>> criteriosInfo = new java.util.ArrayList<>();
 
-            // Crear columnas dinámicamente por criterio (solo lectura)
+            // Crear columnas din├ímicamente por criterio (solo lectura)
             for (Criterio criterio : criterios) {
                 // Obtener agregados del criterio
                 List<Agregado> agregados = agregadoService.obtenerAgregadosPorCriterio(criterio.getId()).stream()
@@ -3806,7 +3806,7 @@ public class HomeController {
                         .collect(java.util.stream.Collectors.toList());
 
                 if (!agregados.isEmpty()) {
-                    // Guardar información del criterio para la columna Portafolio
+                    // Guardar informaci├│n del criterio para la columna Portafolio
                     java.util.Map<String, Object> criterioInfo = new java.util.HashMap<>();
                     criterioInfo.put("criterioId", criterio.getId());
                     criterioInfo.put("agregadoIds", agregados.stream().map(Agregado::getId).collect(java.util.stream.Collectors.toList()));
@@ -3836,25 +3836,25 @@ public class HomeController {
                             String texto = "";
 
                             if (esCheck) {
-                                // Para tipo Check, mostrar ✓ o X en rojo si está vacío
+                                // Para tipo Check, mostrar Γ£ô o X en rojo si est├í vac├¡o
                                 if (valor instanceof Boolean && (Boolean) valor) {
-                                    texto = "✓";
+                                    texto = "Γ£ô";
                                 } else if (valor instanceof String) {
                                     String strValor = (String) valor;
                                     if ("true".equalsIgnoreCase(strValor) || "1".equals(strValor)) {
-                                        texto = "✓";
+                                        texto = "Γ£ô";
                                     } else {
-                                        texto = "X"; // Vacío = X
+                                        texto = "X"; // Vac├¡o = X
                                     }
                                 } else {
-                                    texto = "X"; // Vacío = X
+                                    texto = "X"; // Vac├¡o = X
                                 }
                             } else {
-                                // Para tipo Puntuación, mostrar el valor numérico o 0 en rojo si está vacío
+                                // Para tipo Puntuaci├│n, mostrar el valor num├⌐rico o 0 en rojo si est├í vac├¡o
                                 if (valor != null && !valor.toString().isEmpty()) {
                                     texto = valor.toString();
                                 } else {
-                                    texto = "0"; // Vacío = 0
+                                    texto = "0"; // Vac├¡o = 0
                                 }
                             }
 
@@ -3871,7 +3871,7 @@ public class HomeController {
                                     setStyle("");
                                 } else {
                                     setText(item);
-                                    // Si es Check y está vacío (X), o es Puntuación y es 0, poner en rojo
+                                    // Si es Check y est├í vac├¡o (X), o es Puntuaci├│n y es 0, poner en rojo
                                     if ((esCheckFinal && "X".equals(item)) || (!esCheckFinal && "0".equals(item))) {
                                         setStyle("-fx-alignment: CENTER; -fx-text-fill: red; -fx-font-weight: bold;");
                                     } else {
@@ -4085,7 +4085,7 @@ public class HomeController {
 
                 tabla.getColumns().add(colPorcentajeExamen);
 
-                // Columna Calificación Examen
+                // Columna Calificaci├│n Examen
                 TableColumn<java.util.Map<String, Object>, String> colCalificacionExamen = new TableColumn<>("Calif. Examen");
                 colCalificacionExamen.setPrefWidth(120);
                 colCalificacionExamen.setMinWidth(120);
@@ -4146,8 +4146,8 @@ public class HomeController {
 
             tabla.getColumns().add(colPuntosParcial);
 
-            // Columna Calificación Parcial
-            TableColumn<java.util.Map<String, Object>, String> colCalificacionParcial = new TableColumn<>("Calificación Parcial");
+            // Columna Calificaci├│n Parcial
+            TableColumn<java.util.Map<String, Object>, String> colCalificacionParcial = new TableColumn<>("Calificaci├│n Parcial");
             colCalificacionParcial.setPrefWidth(150);
             colCalificacionParcial.setMinWidth(150);
             colCalificacionParcial.setMaxWidth(150);
@@ -4212,7 +4212,7 @@ public class HomeController {
                                 fila.put("agregado_" + agregado.getId(), puntuacion != null ? String.valueOf(puntuacion) : "");
                             }
                         } else {
-                            // Si no hay calificación, poner valor por defecto según el tipo
+                            // Si no hay calificaci├│n, poner valor por defecto seg├║n el tipo
                             if (esCheck) {
                                 fila.put("agregado_" + agregado.getId(), false);
                             } else {
@@ -4270,7 +4270,7 @@ public class HomeController {
                                 try {
                                     puntosObtenidosCriterio += Double.parseDouble((String) valor);
                                 } catch (NumberFormatException e) {
-                                    // Ignorar valores no numéricos
+                                    // Ignorar valores no num├⌐ricos
                                 }
                             }
                         }
@@ -4288,7 +4288,7 @@ public class HomeController {
                         try {
                             puntosExamen = Double.parseDouble((String) aciertosExamen);
                         } catch (NumberFormatException e) {
-                            // Ignorar valores no numéricos
+                            // Ignorar valores no num├⌐ricos
                         }
                     }
                 }
@@ -4310,7 +4310,7 @@ public class HomeController {
         }
     }
 
-    // Método para generar la tabla de calificaciones
+    // M├⌐todo para generar la tabla de calificaciones
     private void generarTablaCalificaciones(TableView<java.util.Map<String, Object>> tabla, Grupo grupo, Materia materia, Integer parcial) {
         try {
             tabla.getColumns().clear();
@@ -4327,7 +4327,7 @@ public class HomeController {
                     .collect(java.util.stream.Collectors.toList());
 
             if (alumnos.isEmpty()) {
-                mostrarAlerta("Información", "No hay alumnos en este grupo", Alert.AlertType.INFORMATION);
+                mostrarAlerta("Informaci├│n", "No hay alumnos en este grupo", Alert.AlertType.INFORMATION);
                 return;
             }
 
@@ -4343,7 +4343,7 @@ public class HomeController {
                     .collect(java.util.stream.Collectors.toList());
 
             if (criterios.isEmpty()) {
-                mostrarAlerta("Información", "No hay criterios para esta materia y parcial", Alert.AlertType.INFORMATION);
+                mostrarAlerta("Informaci├│n", "No hay criterios para esta materia y parcial", Alert.AlertType.INFORMATION);
                 return;
             }
 
@@ -4371,10 +4371,10 @@ public class HomeController {
             });
             tabla.getColumns().add(colNombre);
 
-            // Lista para recopilar información de todos los agregados de todos los criterios
+            // Lista para recopilar informaci├│n de todos los agregados de todos los criterios
             List<java.util.Map<String, Object>> criteriosInfo = new java.util.ArrayList<>();
 
-            // Crear columnas dinámicamente por criterio
+            // Crear columnas din├ímicamente por criterio
             for (Criterio criterio : criterios) {
                 // Obtener agregados del criterio
                 List<Agregado> agregados = agregadoService.obtenerAgregadosPorCriterio(criterio.getId()).stream()
@@ -4393,7 +4393,7 @@ public class HomeController {
                     );
                     colCriterio.setResizable(false);
 
-                    // Obtener IDs de todos los agregados del criterio para validación
+                    // Obtener IDs de todos los agregados del criterio para validaci├│n
                     final List<Long> agregadoIdsDelCriterio = agregados.stream()
                             .map(Agregado::getId)
                             .collect(java.util.stream.Collectors.toList());
@@ -4462,7 +4462,7 @@ public class HomeController {
                             colCriterio.getColumns().add(colAgregadoCheck);
 
                         } else {
-                            // Columna con TextField para tipo Puntuacion (máximo 2 dígitos)
+                            // Columna con TextField para tipo Puntuacion (m├íximo 2 d├¡gitos)
                             TableColumn<java.util.Map<String, Object>, String> colAgregadoPuntos = new TableColumn<>(agregado.getNombre());
                             colAgregadoPuntos.setPrefWidth(100);
                             colAgregadoPuntos.setMinWidth(100);
@@ -4482,10 +4482,10 @@ public class HomeController {
                                     textField.setStyle("-fx-alignment: CENTER; -fx-pref-width: 90px;");
                                     textField.setMaxWidth(90);
 
-                                    // Validar que solo sean números de máximo 2 dígitos
+                                    // Validar que solo sean n├║meros de m├íximo 2 d├¡gitos
                                     textField.textProperty().addListener((obs, oldVal, newVal) -> {
                                         if (newVal != null && !newVal.isEmpty()) {
-                                            // Solo permitir números y punto decimal
+                                            // Solo permitir n├║meros y punto decimal
                                             if (!newVal.matches("\\d{0,2}(\\.\\d{0,2})?")) {
                                                 textField.setText(oldVal);
                                                 return;
@@ -4498,7 +4498,7 @@ public class HomeController {
                                                     return;
                                                 }
                                             } catch (NumberFormatException e) {
-                                                // Ignorar si no es un número válido aún
+                                                // Ignorar si no es un n├║mero v├ílido a├║n
                                             }
                                         }
                                     });
@@ -4521,15 +4521,15 @@ public class HomeController {
                                                     try {
                                                         sumaTotal += Double.parseDouble((String) valor);
                                                     } catch (NumberFormatException e) {
-                                                        // Ignorar valores no numéricos
+                                                        // Ignorar valores no num├⌐ricos
                                                     }
                                                 }
                                             }
 
-                                            // Validar que la suma no exceda el máximo
+                                            // Validar que la suma no exceda el m├íximo
                                             if (sumaTotal > puntuacionMaximaCriterio) {
                                                 mostrarAlerta("Advertencia",
-                                                    "No puede exceder el máximo de puntos",
+                                                    "No puede exceder el m├íximo de puntos",
                                                     Alert.AlertType.WARNING);
                                                 // Restaurar el valor anterior
                                                 fila.put("agregado_" + agregado.getId(), valorAnterior != null ? valorAnterior : "");
@@ -4559,15 +4559,15 @@ public class HomeController {
                                                     try {
                                                         sumaTotal += Double.parseDouble((String) valor);
                                                     } catch (NumberFormatException e) {
-                                                        // Ignorar valores no numéricos
+                                                        // Ignorar valores no num├⌐ricos
                                                     }
                                                 }
                                             }
 
-                                            // Validar que la suma no exceda el máximo
+                                            // Validar que la suma no exceda el m├íximo
                                             if (sumaTotal > puntuacionMaximaCriterio) {
                                                 mostrarAlerta("Advertencia",
-                                                    "No puede exceder el máximo de puntos",
+                                                    "No puede exceder el m├íximo de puntos",
                                                     Alert.AlertType.WARNING);
                                                 // Restaurar el valor anterior
                                                 fila.put("agregado_" + agregado.getId(), valorAnterior != null ? valorAnterior : "");
@@ -4631,14 +4631,14 @@ public class HomeController {
                                     }
                                 }
                             } else {
-                                // Para tipo Puntuación, sumar los valores numéricos
+                                // Para tipo Puntuaci├│n, sumar los valores num├⌐ricos
                                 if (valor instanceof Number) {
                                     puntosObtenidos += ((Number) valor).doubleValue();
                                 } else if (valor instanceof String && !((String) valor).isEmpty()) {
                                     try {
                                         puntosObtenidos += Double.parseDouble((String) valor);
                                     } catch (NumberFormatException e) {
-                                        // Ignorar valores no numéricos
+                                        // Ignorar valores no num├⌐ricos
                                     }
                                 }
                             }
@@ -4667,7 +4667,7 @@ public class HomeController {
 
                     tabla.getColumns().add(colCriterio);
 
-                    // Guardar información del criterio para la columna Portafolio
+                    // Guardar informaci├│n del criterio para la columna Portafolio
                     java.util.Map<String, Object> criterioInfo = new java.util.HashMap<>();
                     criterioInfo.put("criterioId", criterio.getId());
                     criterioInfo.put("agregadoIds", agregadoIdsDelCriterio);
@@ -4714,14 +4714,14 @@ public class HomeController {
                                     }
                                 }
                             } else {
-                                // Para tipo Puntuación, sumar los valores numéricos
+                                // Para tipo Puntuaci├│n, sumar los valores num├⌐ricos
                                 if (valor instanceof Number) {
                                     puntosObtenidosCriterio += ((Number) valor).doubleValue();
                                 } else if (valor instanceof String && !((String) valor).isEmpty()) {
                                     try {
                                         puntosObtenidosCriterio += Double.parseDouble((String) valor);
                                     } catch (NumberFormatException e) {
-                                        // Ignorar valores no numéricos
+                                        // Ignorar valores no num├⌐ricos
                                     }
                                 }
                             }
@@ -4752,7 +4752,7 @@ public class HomeController {
                 tabla.getColumns().add(colPortafolio);
             }
 
-            // Agregar columnas de Examen (Puntos Examen, Porcentaje, Calificación)
+            // Agregar columnas de Examen (Puntos Examen, Porcentaje, Calificaci├│n)
             // Buscar el examen correspondiente al grupo, materia y parcial
             Optional<Examen> examenOpt = examenService.obtenerExamenPorGrupoMateriaParcial(
                     grupo.getId(), materia.getId(), parcial);
@@ -4822,7 +4822,7 @@ public class HomeController {
 
                 tabla.getColumns().add(colPorcentajeExamen);
 
-                // Columna Calificación Examen
+                // Columna Calificaci├│n Examen
                 TableColumn<java.util.Map<String, Object>, String> colCalificacionExamen = new TableColumn<>("Calif. Examen");
                 colCalificacionExamen.setPrefWidth(120);
                 colCalificacionExamen.setMinWidth(120);
@@ -4890,14 +4890,14 @@ public class HomeController {
                                 }
                             }
                         } else {
-                            // Para tipo Puntuación, sumar los valores numéricos
+                            // Para tipo Puntuaci├│n, sumar los valores num├⌐ricos
                             if (valor instanceof Number) {
                                 puntosObtenidosCriterio += ((Number) valor).doubleValue();
                             } else if (valor instanceof String && !((String) valor).isEmpty()) {
                                 try {
                                     puntosObtenidosCriterio += Double.parseDouble((String) valor);
                                 } catch (NumberFormatException e) {
-                                    // Ignorar valores no numéricos
+                                    // Ignorar valores no num├⌐ricos
                                 }
                             }
                         }
@@ -4906,7 +4906,7 @@ public class HomeController {
                     totalPortafolio += puntosObtenidosCriterio;
                 }
 
-                // Obtener puntos del examen (aciertos/puntos examen, no calificación)
+                // Obtener puntos del examen (aciertos/puntos examen, no calificaci├│n)
                 Object aciertosExamen = fila.get("aciertosExamen");
                 double puntosExamen = 0.0;
                 if (aciertosExamen != null) {
@@ -4917,7 +4917,7 @@ public class HomeController {
                         try {
                             puntosExamen = Double.parseDouble((String) aciertosExamen);
                         } catch (NumberFormatException e) {
-                            // Ignorar valores no numéricos
+                            // Ignorar valores no num├⌐ricos
                         }
                     }
                 }
@@ -4946,8 +4946,8 @@ public class HomeController {
 
             tabla.getColumns().add(colPuntosParcial);
 
-            // Agregar columna Calificación Parcial (Puntos Parcial en escala de 10)
-            TableColumn<java.util.Map<String, Object>, String> colCalificacionParcial = new TableColumn<>("Calificación Parcial");
+            // Agregar columna Calificaci├│n Parcial (Puntos Parcial en escala de 10)
+            TableColumn<java.util.Map<String, Object>, String> colCalificacionParcial = new TableColumn<>("Calificaci├│n Parcial");
             colCalificacionParcial.setPrefWidth(140);
             colCalificacionParcial.setMinWidth(140);
             colCalificacionParcial.setMaxWidth(140);
@@ -4982,14 +4982,14 @@ public class HomeController {
                                 }
                             }
                         } else {
-                            // Para tipo Puntuación, sumar los valores numéricos
+                            // Para tipo Puntuaci├│n, sumar los valores num├⌐ricos
                             if (valor instanceof Number) {
                                 puntosObtenidosCriterio += ((Number) valor).doubleValue();
                             } else if (valor instanceof String && !((String) valor).isEmpty()) {
                                 try {
                                     puntosObtenidosCriterio += Double.parseDouble((String) valor);
                                 } catch (NumberFormatException e) {
-                                    // Ignorar valores no numéricos
+                                    // Ignorar valores no num├⌐ricos
                                 }
                             }
                         }
@@ -4998,7 +4998,7 @@ public class HomeController {
                     totalPortafolio += puntosObtenidosCriterio;
                 }
 
-                // Obtener puntos del examen (aciertos/puntos examen, no calificación)
+                // Obtener puntos del examen (aciertos/puntos examen, no calificaci├│n)
                 Object aciertosExamen = fila.get("aciertosExamen");
                 double puntosExamen = 0.0;
                 if (aciertosExamen != null) {
@@ -5009,7 +5009,7 @@ public class HomeController {
                         try {
                             puntosExamen = Double.parseDouble((String) aciertosExamen);
                         } catch (NumberFormatException e) {
-                            // Ignorar valores no numéricos
+                            // Ignorar valores no num├⌐ricos
                         }
                     }
                 }
@@ -5017,7 +5017,7 @@ public class HomeController {
                 // Puntos Parcial = Portafolio + Puntos Examen (aciertos)
                 double puntosParcial = totalPortafolio + puntosExamen;
 
-                // Calificación Parcial = (Puntos Parcial * 10) / 100
+                // Calificaci├│n Parcial = (Puntos Parcial * 10) / 100
                 // Esto representa los puntos parcial en escala de 10
                 double calificacionParcial = (puntosParcial * 10.0) / 100.0;
 
@@ -5079,7 +5079,7 @@ public class HomeController {
                                 fila.put("agregado_" + agregado.getId(), String.valueOf(puntuacion));
                             }
                         } else {
-                            // Si no hay calificación, poner valor por defecto según el tipo
+                            // Si no hay calificaci├│n, poner valor por defecto seg├║n el tipo
                             if (esCheck) {
                                 fila.put("agregado_" + agregado.getId(), false);
                             } else {
@@ -5137,7 +5137,7 @@ public class HomeController {
                                 try {
                                     puntosObtenidosCriterio += Double.parseDouble((String) valor);
                                 } catch (NumberFormatException e) {
-                                    // Ignorar valores no numéricos
+                                    // Ignorar valores no num├⌐ricos
                                 }
                             }
                         }
@@ -5155,7 +5155,7 @@ public class HomeController {
                         try {
                             puntosExamen = Double.parseDouble((String) aciertosExamen);
                         } catch (NumberFormatException e) {
-                            // Ignorar valores no numéricos
+                            // Ignorar valores no num├⌐ricos
                         }
                     }
                 }
@@ -5177,7 +5177,7 @@ public class HomeController {
         }
     }
 
-    // Método para guardar las calificaciones
+    // M├⌐todo para guardar las calificaciones
     private void guardarCalificaciones(TableView<java.util.Map<String, Object>> tabla, Grupo grupo, Materia materia, Integer parcial) {
         try {
             int totalGuardadas = 0;
@@ -5220,7 +5220,7 @@ public class HomeController {
                                 try {
                                     puntosObtenidosCriterio += Double.parseDouble((String) valor);
                                 } catch (NumberFormatException e) {
-                                    // Ignorar valores no numéricos
+                                    // Ignorar valores no num├⌐ricos
                                 }
                             }
                         }
@@ -5239,7 +5239,7 @@ public class HomeController {
                     }
                 }
 
-                // Calcular puntos parcial y calificación parcial
+                // Calcular puntos parcial y calificaci├│n parcial
                 double puntosParcial = totalPortafolio + puntosExamen;
                 double calificacionParcial = (puntosParcial * 10.0) / 100.0;
 
@@ -5259,7 +5259,7 @@ public class HomeController {
                                 } else if (valor instanceof String) {
                                     String valorStr = ((String) valor).trim();
                                     if (!valorStr.isEmpty()) {
-                                        // Intentar convertir a número
+                                        // Intentar convertir a n├║mero
                                         if ("true".equalsIgnoreCase(valorStr)) {
                                             puntuacion = 1.0;
                                         } else if ("false".equalsIgnoreCase(valorStr)) {
@@ -5296,7 +5296,7 @@ public class HomeController {
                                     }
                                 }
                             } catch (NumberFormatException e) {
-                                LOG.warn("Valor inválido para calificación: " + valor);
+                                LOG.warn("Valor inv├ílido para calificaci├│n: " + valor);
                             }
                         }
                     }
@@ -5309,7 +5309,7 @@ public class HomeController {
         }
     }
 
-    // Método para cargar agregados en la tabla
+    // M├⌐todo para cargar agregados en la tabla
     private void cargarAgregados(TableView<Agregado> tabla) {
         try {
             ObservableList<Agregado> agregadosList = FXCollections.observableArrayList(
@@ -5328,12 +5328,12 @@ public class HomeController {
     }
 
 
-    // Método para aplicar filtros combinados de materia y parcial
+    // M├⌐todo para aplicar filtros combinados de materia y parcial
     private void aplicarFiltrosCriterios(TableView<Criterio> tabla, ComboBox<Materia> cmbMateria, ComboBox<Integer> cmbParcial) {
         try {
             List<Criterio> criteriosFiltrados = criterioService.obtenerTodosLosCriterios();
 
-            // Filtrar por materia si está seleccionada
+            // Filtrar por materia si est├í seleccionada
             Materia materiaSeleccionada = cmbMateria.getValue();
             if (materiaSeleccionada != null) {
                 criteriosFiltrados = criteriosFiltrados.stream()
@@ -5341,7 +5341,7 @@ public class HomeController {
                         .collect(java.util.stream.Collectors.toList());
             }
 
-            // Filtrar por parcial si está seleccionado
+            // Filtrar por parcial si est├í seleccionado
             Integer parcialSeleccionado = cmbParcial.getValue();
             if (parcialSeleccionado != null) {
                 criteriosFiltrados = criteriosFiltrados.stream()
@@ -5377,7 +5377,7 @@ public class HomeController {
     }
 
 
-    // Método para filtrar agregados por criterio
+    // M├⌐todo para filtrar agregados por criterio
     private void filtrarAgregadosPorCriterio(TableView<Agregado> tabla, Long criterioId) {
         try {
             List<Agregado> agregadosDelCriterio = agregadoService.obtenerAgregadosPorCriterio(criterioId);
@@ -5403,14 +5403,14 @@ public class HomeController {
         }
     }
 
-    // Método para crear la vista completa de Exámenes
+    // M├⌐todo para crear la vista completa de Ex├ímenes
     private VBox crearVistaExamenesCompleta() {
         VBox vista = new VBox(20);
         vista.setStyle("-fx-padding: 20; -fx-background-color: #f5f5f5;");
 
         try {
             // Header
-            Label lblTitulo = new Label("Exámenes");
+            Label lblTitulo = new Label("Ex├ímenes");
             lblTitulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;");
 
             // Panel de filtros
@@ -5487,7 +5487,7 @@ public class HomeController {
             cmbParcial.setItems(FXCollections.observableArrayList(1, 2, 3));
             parcialContainer.getChildren().addAll(lblParcial, cmbParcial);
 
-            // Botón Buscar en la misma fila
+            // Bot├│n Buscar en la misma fila
             VBox buscarContainer = new VBox(5);
             Label lblEspacio = new Label(" "); // Espaciador para alinear con los otros labels
             lblEspacio.setStyle("-fx-font-size: 14px;");
@@ -5517,7 +5517,7 @@ public class HomeController {
             txtTotalAciertos.setPrefWidth(60);
             txtTotalAciertos.setStyle("-fx-alignment: CENTER;");
 
-            // Limitar a máximo 2 dígitos
+            // Limitar a m├íximo 2 d├¡gitos
             txtTotalAciertos.textProperty().addListener((obs, oldVal, newVal) -> {
                 if (newVal != null && !newVal.matches("\\d{0,2}")) {
                     txtTotalAciertos.setText(oldVal);
@@ -5529,8 +5529,8 @@ public class HomeController {
                 }
             });
 
-            // Campo para Fecha de Aplicación
-            Label lblFechaAplicacion = new Label("Fecha de aplicación:");
+            // Campo para Fecha de Aplicaci├│n
+            Label lblFechaAplicacion = new Label("Fecha de aplicaci├│n:");
             lblFechaAplicacion.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #555; -fx-padding: 0 0 0 20;");
 
             DatePicker dpFechaAplicacion = new DatePicker();
@@ -5550,8 +5550,8 @@ public class HomeController {
             tblAlumnos.setPlaceholder(new Label("Seleccione Grupo, Materia y Parcial, luego presione 'Generar Tabla'"));
             tblAlumnos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-            // Columna Número de Lista
-            TableColumn<Alumno, Integer> colNumeroLista = new TableColumn<>("N° Lista");
+            // Columna N├║mero de Lista
+            TableColumn<Alumno, Integer> colNumeroLista = new TableColumn<>("N┬░ Lista");
             colNumeroLista.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("numeroLista"));
             colNumeroLista.setPrefWidth(80);
             colNumeroLista.setStyle("-fx-alignment: CENTER;");
@@ -5588,7 +5588,7 @@ public class HomeController {
                     textField.setStyle("-fx-alignment: CENTER;");
                     textField.setPromptText("0-99");
 
-                    // Limitar a máximo 2 dígitos
+                    // Limitar a m├íximo 2 d├¡gitos
                     textField.textProperty().addListener((obs, oldVal, newVal) -> {
                         if (newVal != null && !newVal.matches("\\d{0,2}")) {
                             textField.setText(oldVal);
@@ -5611,10 +5611,10 @@ public class HomeController {
                                 if (totalAciertosStr != null && !totalAciertosStr.trim().isEmpty()) {
                                     int totalAciertos = Integer.parseInt(totalAciertosStr);
                                     if (aciertos > totalAciertos) {
-                                        // Si supera el total, establecer el máximo permitido
+                                        // Si supera el total, establecer el m├íximo permitido
                                         valor = String.valueOf(totalAciertos);
                                         textField.setText(valor);
-                                        mostrarAlerta("Validación",
+                                        mostrarAlerta("Validaci├│n",
                                             "Los aciertos (" + aciertos + ") no pueden superar el total de aciertos del examen (" + totalAciertos + ")",
                                             Alert.AlertType.WARNING);
                                     }
@@ -5671,8 +5671,8 @@ public class HomeController {
                 }
             });
 
-            // Columna Calificación Examen
-            TableColumn<Alumno, String> colCalificacion = new TableColumn<>("Calificación examen");
+            // Columna Calificaci├│n Examen
+            TableColumn<Alumno, String> colCalificacion = new TableColumn<>("Calificaci├│n examen");
             colCalificacion.setPrefWidth(130);
             colCalificacion.setStyle("-fx-alignment: CENTER;");
 
@@ -5706,21 +5706,21 @@ public class HomeController {
 
             scrollPane.setContent(tblAlumnos);
 
-            // Botón para guardar
-            Button btnGuardarExamenes = new Button("Guardar Exámenes");
+            // Bot├│n para guardar
+            Button btnGuardarExamenes = new Button("Guardar Ex├ímenes");
             btnGuardarExamenes.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;");
             btnGuardarExamenes.setOnMouseEntered(e -> btnGuardarExamenes.setStyle("-fx-background-color: #45a049; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;"));
             btnGuardarExamenes.setOnMouseExited(e -> btnGuardarExamenes.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;"));
             btnGuardarExamenes.setOnAction(e -> {
                 if (cmbGrupo.getValue() == null || cmbMateria.getValue() == null || cmbParcial.getValue() == null) {
-                    mostrarAlerta("Validación", "Debe generar la tabla primero", Alert.AlertType.WARNING);
+                    mostrarAlerta("Validaci├│n", "Debe generar la tabla primero", Alert.AlertType.WARNING);
                     return;
                 }
 
                 // Validar que se haya ingresado el total de aciertos
                 String totalAciertosStr = txtTotalAciertos.getText();
                 if (totalAciertosStr == null || totalAciertosStr.trim().isEmpty()) {
-                    mostrarAlerta("Validación", "Debe ingresar el total de aciertos del examen", Alert.AlertType.WARNING);
+                    mostrarAlerta("Validaci├│n", "Debe ingresar el total de aciertos del examen", Alert.AlertType.WARNING);
                     return;
                 }
 
@@ -5763,7 +5763,7 @@ public class HomeController {
                         String aciertoStr = aciertosPorAlumno.getOrDefault(alumno.getId(), "0");
                         int aciertos = Integer.parseInt(aciertoStr);
 
-                        // Calcular porcentaje y calificación
+                        // Calcular porcentaje y calificaci├│n
                         double porcentaje = (aciertos * 100.0) / totalAciertosExamen;
                         double calificacion = (porcentaje * 10.0) / 100.0;
 
@@ -5794,24 +5794,24 @@ public class HomeController {
                         }
                     }
 
-                    mostrarAlerta("Éxito",
-                        "Exámenes guardados correctamente\n" +
+                    mostrarAlerta("├ëxito",
+                        "Ex├ímenes guardados correctamente\n" +
                         "Nuevos: " + guardados + "\n" +
                         "Actualizados: " + actualizados,
                         Alert.AlertType.INFORMATION);
 
-                    LOG.info("Exámenes guardados - Grupo: {}, Materia: {}, Parcial: {}, Nuevos: {}, Actualizados: {}",
+                    LOG.info("Ex├ímenes guardados - Grupo: {}, Materia: {}, Parcial: {}, Nuevos: {}, Actualizados: {}",
                             grupo.getId(), materia.getNombre(), parcial, guardados, actualizados);
 
                 } catch (Exception ex) {
-                    LOG.error("Error al guardar exámenes", ex);
-                    mostrarAlerta("Error", "No se pudieron guardar los exámenes: " + ex.getMessage(), Alert.AlertType.ERROR);
+                    LOG.error("Error al guardar ex├ímenes", ex);
+                    mostrarAlerta("Error", "No se pudieron guardar los ex├ímenes: " + ex.getMessage(), Alert.AlertType.ERROR);
                 }
             });
 
             tablaPanel.getChildren().addAll(totalAciertosBox, scrollPane, btnGuardarExamenes);
 
-            // Lógica para cargar materias cuando se selecciona un grupo
+            // L├│gica para cargar materias cuando se selecciona un grupo
             cmbGrupo.setOnAction(event -> {
                 Grupo grupoSeleccionado = cmbGrupo.getValue();
                 if (grupoSeleccionado != null) {
@@ -5834,10 +5834,10 @@ public class HomeController {
                 }
             });
 
-            // Evento del botón buscar
+            // Evento del bot├│n buscar
             btnBuscar.setOnAction(event -> {
                 if (cmbGrupo.getValue() == null || cmbMateria.getValue() == null || cmbParcial.getValue() == null) {
-                    mostrarAlerta("Validación", "Debe seleccionar Grupo, Materia y Parcial", Alert.AlertType.WARNING);
+                    mostrarAlerta("Validaci├│n", "Debe seleccionar Grupo, Materia y Parcial", Alert.AlertType.WARNING);
                     return;
                 }
 
@@ -5850,7 +5850,7 @@ public class HomeController {
                     List<Alumno> alumnos = alumnoService.obtenerTodosLosAlumnos().stream()
                         .filter(alumno -> alumno.getGrupoId() != null && alumno.getGrupoId().equals(grupoSeleccionado.getId()))
                         .sorted((a1, a2) -> {
-                            // Ordenar por número de lista
+                            // Ordenar por n├║mero de lista
                             if (a1.getNumeroLista() == null && a2.getNumeroLista() == null) return 0;
                             if (a1.getNumeroLista() == null) return 1;
                             if (a2.getNumeroLista() == null) return -1;
@@ -5875,7 +5875,7 @@ public class HomeController {
                             txtTotalAciertos.setText("");
                         }
 
-                        // Establecer la fecha de aplicación en el DatePicker
+                        // Establecer la fecha de aplicaci├│n en el DatePicker
                         if (examen.getFechaAplicacion() != null) {
                             dpFechaAplicacion.setValue(examen.getFechaAplicacion());
                         } else {
@@ -5905,10 +5905,10 @@ public class HomeController {
                     // Forzar refresh de la tabla para que muestre los valores
                     tblAlumnos.refresh();
 
-                    LOG.info("Tabla de exámenes generada - Grupo: {}, Materia: {}, Parcial: {}, Alumnos: {}",
+                    LOG.info("Tabla de ex├ímenes generada - Grupo: {}, Materia: {}, Parcial: {}, Alumnos: {}",
                             grupoSeleccionado.getId(), materiaSeleccionada.getNombre(), parcialSeleccionado, alumnos.size());
                 } catch (Exception e) {
-                    LOG.error("Error al generar tabla de exámenes", e);
+                    LOG.error("Error al generar tabla de ex├ímenes", e);
                     mostrarAlerta("Error", "No se pudo generar la tabla: " + e.getMessage(), Alert.AlertType.ERROR);
                 }
             });
@@ -5916,13 +5916,13 @@ public class HomeController {
             vista.getChildren().addAll(lblTitulo, filtrosPanel, tablaPanel);
 
         } catch (Exception e) {
-            LOG.error("Error al crear vista de exámenes", e);
+            LOG.error("Error al crear vista de ex├ímenes", e);
         }
 
         return vista;
     }
 
-    // Método para generar archivo Word del concentrado de calificaciones
+    // M├⌐todo para generar archivo Word del concentrado de calificaciones
     private void generarArchivoConcentrado(TableView<java.util.Map<String, Object>> tabla, Grupo grupo, Materia materia, Integer parcial) {
         try {
             // Validar que haya datos en la tabla
@@ -5931,7 +5931,7 @@ public class HomeController {
                 return;
             }
 
-            // Obtener el examen para acceder a la fecha de aplicación
+            // Obtener el examen para acceder a la fecha de aplicaci├│n
             Optional<Examen> examenOpt = examenService.obtenerExamenPorGrupoMateriaParcial(
                 grupo.getId(), materia.getId(), parcial
             );
@@ -5942,17 +5942,17 @@ public class HomeController {
                     .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
             }
 
-            // Obtener el nombre del maestro de la configuración
+            // Obtener el nombre del maestro de la configuraci├│n
             String nombreMaestro = "N/A";
             Optional<Configuracion> configuracionOpt = configuracionService.obtenerConfiguracion();
             if (configuracionOpt.isPresent() && configuracionOpt.get().getNombreMaestro() != null) {
                 nombreMaestro = configuracionOpt.get().getNombreMaestro();
             }
 
-            // Obtener el semestre desde el primer dígito del ID del grupo
+            // Obtener el semestre desde el primer d├¡gito del ID del grupo
             String semestre = obtenerSemestreDesdeGrupoId(grupo.getId());
 
-            // Crear FileChooser para seleccionar dónde guardar
+            // Crear FileChooser para seleccionar d├│nde guardar
             FileChooser fileChooser = new FileChooser();
             fileChooser.setTitle("Guardar Concentrado de Calificaciones");
 
@@ -5969,11 +5969,11 @@ public class HomeController {
                 new FileChooser.ExtensionFilter("Documentos Word", "*.docx")
             );
 
-            // Mostrar diálogo para seleccionar ubicación
+            // Mostrar di├ílogo para seleccionar ubicaci├│n
             File file = fileChooser.showSaveDialog(mainContent.getScene().getWindow());
 
             if (file == null) {
-                // Usuario canceló la operación
+                // Usuario cancel├│ la operaci├│n
                 return;
             }
 
@@ -5988,7 +5988,7 @@ public class HomeController {
             // Ruta de la plantilla
             Path templatePath = Paths.get("plantillas/concentrado_calificaciones.docx");
 
-            // Obtener criterios de evaluación para esta materia y parcial
+            // Obtener criterios de evaluaci├│n para esta materia y parcial
             List<Criterio> criterios = new ArrayList<>();
             List<java.util.Map<String, Object>> criteriosInfo = new ArrayList<>();
             int totalCriterios = 0;
@@ -6006,7 +6006,7 @@ public class HomeController {
                 totalCriterios = criterios.size();
                 LOG.info("Total de criterios para materia {} parcial {}: {}", materia.getId(), parcial, totalCriterios);
 
-                // Recopilar información de criterios y agregados para calcular portafolio
+                // Recopilar informaci├│n de criterios y agregados para calcular portafolio
                 for (Criterio criterio : criterios) {
                     List<Agregado> agregados = agregadoService.obtenerAgregadosPorCriterio(criterio.getId()).stream()
                         .sorted((a1, a2) -> {
@@ -6040,7 +6040,7 @@ public class HomeController {
                  org.apache.poi.xwpf.usermodel.XWPFDocument document = new org.apache.poi.xwpf.usermodel.XWPFDocument(fis);
                  java.io.FileOutputStream out = new java.io.FileOutputStream(file)) {
 
-                 // Reemplazar etiquetas en párrafos del documento
+                 // Reemplazar etiquetas en p├írrafos del documento
                  for (org.apache.poi.xwpf.usermodel.XWPFParagraph paragraph : document.getParagraphs()) {
                      reemplazarEtiquetasEnParrafo(paragraph, materia.getNombre(), fechaAplicacionStr, NOMBRE_MAESTRO, PARCIAL, SEMESTRE);
                  }
@@ -6060,7 +6060,7 @@ public class HomeController {
                     org.apache.poi.xwpf.usermodel.XWPFTable table = document.getTables().get(0);
                     LOG.info("Tabla encontrada con {} filas", table.getNumberOfRows());
 
-                    // Los datos se escriben a partir de la fila 6 (índice 5)
+                    // Los datos se escriben a partir de la fila 6 (├¡ndice 5)
                     final int FILA_INICIO = 5; // Fila 6 (base 1)
                     final int COL_NUMERO_LISTA = 0; // Primera columna
                     final int COL_NOMBRE_COMPLETO = 1; // Segunda columna
@@ -6076,7 +6076,7 @@ public class HomeController {
                         LOG.info("Insertando {} filas adicionales en la tabla (tiene {}, necesita {})",
                             filasAInsertar, table.getNumberOfRows(), filasNecesarias);
 
-                        // Obtener la última fila como referencia para copiar el formato
+                        // Obtener la ├║ltima fila como referencia para copiar el formato
                         org.apache.poi.xwpf.usermodel.XWPFTableRow filaReferencia = table.getRow(table.getNumberOfRows() - 1);
 
                         for (int i = 0; i < filasAInsertar; i++) {
@@ -6087,7 +6087,7 @@ public class HomeController {
                                 org.apache.poi.xwpf.usermodel.XWPFTableCell celdaReferencia = filaReferencia.getCell(j);
                                 org.apache.poi.xwpf.usermodel.XWPFTableCell nuevaCelda = nuevaFila.getCell(j);
 
-                                // Copiar propiedades de la celda (bordes, alineación, etc.)
+                                // Copiar propiedades de la celda (bordes, alineaci├│n, etc.)
                                 if (celdaReferencia.getCTTc().getTcPr() != null) {
                                     nuevaCelda.getCTTc().setTcPr(
                                         (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr)
@@ -6126,21 +6126,21 @@ public class HomeController {
                             escribirSoloTexto(cell, nombreStr);
                         }
 
-                        // Escribir "0" en la columna 3 (índice 2)
+                        // Escribir "0" en la columna 3 (├¡ndice 2)
                         final int COL_TERCERA = 2;
                         if (COL_TERCERA < filaActual.getTableCells().size()) {
                             org.apache.poi.xwpf.usermodel.XWPFTableCell cell = filaActual.getCell(COL_TERCERA);
                             escribirSoloTexto(cell, "0");
                         }
 
-                        // Escribir el total de criterios en la columna 4 (índice 3)
+                        // Escribir el total de criterios en la columna 4 (├¡ndice 3)
                         final int COL_TOTAL_CRITERIOS = 3;
                         if (COL_TOTAL_CRITERIOS < filaActual.getTableCells().size()) {
                             org.apache.poi.xwpf.usermodel.XWPFTableCell cell = filaActual.getCell(COL_TOTAL_CRITERIOS);
                             escribirSoloTexto(cell, String.valueOf(TOTAL_CRITERIOS));
                         }
 
-                        // Calcular y escribir el Portafolio en la columna 5 (índice 4)
+                        // Calcular y escribir el Portafolio en la columna 5 (├¡ndice 4)
                         final int COL_PORTAFOLIO = 4;
                         if (COL_PORTAFOLIO < filaActual.getTableCells().size()) {
                             double totalPortafolio = 0.0;
@@ -6169,14 +6169,14 @@ public class HomeController {
                                             }
                                         }
                                     } else {
-                                        // Para tipo Puntuación, sumar los valores numéricos
+                                        // Para tipo Puntuaci├│n, sumar los valores num├⌐ricos
                                         if (valor instanceof Number) {
                                             puntosObtenidosCriterio += ((Number) valor).doubleValue();
                                         } else if (valor instanceof String && !((String) valor).isEmpty()) {
                                             try {
                                                 puntosObtenidosCriterio += Double.parseDouble((String) valor);
                                             } catch (NumberFormatException e) {
-                                                // Ignorar valores no numéricos
+                                                // Ignorar valores no num├⌐ricos
                                             }
                                         }
                                     }
@@ -6186,11 +6186,11 @@ public class HomeController {
                             }
 
                             org.apache.poi.xwpf.usermodel.XWPFTableCell cell = filaActual.getCell(COL_PORTAFOLIO);
-                            // Formatear como entero de dos dígitos
+                            // Formatear como entero de dos d├¡gitos
                             escribirSoloTexto(cell, String.format("%02d", (int) Math.round(totalPortafolio)));
                         }
 
-                        // Escribir Calificación Examen en columna 6 (índice 5) con 1 decimal
+                        // Escribir Calificaci├│n Examen en columna 6 (├¡ndice 5) con 1 decimal
                         final int COL_CALIFICACION_EXAMEN = 5;
                         if (COL_CALIFICACION_EXAMEN < filaActual.getTableCells().size()) {
                             Object calificacionExamen = fila.get("calificacionExamen");
@@ -6211,7 +6211,7 @@ public class HomeController {
                             escribirSoloTexto(cell, valorStr);
                         }
 
-                        // Escribir Puntos Examen en columna 7 (índice 6) como entero
+                        // Escribir Puntos Examen en columna 7 (├¡ndice 6) como entero
                         final int COL_PUNTOS_EXAMEN = 6;
                         if (COL_PUNTOS_EXAMEN < filaActual.getTableCells().size()) {
                             Object aciertosExamen = fila.get("aciertosExamen");
@@ -6231,7 +6231,7 @@ public class HomeController {
                             escribirSoloTexto(cell, valorStr);
                         }
 
-                        // Escribir Calificación Parcial en columna 8 (índice 7) con 1 decimal
+                        // Escribir Calificaci├│n Parcial en columna 8 (├¡ndice 7) con 1 decimal
                         final int COL_CALIFICACION_PARCIAL = 7;
                         double calificacionParcialValor = 0.0;
                         if (COL_CALIFICACION_PARCIAL < filaActual.getTableCells().size()) {
@@ -6254,12 +6254,12 @@ public class HomeController {
                             escribirSoloTexto(cell, valorStr);
                         }
 
-                        // Escribir Calificación Parcial en letra en columna 9 (índice 8)
+                        // Escribir Calificaci├│n Parcial en letra en columna 9 (├¡ndice 8)
                         final int COL_CALIFICACION_LETRA = 8;
                         if (COL_CALIFICACION_LETRA < filaActual.getTableCells().size()) {
                             String valorLetra = convertirCalificacionALetra(calificacionParcialValor);
                             org.apache.poi.xwpf.usermodel.XWPFTableCell cell = filaActual.getCell(COL_CALIFICACION_LETRA);
-                            escribirTextoConFuenteReducida(cell, valorLetra); // Fuente 2 puntos más pequeña
+                            escribirTextoConFuenteReducida(cell, valorLetra); // Fuente 2 puntos m├ís peque├▒a
                         }
                     }
 
@@ -6271,34 +6271,34 @@ public class HomeController {
 
                 document.write(out);
             } catch (java.io.FileNotFoundException e) {
-                LOG.error("No se encontró la plantilla en: {}", templatePath);
-                mostrarAlerta("Error", "No se encontró la plantilla en: " + templatePath.toString(), Alert.AlertType.ERROR);
+                LOG.error("No se encontr├│ la plantilla en: {}", templatePath);
+                mostrarAlerta("Error", "No se encontr├│ la plantilla en: " + templatePath.toString(), Alert.AlertType.ERROR);
                 return;
             } catch (Exception e) {
                 LOG.error("Error al procesar la plantilla", e);
                 throw new IOException("Error al procesar la plantilla: " + e.getMessage(), e);
             }
 
-            // Mostrar mensaje de éxito
+            // Mostrar mensaje de ├⌐xito
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Exportación Exitosa");
+            alert.setTitle("Exportaci├│n Exitosa");
             alert.setHeaderText(null);
             alert.setContentText("El concentrado se ha exportado correctamente a:\n" + file.getAbsolutePath());
 
-            // Agregar botón para abrir el archivo
+            // Agregar bot├│n para abrir el archivo
             ButtonType btnAbrir = new ButtonType("Abrir archivo");
             ButtonType btnCerrar = new ButtonType("Cerrar", ButtonBar.ButtonData.CANCEL_CLOSE);
             alert.getButtonTypes().setAll(btnAbrir, btnCerrar);
 
             Optional<ButtonType> resultado = alert.showAndWait();
             if (resultado.isPresent() && resultado.get() == btnAbrir) {
-                // Intentar abrir el archivo con la aplicación predeterminada
+                // Intentar abrir el archivo con la aplicaci├│n predeterminada
                 if (Desktop.isDesktopSupported()) {
                     try {
                         Desktop.getDesktop().open(file);
                     } catch (IOException e) {
                         LOG.error("Error al abrir archivo", e);
-                        mostrarAlerta("Error", "No se pudo abrir el archivo automáticamente", Alert.AlertType.WARNING);
+                        mostrarAlerta("Error", "No se pudo abrir el archivo autom├íticamente", Alert.AlertType.WARNING);
                     }
                 }
             }
@@ -6316,15 +6316,15 @@ public class HomeController {
 
     /**
      * Escribe SOLO el texto en una celda sin modificar formato ni estructura
-     * Este método es lo más minimalista posible para no alterar NADA de la plantilla
+     * Este m├⌐todo es lo m├ís minimalista posible para no alterar NADA de la plantilla
      */
     private void escribirSoloTexto(org.apache.poi.xwpf.usermodel.XWPFTableCell cell, String texto) {
         try {
             org.apache.poi.xwpf.usermodel.XWPFParagraph paragraph;
 
-            // Si no hay párrafos, crear uno
+            // Si no hay p├írrafos, crear uno
             if (cell.getParagraphs().isEmpty()) {
-                LOG.warn("Celda sin párrafos, creando uno nuevo");
+                LOG.warn("Celda sin p├írrafos, creando uno nuevo");
                 paragraph = cell.addParagraph();
             } else {
                 paragraph = cell.getParagraphs().get(0);
@@ -6334,7 +6334,7 @@ public class HomeController {
 
             // Si no hay runs, crear uno
             if (paragraph.getRuns().isEmpty()) {
-                LOG.warn("Párrafo sin runs, creando uno nuevo");
+                LOG.warn("P├írrafo sin runs, creando uno nuevo");
                 run = paragraph.createRun();
             } else {
                 run = paragraph.getRuns().get(0);
@@ -6350,15 +6350,15 @@ public class HomeController {
 
     /**
      * Escribe texto en una celda con fuente reducida (2 puntos menos)
-     * Específico para columna de calificación en letra
+     * Espec├¡fico para columna de calificaci├│n en letra
      */
     private void escribirTextoConFuenteReducida(org.apache.poi.xwpf.usermodel.XWPFTableCell cell, String texto) {
         try {
             org.apache.poi.xwpf.usermodel.XWPFParagraph paragraph;
 
-            // Si no hay párrafos, crear uno
+            // Si no hay p├írrafos, crear uno
             if (cell.getParagraphs().isEmpty()) {
-                LOG.warn("Celda sin párrafos, creando uno nuevo");
+                LOG.warn("Celda sin p├írrafos, creando uno nuevo");
                 paragraph = cell.addParagraph();
             } else {
                 paragraph = cell.getParagraphs().get(0);
@@ -6368,18 +6368,18 @@ public class HomeController {
 
             // Si no hay runs, crear uno
             if (paragraph.getRuns().isEmpty()) {
-                LOG.warn("Párrafo sin runs, creando uno nuevo");
+                LOG.warn("P├írrafo sin runs, creando uno nuevo");
                 run = paragraph.createRun();
             } else {
                 run = paragraph.getRuns().get(0);
             }
 
-            // Obtener el tamaño de fuente actual y reducirlo en 2 puntos
+            // Obtener el tama├▒o de fuente actual y reducirlo en 2 puntos
             int tamanoActual = run.getFontSize();
             if (tamanoActual > 0) {
                 run.setFontSize(tamanoActual - 2);
             } else {
-                // Si no tiene tamaño definido, usar 9 puntos (11 - 2)
+                // Si no tiene tama├▒o definido, usar 9 puntos (11 - 2)
                 run.setFontSize(9);
             }
 
@@ -6392,14 +6392,14 @@ public class HomeController {
     }
 
     /**
-     * Formatea un valor con un número específico de decimales
+     * Formatea un valor con un n├║mero espec├¡fico de decimales
      */
     private String formatearValorConDecimal(Object valor, int decimales) {
         if (valor == null) {
             return "";
         }
         if (valor instanceof Boolean) {
-            return (Boolean) valor ? "✓" : "";
+            return (Boolean) valor ? "Γ£ô" : "";
         }
         if (valor instanceof Number) {
             String formato = String.format("%%.%df", decimales);
@@ -6407,15 +6407,15 @@ public class HomeController {
         }
         if (valor instanceof String) {
             String strValor = (String) valor;
-            // Si es un número en string, formatearlo
+            // Si es un n├║mero en string, formatearlo
             try {
                 double numValor = Double.parseDouble(strValor);
                 String formato = String.format("%%.%df", decimales);
                 return String.format(formato, numValor);
             } catch (NumberFormatException e) {
-                // Si no es número, devolver como está
+                // Si no es n├║mero, devolver como est├í
                 if ("true".equalsIgnoreCase(strValor) || "1".equals(strValor)) {
-                    return "✓";
+                    return "Γ£ô";
                 } else if ("false".equalsIgnoreCase(strValor) || "0".equals(strValor)) {
                     return "";
                 }
@@ -6426,7 +6426,7 @@ public class HomeController {
     }
 
     /**
-     * Convierte una calificación numérica (0-10) a su equivalente en letra
+     * Convierte una calificaci├│n num├⌐rica (0-10) a su equivalente en letra
      * Ejemplo: 9.3 = "Nueve punto tres", 9.0 = "Nueve punto cero", 8.5 = "Ocho punto cinco"
      */
     private String convertirCalificacionALetra(double calificacion) {
@@ -6446,7 +6446,7 @@ public class HomeController {
     }
 
     /**
-     * Convierte un número entero (0-10) a letra
+     * Convierte un n├║mero entero (0-10) a letra
      */
     private String convertirEnteroALetra(int numero) {
         switch (numero) {
@@ -6466,7 +6466,7 @@ public class HomeController {
     }
 
     /**
-     * Convierte un dígito (0-9) a letra
+     * Convierte un d├¡gito (0-9) a letra
      */
     private String convertirDigitoALetra(int digito) {
         switch (digito) {
@@ -6485,28 +6485,28 @@ public class HomeController {
     }
 
     /**
-     * Obtiene el nombre del semestre basado en el primer dígito del ID del grupo.
-     * Ejemplos: 101 → PRIMER, 201 → SEGUNDO, 301 → TERCER, etc.
+     * Obtiene el nombre del semestre basado en el primer d├¡gito del ID del grupo.
+     * Ejemplos: 101 ΓåÆ PRIMER, 201 ΓåÆ SEGUNDO, 301 ΓåÆ TERCER, etc.
      *
      * @param grupoId ID del grupo
-     * @return Nombre del semestre en mayúsculas (PRIMER, SEGUNDO, TERCER, CUARTO, QUINTO, SEXTO)
+     * @return Nombre del semestre en may├║sculas (PRIMER, SEGUNDO, TERCER, CUARTO, QUINTO, SEXTO)
      */
     private String obtenerSemestreDesdeGrupoId(Long grupoId) {
         if (grupoId == null) {
             return "N/A";
         }
 
-        // Convertir el ID a String y obtener el primer dígito
+        // Convertir el ID a String y obtener el primer d├¡gito
         String grupoIdStr = String.valueOf(grupoId);
         if (grupoIdStr.isEmpty()) {
             return "N/A";
         }
 
-        // Obtener el primer dígito
+        // Obtener el primer d├¡gito
         char primerDigito = grupoIdStr.charAt(0);
         int semestre = Character.getNumericValue(primerDigito);
 
-        // Mapear el dígito al nombre del semestre
+        // Mapear el d├¡gito al nombre del semestre
         switch (semestre) {
             case 1:
                 return "PRIMER";
@@ -6526,15 +6526,15 @@ public class HomeController {
     }
 
     /**
-     * Reemplaza etiquetas en un párrafo de un documento Word.
-     * Este método maneja correctamente los casos donde una etiqueta está dividida en múltiples runs.
+     * Reemplaza etiquetas en un p├írrafo de un documento Word.
+     * Este m├⌐todo maneja correctamente los casos donde una etiqueta est├í dividida en m├║ltiples runs.
      */
     private void reemplazarEtiquetasEnParrafo(org.apache.poi.xwpf.usermodel.XWPFParagraph paragraph, String nombreMateria, String fechaAplicacion, String nombreMaestro, String parcial, String semestre) {
         if (paragraph.getRuns() == null || paragraph.getRuns().isEmpty()) {
             return;
         }
 
-        // Concatenar todo el texto del párrafo
+        // Concatenar todo el texto del p├írrafo
         StringBuilder textoCompleto = new StringBuilder();
         for (org.apache.poi.xwpf.usermodel.XWPFRun run : paragraph.getRuns()) {
             String texto = run.getText(0);
@@ -6584,7 +6584,7 @@ public class HomeController {
             huboReemplazo = true;
         }
 
-        // Si hubo reemplazo, actualizar el párrafo
+        // Si hubo reemplazo, actualizar el p├írrafo
         if (huboReemplazo) {
             // Guardar el formato del primer run
             org.apache.poi.xwpf.usermodel.XWPFRun primerRun = paragraph.getRuns().get(0);
@@ -6616,17 +6616,17 @@ public class HomeController {
     }
 
     /**
-     * Capitaliza la primera letra de un texto y convierte el resto a minúsculas.
+     * Capitaliza la primera letra de un texto y convierte el resto a min├║sculas.
      *
      * @param texto El texto a capitalizar
-     * @return El texto con la primera letra en mayúscula y el resto en minúsculas
+     * @return El texto con la primera letra en may├║scula y el resto en min├║sculas
      */
     private String capitalizarPrimeraLetra(String texto) {
         if (texto == null || texto.isEmpty()) {
             return texto;
         }
 
-        // Convertir todo a minúsculas y capitalizar la primera letra
+        // Convertir todo a min├║sculas y capitalizar la primera letra
         return texto.substring(0, 1).toUpperCase() + texto.substring(1).toLowerCase();
     }
 }

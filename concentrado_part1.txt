@@ -1,0 +1,200 @@
+﻿    private VBox crearVistaConcentradoCompleta() {
+        VBox vista = new VBox(20);
+        vista.setStyle("-fx-padding: 20; -fx-background-color: #f5f5f5;");
+
+        try {
+            // Header
+            Label lblTitulo = new Label("Concentrado de Calificaciones");
+            lblTitulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;");
+
+            // Panel de filtros
+            VBox filtrosPanel = new VBox(15);
+            filtrosPanel.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 2);");
+
+            Label lblFiltros = new Label("Filtros (Obligatorios)");
+            lblFiltros.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");
+
+            // Fila de filtros
+            javafx.scene.layout.HBox filtrosBox = new javafx.scene.layout.HBox(20);
+            filtrosBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+            // ComboBox para seleccionar grupo
+            VBox grupoContainer = new VBox(5);
+            Label lblGrupo = new Label("Grupo: *");
+            lblGrupo.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #555;");
+            ComboBox<Grupo> cmbGrupo = new ComboBox<>();
+            cmbGrupo.setPrefWidth(150);
+            cmbGrupo.setPromptText("Seleccionar...");
+            try {
+                List<Grupo> grupos = grupoService.obtenerTodosLosGrupos();
+                cmbGrupo.setItems(FXCollections.observableArrayList(grupos));
+            } catch (Exception e) {
+                LOG.error("Error al cargar grupos", e);
+            }
+            cmbGrupo.setCellFactory(param -> new ListCell<Grupo>() {
+                @Override
+                protected void updateItem(Grupo item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? null : String.valueOf(item.getId()));
+                }
+            });
+            cmbGrupo.setButtonCell(new ListCell<Grupo>() {
+                @Override
+                protected void updateItem(Grupo item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? "Seleccionar..." : String.valueOf(item.getId()));
+                }
+            });
+            grupoContainer.getChildren().addAll(lblGrupo, cmbGrupo);
+
+            // ComboBox para seleccionar materia
+            VBox materiaContainer = new VBox(5);
+            Label lblMateria = new Label("Materia: *");
+            lblMateria.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #555;");
+            ComboBox<Materia> cmbMateria = new ComboBox<>();
+            cmbMateria.setPrefWidth(250);
+            cmbMateria.setPromptText("Seleccionar...");
+            cmbMateria.setDisable(true);
+            cmbMateria.setCellFactory(param -> new ListCell<Materia>() {
+                @Override
+                protected void updateItem(Materia item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? null : item.getNombre());
+                }
+            });
+            cmbMateria.setButtonCell(new ListCell<Materia>() {
+                @Override
+                protected void updateItem(Materia item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? "Seleccionar..." : item.getNombre());
+                }
+            });
+            materiaContainer.getChildren().addAll(lblMateria, cmbMateria);
+
+            // ComboBox para seleccionar parcial
+            VBox parcialContainer = new VBox(5);
+            Label lblParcial = new Label("Parcial: *");
+            lblParcial.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #555;");
+            ComboBox<Integer> cmbParcial = new ComboBox<>();
+            cmbParcial.setPrefWidth(120);
+            cmbParcial.setPromptText("Seleccionar...");
+            cmbParcial.setItems(FXCollections.observableArrayList(1, 2, 3));
+            parcialContainer.getChildren().addAll(lblParcial, cmbParcial);
+
+            // Bot├│n Buscar (antes "Generar Tabla") - en la misma fila que los inputs
+            VBox buscarContainer = new VBox(5);
+            Label lblEspacio = new Label(" "); // Espacio para alinear con los otros labels
+            Button btnBuscar = new Button("Buscar");
+            btnBuscar.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;");
+            buscarContainer.getChildren().addAll(lblEspacio, btnBuscar);
+
+            filtrosBox.getChildren().addAll(grupoContainer, materiaContainer, parcialContainer, buscarContainer);
+
+            filtrosPanel.getChildren().addAll(lblFiltros, filtrosBox);
+
+            // Panel de tabla
+            VBox tablaPanel = new VBox(15);
+            tablaPanel.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 2);");
+
+            // Botones sobre la tabla (Guardar y Generar archivo)
+            javafx.scene.layout.HBox botonesTablaBox = new javafx.scene.layout.HBox(10);
+            botonesTablaBox.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+
+            Button btnGuardar = new Button("Guardar");
+            btnGuardar.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;");
+            btnGuardar.setDisable(true);
+
+            Button btnGenerarArchivo = new Button("Generar archivo");
+            btnGenerarArchivo.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;");
+            btnGenerarArchivo.setDisable(true);
+
+            botonesTablaBox.getChildren().addAll(btnGenerarArchivo, btnGuardar);
+
+            ScrollPane scrollPane = new ScrollPane();
+            scrollPane.setFitToWidth(true);
+            scrollPane.setFitToHeight(true);
+            scrollPane.setPrefHeight(500);
+            scrollPane.setStyle("-fx-background-color: transparent;");
+
+            TableView<java.util.Map<String, Object>> tblCalificaciones = new TableView<>();
+            tblCalificaciones.setEditable(true);
+            tblCalificaciones.setPlaceholder(new Label("Seleccione Grupo, Materia y Parcial, luego presione 'Buscar'"));
+            tblCalificaciones.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+
+            scrollPane.setContent(tblCalificaciones);
+            tablaPanel.getChildren().addAll(botonesTablaBox, scrollPane);
+
+            // L├│gica para cargar materias cuando se selecciona un grupo
+            cmbGrupo.setOnAction(event -> {
+                Grupo grupoSeleccionado = cmbGrupo.getValue();
+                if (grupoSeleccionado != null) {
+                    try {
+                        List<GrupoMateria> asignaciones = grupoMateriaService.obtenerMateriasPorGrupo(grupoSeleccionado.getId());
+                        List<Materia> materias = new java.util.ArrayList<>();
+                        for (GrupoMateria gm : asignaciones) {
+                            materiaService.obtenerMateriaPorId(gm.getMateriaId()).ifPresent(materias::add);
+                        }
+                        cmbMateria.setItems(FXCollections.observableArrayList(materias));
+                        cmbMateria.setDisable(false);
+                    } catch (Exception e) {
+                        LOG.error("Error al cargar materias del grupo", e);
+                        mostrarAlerta("Error", "No se pudieron cargar las materias del grupo", Alert.AlertType.ERROR);
+                    }
+                } else {
+                    cmbMateria.setItems(FXCollections.observableArrayList());
+                    cmbMateria.setDisable(true);
+                }
+            });
+
+            // Evento del bot├│n Buscar (antes "Generar Tabla")
+            btnBuscar.setOnAction(event -> {
+                if (cmbGrupo.getValue() == null || cmbMateria.getValue() == null || cmbParcial.getValue() == null) {
+                    mostrarAlerta("Validaci├│n", "Debe seleccionar Grupo, Materia y Parcial", Alert.AlertType.WARNING);
+                    return;
+                }
+
+                generarTablaCalificaciones(tblCalificaciones, cmbGrupo.getValue(), cmbMateria.getValue(), cmbParcial.getValue());
+                btnGuardar.setDisable(false);
+                btnGenerarArchivo.setDisable(false);
+            });
+
+            // Evento del bot├│n Guardar (antes "Guardar Calificaciones")
+            btnGuardar.setOnAction(event -> {
+                if (cmbGrupo.getValue() == null || cmbMateria.getValue() == null || cmbParcial.getValue() == null) {
+                    mostrarAlerta("Validaci├│n", "Debe seleccionar Grupo, Materia y Parcial", Alert.AlertType.WARNING);
+                    return;
+                }
+                guardarCalificaciones(tblCalificaciones, cmbGrupo.getValue(), cmbMateria.getValue(), cmbParcial.getValue());
+                mostrarAlerta("├ëxito", "Calificaciones guardadas correctamente", Alert.AlertType.INFORMATION);
+            });
+
+            // Evento del bot├│n Generar archivo
+            btnGenerarArchivo.setOnAction(event -> {
+                if (cmbGrupo.getValue() == null || cmbMateria.getValue() == null || cmbParcial.getValue() == null) {
+                    mostrarAlerta("Validaci├│n", "Debe seleccionar Grupo, Materia y Parcial", Alert.AlertType.WARNING);
+                    return;
+                }
+                generarArchivoConcentrado(tblCalificaciones, cmbGrupo.getValue(), cmbMateria.getValue(), cmbParcial.getValue());
+            });
+
+            vista.getChildren().addAll(lblTitulo, filtrosPanel, tablaPanel);
+
+        } catch (Exception e) {
+            LOG.error("Error al crear vista de concentrado de calificaciones", e);
+        }
+
+        return vista;
+    }
+
+    // M├⌐todo para crear la vista de Informe de Concentrado (Solo Lectura)
+    private VBox crearVistaInformeConcentrado() {
+        VBox vista = new VBox(20);
+        vista.setStyle("-fx-padding: 20; -fx-background-color: #f5f5f5;");
+
+        try {
+            // Header
+            Label lblTitulo = new Label("Informe de Concentrado (Solo Lectura)");
+            lblTitulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;");
+
+            // Panel de filtros
+            VBox filtrosPanel = new VBox(15);

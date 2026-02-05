@@ -12,4 +12,9 @@ import lombok.NoArgsConstructor;
 public class Materia {
     private Long id;
     private String nombre;
+
+    @Override
+    public String toString() {
+        return nombre;
+    }
 }

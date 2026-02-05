@@ -20,4 +20,9 @@ public class Criterio {
 
     // Campos opcionales para mostrar información
     private String nombreMateria;
+
+    @Override
+    public String toString() {
+        return nombre;
+    }
 }

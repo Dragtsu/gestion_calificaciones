@@ -86,3 +86,8 @@
     -fx-text-fill: white;
 }
 
+/* Columnas con encabezado vertical */
+.vertical-header .label {
+    -fx-rotate: -90;
+    -fx-alignment: center;
+}

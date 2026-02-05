@@ -1,0 +1,100 @@
+﻿
+    // M├⌐todo para crear la vista completa de asignaciones de materias a grupos
+    private VBox crearVistaAsignacionesCompleta() {
+        VBox vista = new VBox(20);
+        vista.setStyle("-fx-padding: 20; -fx-background-color: #f5f5f5;");
+
+        try {
+
+            // Panel de formulario
+            VBox formPanel = new VBox(15);
+            formPanel.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
+
+            Label lblFormTitle = new Label("Asignar Materia a Grupo");
+            lblFormTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+            javafx.scene.layout.GridPane gridForm = new javafx.scene.layout.GridPane();
+            gridForm.setHgap(15);
+            gridForm.setVgap(10);
+
+            // ComboBox para seleccionar Grupo
+            Label lblGrupo = new Label("Grupo:");
+            ComboBox<Grupo> cmbGrupoAsignacion = new ComboBox<>();
+            cmbGrupoAsignacion.setPromptText("Seleccione un grupo");
+            cmbGrupoAsignacion.setPrefWidth(300);
+
+            try {
+                cmbGrupoAsignacion.setItems(FXCollections.observableArrayList(grupoService.obtenerTodosLosGrupos()));
+            } catch (Exception e) {
+                LOG.error("Error al cargar grupos", e);
+            }
+
+            cmbGrupoAsignacion.setCellFactory(param -> new ListCell<Grupo>() {
+                @Override
+                protected void updateItem(Grupo item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? null : String.valueOf(item.getId()));
+                }
+            });
+            cmbGrupoAsignacion.setButtonCell(new ListCell<Grupo>() {
+                @Override
+                protected void updateItem(Grupo item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? null : String.valueOf(item.getId()));
+                }
+            });
+
+            // ComboBox para seleccionar Materia
+            Label lblMateria = new Label("Materia:");
+            ComboBox<Materia> cmbMateriaAsignacion = new ComboBox<>();
+            cmbMateriaAsignacion.setPromptText("Seleccione una materia");
+            cmbMateriaAsignacion.setPrefWidth(300);
+
+            try {
+                cmbMateriaAsignacion.setItems(FXCollections.observableArrayList(materiaService.obtenerTodasLasMaterias()));
+            } catch (Exception e) {
+                LOG.error("Error al cargar materias", e);
+            }
+
+            cmbMateriaAsignacion.setCellFactory(param -> new ListCell<Materia>() {
+                @Override
+                protected void updateItem(Materia item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? null : item.getId() + " - " + item.getNombre());
+                }
+            });
+            cmbMateriaAsignacion.setButtonCell(new ListCell<Materia>() {
+                @Override
+                protected void updateItem(Materia item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? null : item.getId() + " - " + item.getNombre());
+                }
+            });
+
+            gridForm.add(lblGrupo, 0, 0);
+            gridForm.add(cmbGrupoAsignacion, 1, 0);
+            gridForm.add(lblMateria, 0, 1);
+            gridForm.add(cmbMateriaAsignacion, 1, 1);
+
+            // Botones
+            javafx.scene.layout.HBox buttonBox = new javafx.scene.layout.HBox(10);
+            Button btnAsignar = new Button("Asignar");
+            btnAsignar.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 30; -fx-cursor: hand;");
+
+            Button btnLimpiar = new Button("Limpiar");
+            btnLimpiar.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 30; -fx-cursor: hand;");
+
+            buttonBox.getChildren().addAll(btnAsignar, btnLimpiar);
+            formPanel.getChildren().addAll(lblFormTitle, new Separator(), gridForm, buttonBox);
+
+            // Panel de tabla
+            VBox tablePanel = new VBox(10);
+            tablePanel.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
+
+            Label lblTableTitle = new Label("Lista de Asignaciones");
+            lblTableTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+            // Tabla
+            TableView<GrupoMateria> tblAsignaciones = new TableView<>();
+            tblAsignaciones.setPrefHeight(300);
+

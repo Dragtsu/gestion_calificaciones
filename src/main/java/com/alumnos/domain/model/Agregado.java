@@ -18,4 +18,9 @@ public class Agregado {
     // Campos opcionales para mostrar información
     private String nombreCriterio;
     private String nombreMateria;
+
+    @Override
+    public String toString() {
+        return nombre;
+    }
 }

@@ -29,6 +29,12 @@ Write-Host ""
 Write-Host "Iniciando compilación..." -ForegroundColor Yellow
 Write-Host ""
 
+# Configurar encoding UTF-8 para la compilación
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$env:JAVA_TOOL_OPTIONS = "-Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8"
+Write-Host "✓ Encoding UTF-8 configurado" -ForegroundColor Green
+Write-Host ""
+
 # Limpiar y compilar
 Write-Host "[1/3] Limpiando proyecto..." -ForegroundColor Cyan
 mvn clean

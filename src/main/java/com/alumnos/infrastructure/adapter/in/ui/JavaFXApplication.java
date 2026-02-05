@@ -26,16 +26,12 @@ public class JavaFXApplication extends Application {
     public void start(Stage primaryStage) {
         stageManager.setPrimaryStage(primaryStage);
 
-        // Verificar si existe configuración
         ConfiguracionServicePort configuracionService = springContext.getBean(ConfiguracionServicePort.class);
 
         if (configuracionService.obtenerConfiguracion().isEmpty()) {
-            // No hay configuración, mostrar diálogo de configuración inicial
-            Stage configStage = stageManager.showModal(FxmlView.CONFIGURACION_INICIAL);
-            configStage.showAndWait();
+            stageManager.showModal(FxmlView.CONFIGURACION_INICIAL).showAndWait();
         }
 
-        // Mostrar ventana principal
         stageManager.switchScene(FxmlView.HOME);
     }
 
