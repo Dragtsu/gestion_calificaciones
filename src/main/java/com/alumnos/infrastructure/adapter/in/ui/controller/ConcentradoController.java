@@ -7,8 +7,23 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
+import javafx.stage.FileChooser;
+import javafx.geometry.Pos;
+import org.apache.poi.xwpf.usermodel.*;
 import org.springframework.stereotype.Component;
 
+import java.awt.Desktop;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +45,8 @@ public class ConcentradoController extends BaseController {
     private final MateriaServicePort materiaService;
     private final ExamenServicePort examenService;
     private final AlumnoExamenServicePort alumnoExamenService;
+    private final ConfiguracionServicePort configuracionService;
+    private final GrupoMateriaServicePort grupoMateriaService;
 
     private BorderPane mainContent;
 
@@ -40,7 +57,9 @@ public class ConcentradoController extends BaseController {
                                  GrupoServicePort grupoService,
                                  MateriaServicePort materiaService,
                                  ExamenServicePort examenService,
-                                 AlumnoExamenServicePort alumnoExamenService) {
+                                 AlumnoExamenServicePort alumnoExamenService,
+                                 ConfiguracionServicePort configuracionService,
+                                 GrupoMateriaServicePort grupoMateriaService) {
         this.calificacionConcentradoService = calificacionConcentradoService;
         this.alumnoService = alumnoService;
         this.agregadoService = agregadoService;
@@ -49,6 +68,8 @@ public class ConcentradoController extends BaseController {
         this.materiaService = materiaService;
         this.examenService = examenService;
         this.alumnoExamenService = alumnoExamenService;
+        this.configuracionService = configuracionService;
+        this.grupoMateriaService = grupoMateriaService;
     }
 
     public void setMainContent(BorderPane mainContent) {
@@ -157,6 +178,21 @@ public class ConcentradoController extends BaseController {
                 generarTablaCalificaciones(tblCalificaciones, cmbGrupo.getValue(), cmbMateria.getValue(), cmbParcial.getValue());
             });
 
+            // Panel de botones
+            HBox botonesBox = new HBox(10);
+            botonesBox.setAlignment(Pos.CENTER_RIGHT);
+
+            // Botón para generar archivo Word
+            Button btnGenerarArchivo = new Button("📄 Generar archivo");
+            btnGenerarArchivo.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 30; -fx-cursor: hand; -fx-font-weight: bold;");
+            btnGenerarArchivo.setOnAction(e -> {
+                if (cmbGrupo.getValue() == null || cmbMateria.getValue() == null || cmbParcial.getValue() == null) {
+                    mostrarAdvertencia("Debe seleccionar Grupo, Materia y Parcial");
+                    return;
+                }
+                generarArchivoConcentrado(tblCalificaciones, cmbGrupo.getValue(), cmbMateria.getValue(), cmbParcial.getValue());
+            });
+
             // Botón para guardar cambios
             Button btnGuardarCambios = new Button("💾 Guardar Cambios");
             btnGuardarCambios.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 30; -fx-cursor: hand; -fx-font-weight: bold;");
@@ -168,7 +204,9 @@ public class ConcentradoController extends BaseController {
                 guardarCalificacionesDesdeTabla(tblCalificaciones, cmbGrupo.getValue(), cmbMateria.getValue(), cmbParcial.getValue());
             });
 
-            tablaPanel.getChildren().addAll(lblTabla, tblCalificaciones, btnGuardarCambios);
+            botonesBox.getChildren().addAll(btnGenerarArchivo, btnGuardarCambios);
+
+            tablaPanel.getChildren().addAll(lblTabla, tblCalificaciones, botonesBox);
 
             vista.getChildren().addAll(lblTitulo, filtrosPanel, tablaPanel);
 
@@ -1397,6 +1435,659 @@ public class ConcentradoController extends BaseController {
 
         } catch (Exception e) {
             LOG.error("Error al recalcular puntos parcial: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Genera un archivo Word con el concentrado de calificaciones usando una plantilla
+     */
+    private void generarArchivoConcentrado(TableView<Map<String, Object>> tabla, Grupo grupo, Materia materia, Integer parcial) {
+        try {
+            // Validar que haya datos en la tabla
+            if (tabla.getItems().isEmpty()) {
+                mostrarAdvertencia("No hay datos para exportar");
+                return;
+            }
+
+            // Obtener el examen para acceder a la fecha de aplicación
+            Optional<Examen> examenOpt = examenService.obtenerExamenPorGrupoMateriaParcial(
+                grupo.getId(), materia.getId(), parcial
+            );
+
+            String fechaAplicacionStr = "N/A";
+            if (examenOpt.isPresent() && examenOpt.get().getFechaAplicacion() != null) {
+                fechaAplicacionStr = examenOpt.get().getFechaAplicacion()
+                    .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            }
+
+            // Obtener el nombre del maestro de la configuración
+            String nombreMaestro = "N/A";
+            Optional<Configuracion> configuracionOpt = configuracionService.obtenerConfiguracion();
+            if (configuracionOpt.isPresent() && configuracionOpt.get().getNombreMaestro() != null) {
+                nombreMaestro = configuracionOpt.get().getNombreMaestro();
+            }
+
+            // Obtener el semestre desde el primer dígito del ID del grupo
+            String semestre = obtenerSemestreDesdeGrupoId(grupo.getId());
+
+            // Crear FileChooser para seleccionar dónde guardar
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Guardar Concentrado de Calificaciones");
+
+            // Nombre sugerido del archivo
+            String nombreArchivo = String.format("concentrado_%s_%s_parcial%d_%s.docx",
+                    grupo.getId(),
+                    materia.getNombre().replaceAll("[^a-zA-Z0-9]", "_"),
+                    parcial,
+                    LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")));
+            fileChooser.setInitialFileName(nombreArchivo);
+
+            // Filtro para archivos Word
+            fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Documentos Word", "*.docx")
+            );
+
+            // Mostrar diálogo para seleccionar ubicación
+            File file = fileChooser.showSaveDialog(mainContent.getScene().getWindow());
+
+            if (file == null) {
+                // Usuario canceló la operación
+                return;
+            }
+
+            // Ruta de la plantilla
+            Path templatePath = Paths.get("plantillas/concentrado_calificaciones.docx");
+
+            // Obtener criterios de evaluación para esta materia y parcial
+            List<Criterio> criterios = new ArrayList<>();
+            List<Map<String, Object>> criteriosInfo = new ArrayList<>();
+            int totalCriterios = 0;
+
+            try {
+                criterios = criterioService.obtenerCriteriosPorMateria(materia.getId()).stream()
+                    .filter(c -> parcial.equals(c.getParcial()))
+                    .sorted((c1, c2) -> {
+                        if (c1.getOrden() == null && c2.getOrden() == null) return 0;
+                        if (c1.getOrden() == null) return 1;
+                        if (c2.getOrden() == null) return -1;
+                        return Integer.compare(c1.getOrden(), c2.getOrden());
+                    })
+                    .collect(Collectors.toList());
+                totalCriterios = criterios.size();
+                LOG.info("Total de criterios para materia {} parcial {}: {}", materia.getId(), parcial, totalCriterios);
+
+                // Recopilar información de criterios y agregados para calcular portafolio
+                for (Criterio criterio : criterios) {
+                    List<Agregado> agregados = agregadoService.obtenerAgregadosPorCriterio(criterio.getId()).stream()
+                        .sorted((a1, a2) -> {
+                            if (a1.getOrden() == null && a2.getOrden() == null) return 0;
+                            if (a1.getOrden() == null) return 1;
+                            if (a2.getOrden() == null) return -1;
+                            return Integer.compare(a1.getOrden(), a2.getOrden());
+                        })
+                        .collect(Collectors.toList());
+
+                    if (!agregados.isEmpty()) {
+                        Map<String, Object> criterioInfo = new HashMap<>();
+                        criterioInfo.put("criterioId", criterio.getId());
+                        criterioInfo.put("agregadoIds", agregados.stream().map(Agregado::getId).collect(Collectors.toList()));
+                        criterioInfo.put("esCheck", "Check".equalsIgnoreCase(criterio.getTipoEvaluacion()));
+                        criterioInfo.put("puntuacionMaxima", criterio.getPuntuacionMaxima());
+                        criteriosInfo.add(criterioInfo);
+                    }
+                }
+            } catch (Exception e) {
+                LOG.error("Error al obtener criterios", e);
+            }
+            final int TOTAL_CRITERIOS = totalCriterios;
+            final List<Map<String, Object>> CRITERIOS_INFO = criteriosInfo;
+            final String NOMBRE_MAESTRO = nombreMaestro;
+            final String PARCIAL = String.valueOf(parcial);
+            final String SEMESTRE = semestre;
+
+            // Usar la plantilla - escribir directamente en las filas
+            try (FileInputStream fis = new FileInputStream(templatePath.toFile());
+                 XWPFDocument document = new XWPFDocument(fis);
+                 FileOutputStream out = new FileOutputStream(file)) {
+
+                 // Reemplazar etiquetas en párrafos del documento
+                 for (XWPFParagraph paragraph : document.getParagraphs()) {
+                     reemplazarEtiquetasEnParrafo(paragraph, materia.getNombre(), fechaAplicacionStr, NOMBRE_MAESTRO, PARCIAL, SEMESTRE);
+                 }
+
+                 // Reemplazar etiquetas en tablas
+                 for (XWPFTable table : document.getTables()) {
+                     for (XWPFTableRow row : table.getRows()) {
+                         for (XWPFTableCell cell : row.getTableCells()) {
+                             for (XWPFParagraph paragraph : cell.getParagraphs()) {
+                                 reemplazarEtiquetasEnParrafo(paragraph, materia.getNombre(), fechaAplicacionStr, NOMBRE_MAESTRO, PARCIAL, SEMESTRE);
+                             }
+                         }
+                     }
+                 }
+
+                 if (!document.getTables().isEmpty()) {
+                    XWPFTable table = document.getTables().get(0);
+                    LOG.info("Tabla encontrada con {} filas", table.getNumberOfRows());
+
+                    // Los datos se escriben a partir de la fila 6 (índice 5)
+                    final int FILA_INICIO = 5; // Fila 6 (base 1)
+                    final int COL_NUMERO_LISTA = 0; // Primera columna
+                    final int COL_NOMBRE_COMPLETO = 1; // Segunda columna
+
+                    // Obtener datos de alumnos
+                    List<Map<String, Object>> alumnos = tabla.getItems();
+                    LOG.info("Total de alumnos a exportar: {}", alumnos.size());
+
+                    // Verificar si es necesario insertar filas adicionales
+                    int filasNecesarias = FILA_INICIO + alumnos.size();
+                    if (table.getNumberOfRows() < filasNecesarias) {
+                        int filasAInsertar = filasNecesarias - table.getNumberOfRows();
+                        LOG.info("Insertando {} filas adicionales en la tabla (tiene {}, necesita {})",
+                            filasAInsertar, table.getNumberOfRows(), filasNecesarias);
+
+                        // Obtener la última fila como referencia para copiar el formato
+                        XWPFTableRow filaReferencia = table.getRow(table.getNumberOfRows() - 1);
+
+                        for (int i = 0; i < filasAInsertar; i++) {
+                            XWPFTableRow nuevaFila = table.createRow();
+
+                            // Copiar el formato de la fila de referencia
+                            for (int j = 0; j < filaReferencia.getTableCells().size() && j < nuevaFila.getTableCells().size(); j++) {
+                                XWPFTableCell celdaReferencia = filaReferencia.getCell(j);
+                                XWPFTableCell nuevaCelda = nuevaFila.getCell(j);
+
+                                // Copiar propiedades de la celda (bordes, alineación, etc.)
+                                if (celdaReferencia.getCTTc().getTcPr() != null) {
+                                    nuevaCelda.getCTTc().setTcPr(
+                                        (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr)
+                                        celdaReferencia.getCTTc().getTcPr().copy()
+                                    );
+                                }
+                            }
+                        }
+                        LOG.info("Filas insertadas correctamente. Total de filas: {}", table.getNumberOfRows());
+                    }
+
+                    // SOLO ESCRIBIR DATOS en las filas existentes, sin modificar formato ni estructura
+                    for (int alumnoIdx = 0; alumnoIdx < alumnos.size(); alumnoIdx++) {
+                        Map<String, Object> fila = alumnos.get(alumnoIdx);
+                        int filaIndex = FILA_INICIO + alumnoIdx;
+
+                        // Obtener la fila existente (sin crear ni clonar)
+                        XWPFTableRow filaActual = table.getRow(filaIndex);
+
+                        // Obtener datos del alumno
+                        Object numero = fila.get("numero");
+                        Object nombreCompleto = fila.get("nombreCompleto");
+                        String numeroStr = numero != null ? numero.toString() : String.valueOf(alumnoIdx + 1);
+                        String nombreStr = nombreCompleto != null ? nombreCompleto.toString() : "";
+
+                        LOG.info("Alumno {} en fila {}: numero='{}', nombre='{}'", alumnoIdx + 1, filaIndex + 1, numeroStr, nombreStr);
+
+                        // Escribir SOLO los datos en las columnas correspondientes
+                        if (!filaActual.getTableCells().isEmpty()) {
+                            XWPFTableCell cell = filaActual.getCell(COL_NUMERO_LISTA);
+                            escribirSoloTexto(cell, numeroStr);
+                        }
+
+                        if (COL_NOMBRE_COMPLETO < filaActual.getTableCells().size()) {
+                            XWPFTableCell cell = filaActual.getCell(COL_NOMBRE_COMPLETO);
+                            escribirSoloTexto(cell, nombreStr);
+                        }
+
+                        // Escribir "0" en la columna 3 (índice 2)
+                        final int COL_TERCERA = 2;
+                        if (COL_TERCERA < filaActual.getTableCells().size()) {
+                            XWPFTableCell cell = filaActual.getCell(COL_TERCERA);
+                            escribirSoloTexto(cell, "0");
+                        }
+
+                        // Escribir el total de criterios en la columna 4 (índice 3)
+                        final int COL_TOTAL_CRITERIOS = 3;
+                        if (COL_TOTAL_CRITERIOS < filaActual.getTableCells().size()) {
+                            XWPFTableCell cell = filaActual.getCell(COL_TOTAL_CRITERIOS);
+                            escribirSoloTexto(cell, String.valueOf(TOTAL_CRITERIOS));
+                        }
+
+                        // Calcular y escribir el Portafolio en la columna 5 (índice 4)
+                        final int COL_PORTAFOLIO = 4;
+                        if (COL_PORTAFOLIO < filaActual.getTableCells().size()) {
+                            double totalPortafolio = 0.0;
+
+                            // Sumar los puntos obtenidos de todos los criterios
+                            for (Map<String, Object> criterioInfo : CRITERIOS_INFO) {
+                                @SuppressWarnings("unchecked")
+                                List<Long> agregadoIds = (List<Long>) criterioInfo.get("agregadoIds");
+                                boolean esCheck = (Boolean) criterioInfo.get("esCheck");
+                                Double puntuacionMaxima = (Double) criterioInfo.get("puntuacionMaxima");
+
+                                double puntosObtenidosCriterio = 0.0;
+
+                                // Calcular puntos obtenidos de este criterio
+                                for (Long agregadoId : agregadoIds) {
+                                    Object valor = fila.get("agregado_" + agregadoId);
+
+                                    if (esCheck) {
+                                        // Para tipo Check, cada checkbox marcado suma una parte proporcional
+                                        if (valor instanceof Boolean && (Boolean) valor) {
+                                            puntosObtenidosCriterio += puntuacionMaxima / agregadoIds.size();
+                                        } else if (valor instanceof String) {
+                                            String strValor = (String) valor;
+                                            if ("true".equalsIgnoreCase(strValor) || "1".equals(strValor)) {
+                                                puntosObtenidosCriterio += puntuacionMaxima / agregadoIds.size();
+                                            }
+                                        }
+                                    } else {
+                                        // Para tipo Puntuación, sumar los valores numéricos
+                                        if (valor instanceof Number) {
+                                            puntosObtenidosCriterio += ((Number) valor).doubleValue();
+                                        } else if (valor instanceof String && !((String) valor).isEmpty()) {
+                                            try {
+                                                puntosObtenidosCriterio += Double.parseDouble((String) valor);
+                                            } catch (NumberFormatException e) {
+                                                // Ignorar valores no numéricos
+                                            }
+                                        }
+                                    }
+                                }
+
+                                totalPortafolio += puntosObtenidosCriterio;
+                            }
+
+                            XWPFTableCell cell = filaActual.getCell(COL_PORTAFOLIO);
+                            // Formatear como entero de dos dígitos
+                            escribirSoloTexto(cell, String.format("%02d", (int) Math.round(totalPortafolio)));
+                        }
+
+                        // Escribir Calificación Examen en columna 6 (índice 5) con 1 decimal
+                        final int COL_CALIFICACION_EXAMEN = 5;
+                        if (COL_CALIFICACION_EXAMEN < filaActual.getTableCells().size()) {
+                            Object calificacionExamen = fila.get("calificacionExamen");
+                            String valorStr = "0.0";
+                            if (calificacionExamen != null) {
+                                if (calificacionExamen instanceof Number) {
+                                    valorStr = String.format("%.1f", ((Number) calificacionExamen).doubleValue());
+                                } else if (calificacionExamen instanceof String && !"-".equals(calificacionExamen)) {
+                                    try {
+                                        double valor = Double.parseDouble((String) calificacionExamen);
+                                        valorStr = String.format("%.1f", valor);
+                                    } catch (NumberFormatException e) {
+                                        valorStr = "0.0";
+                                    }
+                                }
+                            }
+                            XWPFTableCell cell = filaActual.getCell(COL_CALIFICACION_EXAMEN);
+                            escribirSoloTexto(cell, valorStr);
+                        }
+
+                        // Escribir Puntos Examen en columna 7 (índice 6) como entero
+                        final int COL_PUNTOS_EXAMEN = 6;
+                        if (COL_PUNTOS_EXAMEN < filaActual.getTableCells().size()) {
+                            Object aciertosExamen = fila.get("aciertosExamen");
+                            String valorStr = "0";
+                            if (aciertosExamen != null) {
+                                if (aciertosExamen instanceof Number) {
+                                    valorStr = String.valueOf(((Number) aciertosExamen).intValue());
+                                } else if (aciertosExamen instanceof String && !"-".equals(aciertosExamen)) {
+                                    try {
+                                        valorStr = String.valueOf(Integer.parseInt((String) aciertosExamen));
+                                    } catch (NumberFormatException e) {
+                                        valorStr = "0";
+                                    }
+                                }
+                            }
+                            XWPFTableCell cell = filaActual.getCell(COL_PUNTOS_EXAMEN);
+                            escribirSoloTexto(cell, valorStr);
+                        }
+
+                        // Escribir Calificación Parcial en columna 8 (índice 7) con 1 decimal
+                        final int COL_CALIFICACION_PARCIAL = 7;
+                        double calificacionParcialValor = 0.0;
+                        if (COL_CALIFICACION_PARCIAL < filaActual.getTableCells().size()) {
+                            Object calificacionParcial = fila.get("calificacionParcial");
+                            String valorStr = "0.0";
+                            if (calificacionParcial != null) {
+                                if (calificacionParcial instanceof Number) {
+                                    calificacionParcialValor = ((Number) calificacionParcial).doubleValue();
+                                    valorStr = String.format("%.1f", calificacionParcialValor);
+                                } else if (calificacionParcial instanceof String && !"-".equals(calificacionParcial)) {
+                                    try {
+                                        calificacionParcialValor = Double.parseDouble((String) calificacionParcial);
+                                        valorStr = String.format("%.1f", calificacionParcialValor);
+                                    } catch (NumberFormatException e) {
+                                        valorStr = "0.0";
+                                    }
+                                }
+                            }
+                            XWPFTableCell cell = filaActual.getCell(COL_CALIFICACION_PARCIAL);
+                            escribirSoloTexto(cell, valorStr);
+                        }
+
+                        // Escribir Calificación Parcial en letra en columna 9 (índice 8)
+                        final int COL_CALIFICACION_LETRA = 8;
+                        if (COL_CALIFICACION_LETRA < filaActual.getTableCells().size()) {
+                            String valorLetra = convertirCalificacionALetra(calificacionParcialValor);
+                            XWPFTableCell cell = filaActual.getCell(COL_CALIFICACION_LETRA);
+                            escribirTextoConFuenteReducida(cell, valorLetra); // Fuente 2 puntos más pequeña
+                        }
+                    }
+
+                    LOG.info("Datos escritos para {} alumnos", alumnos.size());
+                } else {
+                    LOG.error("No se encontraron tablas en el documento");
+                    throw new IOException("La plantilla no contiene ninguna tabla");
+                }
+
+                document.write(out);
+            } catch (java.io.FileNotFoundException e) {
+                LOG.error("No se encontró la plantilla en: {}", templatePath);
+                mostrarError("No se encontró la plantilla en: " + templatePath.toString());
+                return;
+            } catch (Exception e) {
+                LOG.error("Error al procesar la plantilla", e);
+                throw new IOException("Error al procesar la plantilla: " + e.getMessage(), e);
+            }
+
+            // Mostrar mensaje de éxito
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Exportación Exitosa");
+            alert.setHeaderText(null);
+            alert.setContentText("El concentrado se ha exportado correctamente a:\n" + file.getAbsolutePath());
+
+            // Agregar botón para abrir el archivo
+            ButtonType btnAbrir = new ButtonType("Abrir archivo");
+            ButtonType btnCerrar = new ButtonType("Cerrar", ButtonBar.ButtonData.CANCEL_CLOSE);
+            alert.getButtonTypes().setAll(btnAbrir, btnCerrar);
+
+            Optional<ButtonType> resultado = alert.showAndWait();
+            if (resultado.isPresent() && resultado.get() == btnAbrir) {
+                // Intentar abrir el archivo con la aplicación predeterminada
+                if (Desktop.isDesktopSupported()) {
+                    try {
+                        Desktop.getDesktop().open(file);
+                    } catch (IOException e) {
+                        LOG.error("Error al abrir archivo", e);
+                        mostrarAdvertencia("No se pudo abrir el archivo automáticamente");
+                    }
+                }
+            }
+
+        } catch (IOException e) {
+            LOG.error("Error al generar archivo Word", e);
+            mostrarError("No se pudo generar el archivo: " + e.getMessage());
+        } catch (Exception e) {
+            LOG.error("Error inesperado al generar archivo", e);
+            mostrarError("Error inesperado: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Escribe SOLO el texto en una celda sin modificar formato ni estructura
+     * Este método es lo más minimalista posible para no alterar NADA de la plantilla
+     */
+    private void escribirSoloTexto(XWPFTableCell cell, String texto) {
+        try {
+            XWPFParagraph paragraph;
+
+            // Si no hay párrafos, crear uno
+            if (cell.getParagraphs().isEmpty()) {
+                LOG.warn("Celda sin párrafos, creando uno nuevo");
+                paragraph = cell.addParagraph();
+            } else {
+                paragraph = cell.getParagraphs().get(0);
+            }
+
+            XWPFRun run;
+
+            // Si no hay runs, crear uno
+            if (paragraph.getRuns().isEmpty()) {
+                LOG.warn("Párrafo sin runs, creando uno nuevo");
+                run = paragraph.createRun();
+            } else {
+                run = paragraph.getRuns().get(0);
+            }
+
+            // SOLO reemplazar el texto del run
+            run.setText(texto, 0);
+
+        } catch (Exception e) {
+            LOG.error("Error al escribir texto en celda: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Escribe texto en una celda con fuente reducida (2 puntos menos)
+     * Específico para columna de calificación en letra
+     */
+    private void escribirTextoConFuenteReducida(XWPFTableCell cell, String texto) {
+        try {
+            XWPFParagraph paragraph;
+
+            // Si no hay párrafos, crear uno
+            if (cell.getParagraphs().isEmpty()) {
+                LOG.warn("Celda sin párrafos, creando uno nuevo");
+                paragraph = cell.addParagraph();
+            } else {
+                paragraph = cell.getParagraphs().get(0);
+            }
+
+            XWPFRun run;
+
+            // Si no hay runs, crear uno
+            if (paragraph.getRuns().isEmpty()) {
+                LOG.warn("Párrafo sin runs, creando uno nuevo");
+                run = paragraph.createRun();
+            } else {
+                run = paragraph.getRuns().get(0);
+            }
+
+            // Obtener el tamaño de fuente actual y reducirlo en 2 puntos
+            int tamanoActual = run.getFontSize();
+            if (tamanoActual > 0) {
+                run.setFontSize(tamanoActual - 2);
+            } else {
+                // Si no tiene tamaño definido, usar 9 puntos (11 - 2)
+                run.setFontSize(9);
+            }
+
+            // SOLO reemplazar el texto del run
+            run.setText(texto, 0);
+
+        } catch (Exception e) {
+            LOG.error("Error al escribir texto con fuente reducida en celda: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Convierte una calificación numérica (0-10) a su equivalente en letra
+     * Ejemplo: 9.3 = "Nueve punto tres", 9.0 = "Nueve punto cero", 8.5 = "Ocho punto cinco"
+     */
+    private String convertirCalificacionALetra(double calificacion) {
+        // Redondear a 1 decimal
+        double calRedondeada = Math.round(calificacion * 10.0) / 10.0;
+
+        // Separar parte entera y decimal
+        int parteEntera = (int) calRedondeada;
+        int parteDecimal = (int) Math.round((calRedondeada - parteEntera) * 10);
+
+        // Convertir parte entera a letra
+        String parteEnteraTexto = convertirEnteroALetra(parteEntera);
+
+        // Siempre agregar "punto" y el decimal en letra (incluso si es cero)
+        String parteDecimalTexto = convertirDigitoALetra(parteDecimal);
+        return parteEnteraTexto + " punto " + parteDecimalTexto;
+    }
+
+    /**
+     * Convierte un número entero (0-10) a letra
+     */
+    private String convertirEnteroALetra(int numero) {
+        switch (numero) {
+            case 0: return "Cero";
+            case 1: return "Uno";
+            case 2: return "Dos";
+            case 3: return "Tres";
+            case 4: return "Cuatro";
+            case 5: return "Cinco";
+            case 6: return "Seis";
+            case 7: return "Siete";
+            case 8: return "Ocho";
+            case 9: return "Nueve";
+            case 10: return "Diez";
+            default: return "N/A";
+        }
+    }
+
+    /**
+     * Convierte un dígito (0-9) a letra
+     */
+    private String convertirDigitoALetra(int digito) {
+        switch (digito) {
+            case 0: return "cero";
+            case 1: return "uno";
+            case 2: return "dos";
+            case 3: return "tres";
+            case 4: return "cuatro";
+            case 5: return "cinco";
+            case 6: return "seis";
+            case 7: return "siete";
+            case 8: return "ocho";
+            case 9: return "nueve";
+            default: return "";
+        }
+    }
+
+    /**
+     * Obtiene el nombre del semestre basado en el primer dígito del ID del grupo.
+     * Ejemplos: 101 → PRIMER, 201 → SEGUNDO, 301 → TERCER, etc.
+     *
+     * @param grupoId ID del grupo
+     * @return Nombre del semestre en mayúsculas (PRIMER, SEGUNDO, TERCER, CUARTO, QUINTO, SEXTO)
+     */
+    private String obtenerSemestreDesdeGrupoId(Long grupoId) {
+        if (grupoId == null) {
+            return "N/A";
+        }
+
+        // Convertir el ID a String y obtener el primer dígito
+        String grupoIdStr = String.valueOf(grupoId);
+        if (grupoIdStr.isEmpty()) {
+            return "N/A";
+        }
+
+        // Obtener el primer dígito
+        char primerDigito = grupoIdStr.charAt(0);
+        int semestre = Character.getNumericValue(primerDigito);
+
+        // Mapear el dígito al nombre del semestre
+        switch (semestre) {
+            case 1:
+                return "PRIMER";
+            case 2:
+                return "SEGUNDO";
+            case 3:
+                return "TERCER";
+            case 4:
+                return "CUARTO";
+            case 5:
+                return "QUINTO";
+            case 6:
+                return "SEXTO";
+            default:
+                return "N/A";
+        }
+    }
+
+    /**
+     * Reemplaza etiquetas en un párrafo de un documento Word.
+     * Este método maneja correctamente los casos donde una etiqueta está dividida en múltiples runs.
+     */
+    private void reemplazarEtiquetasEnParrafo(XWPFParagraph paragraph, String nombreMateria, String fechaAplicacion, String nombreMaestro, String parcial, String semestre) {
+        if (paragraph.getRuns() == null || paragraph.getRuns().isEmpty()) {
+            return;
+        }
+
+        // Concatenar todo el texto del párrafo
+        StringBuilder textoCompleto = new StringBuilder();
+        for (XWPFRun run : paragraph.getRuns()) {
+            String texto = run.getText(0);
+            if (texto != null) {
+                textoCompleto.append(texto);
+            }
+        }
+
+        String textoOriginal = textoCompleto.toString();
+
+        // Verificar si hay etiquetas que reemplazar
+        if (!textoOriginal.contains("${materia}") && !textoOriginal.contains("${fecha_aplicacion}")
+            && !textoOriginal.contains("${nombre_maestro}") && !textoOriginal.contains("${parcial}")
+            && !textoOriginal.contains("${SEMESTRE}")) {
+            return;
+        }
+
+        // Realizar los reemplazos
+        String textoReemplazado = textoOriginal;
+        boolean huboReemplazo = false;
+
+        if (textoReemplazado.contains("${materia}")) {
+            textoReemplazado = textoReemplazado.replace("${materia}", nombreMateria);
+            LOG.info("Reemplazada etiqueta ${{materia}} con: {}", nombreMateria);
+            huboReemplazo = true;
+        }
+
+        if (textoReemplazado.contains("${fecha_aplicacion}")) {
+            textoReemplazado = textoReemplazado.replace("${fecha_aplicacion}", fechaAplicacion);
+            LOG.info("Reemplazada etiqueta ${{fecha_aplicacion}} con: {}", fechaAplicacion);
+            huboReemplazo = true;
+        }
+
+        if (textoReemplazado.contains("${nombre_maestro}")) {
+            textoReemplazado = textoReemplazado.replace("${nombre_maestro}", nombreMaestro);
+            LOG.info("Reemplazada etiqueta ${{nombre_maestro}} con: {}", nombreMaestro);
+            huboReemplazo = true;
+        }
+
+        if (textoReemplazado.contains("${parcial}")) {
+            textoReemplazado = textoReemplazado.replace("${parcial}", parcial);
+            LOG.info("Reemplazada etiqueta ${{parcial}} con: {}", parcial);
+            huboReemplazo = true;
+        }
+
+        if (textoReemplazado.contains("${SEMESTRE}")) {
+            textoReemplazado = textoReemplazado.replace("${SEMESTRE}", semestre);
+            LOG.info("Reemplazada etiqueta ${{SEMESTRE}} con: {}", semestre);
+            huboReemplazo = true;
+        }
+
+        // Si hubo reemplazo, actualizar el párrafo
+        if (huboReemplazo) {
+            // Guardar el formato del primer run
+            XWPFRun primerRun = paragraph.getRuns().get(0);
+            String fontFamily = primerRun.getFontFamily();
+            int fontSize = primerRun.getFontSize();
+            boolean bold = primerRun.isBold();
+            boolean italic = primerRun.isItalic();
+
+            // Eliminar todos los runs existentes
+            int numRuns = paragraph.getRuns().size();
+            for (int i = numRuns - 1; i >= 0; i--) {
+                paragraph.removeRun(i);
+            }
+
+            // Crear un nuevo run con el texto reemplazado
+            XWPFRun nuevoRun = paragraph.createRun();
+            nuevoRun.setText(textoReemplazado);
+
+            // Aplicar el formato guardado
+            if (fontFamily != null) {
+                nuevoRun.setFontFamily(fontFamily);
+            }
+            if (fontSize > 0) {
+                nuevoRun.setFontSize(fontSize);
+            }
+            nuevoRun.setBold(bold);
+            nuevoRun.setItalic(italic);
         }
     }
 }
