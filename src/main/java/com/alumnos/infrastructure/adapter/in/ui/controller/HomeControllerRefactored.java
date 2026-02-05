@@ -49,7 +49,6 @@ public class HomeControllerRefactored {
     @FXML private Button btnMenuInformeConcentrado;
     @FXML private Button btnMenuExamenes;
     @FXML private Button btnMenuConfiguracion;
-    @FXML private Button btnMenuAcercaDe;
 
     // Controladores especializados (inyectados)
     private final EstudiantesController estudiantesController;
@@ -61,6 +60,7 @@ public class HomeControllerRefactored {
     private final ConcentradoController concentradoController;
     private final InformeConcentradoController informeConcentradoController;
     private final ExamenesController examenesController;
+    private final ConfiguracionController configuracionController;
 
     // Vistas cacheadas
     private VBox vistaEstudiantes;
@@ -72,6 +72,7 @@ public class HomeControllerRefactored {
     private VBox vistaConcentrado;
     private VBox vistaInformeConcentrado;
     private VBox vistaExamenes;
+    private VBox vistaConfiguracion;
 
     private boolean menuAbierto = false;
 
@@ -84,7 +85,8 @@ public class HomeControllerRefactored {
             AgregadosController agregadosController,
             ConcentradoController concentradoController,
             InformeConcentradoController informeConcentradoController,
-            ExamenesController examenesController) {
+            ExamenesController examenesController,
+            ConfiguracionController configuracionController) {
         this.estudiantesController = estudiantesController;
         this.gruposController = gruposController;
         this.materiasController = materiasController;
@@ -94,6 +96,7 @@ public class HomeControllerRefactored {
         this.concentradoController = concentradoController;
         this.informeConcentradoController = informeConcentradoController;
         this.examenesController = examenesController;
+        this.configuracionController = configuracionController;
     }
 
     @FXML
@@ -126,6 +129,7 @@ public class HomeControllerRefactored {
             vistaConcentrado = concentradoController.crearVistaConcentrado();
             vistaInformeConcentrado = informeConcentradoController.crearVista();
             vistaExamenes = examenesController.crearVista();
+            vistaConfiguracion = configuracionController.crearVista();
 
             // Ocultar todas inicialmente
             vistaEstudiantes.setVisible(false);
@@ -137,12 +141,14 @@ public class HomeControllerRefactored {
             vistaConcentrado.setVisible(false);
             vistaInformeConcentrado.setVisible(false);
             vistaExamenes.setVisible(false);
+            vistaConfiguracion.setVisible(false);
 
             // Agregar al contenedor
             contentContainer.getChildren().addAll(
                 vistaEstudiantes, vistaGrupos, vistaMaterias,
                 vistaAsignaciones, vistaCriterios, vistaAgregados,
-                vistaConcentrado, vistaInformeConcentrado, vistaExamenes
+                vistaConcentrado, vistaInformeConcentrado, vistaExamenes,
+                vistaConfiguracion
             );
 
             LOG.info("Vistas cargadas exitosamente");
@@ -167,6 +173,7 @@ public class HomeControllerRefactored {
             vistaConcentrado.setVisible(false);
             vistaInformeConcentrado.setVisible(false);
             vistaExamenes.setVisible(false);
+            vistaConfiguracion.setVisible(false);
 
             // Mostrar la solicitada
             switch (nombreVista.toLowerCase()) {
@@ -205,6 +212,10 @@ public class HomeControllerRefactored {
                 case "examenes":
                     vistaExamenes.setVisible(true);
                     vistaExamenes.toFront();
+                    break;
+                case "configuracion":
+                    vistaConfiguracion.setVisible(true);
+                    vistaConfiguracion.toFront();
                     break;
                 default:
                     LOG.warn("Vista no reconocida: {}", nombreVista);
@@ -322,28 +333,10 @@ public class HomeControllerRefactored {
     @FXML
     private void handleMenuConfiguracion() {
         lblTitulo.setText("Configuración - Sistema de Gestión");
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Configuración");
-        alert.setHeaderText(null);
-        alert.setContentText("Función de configuración en desarrollo");
-        alert.showAndWait();
+        mostrarVista("configuracion");
         toggleMenu();
     }
 
-    @FXML
-    private void handleMenuAcercaDe() {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Acerca de");
-        alert.setHeaderText(null);
-        alert.setContentText("Sistema de Gestión de Alumnos v2.0 (Refactorizado)\n\n" +
-                "Desarrollado con:\n" +
-                "- Spring Boot\n" +
-                "- JavaFX\n" +
-                "- SQLite\n" +
-                "- Arquitectura Limpia");
-        alert.showAndWait();
-        toggleMenu();
-    }
 
     @FXML
     private void toggleSubmenuCriterios() {
