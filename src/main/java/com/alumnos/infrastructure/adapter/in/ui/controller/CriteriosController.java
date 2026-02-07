@@ -1,8 +1,10 @@
 package com.alumnos.infrastructure.adapter.in.ui.controller;
 
 import com.alumnos.domain.model.Criterio;
+import com.alumnos.domain.model.Examen;
 import com.alumnos.domain.model.Materia;
 import com.alumnos.domain.port.in.CriterioServicePort;
+import com.alumnos.domain.port.in.ExamenServicePort;
 import com.alumnos.domain.port.in.MateriaServicePort;
 import javafx.collections.FXCollections;
 import javafx.scene.control.*;
@@ -10,6 +12,7 @@ import javafx.scene.layout.VBox;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Controlador para la gestión de criterios de evaluación
@@ -20,9 +23,11 @@ public class CriteriosController extends BaseController {
 
     private final CriterioServicePort criterioService;
     private final MateriaServicePort materiaService;
+    private final ExamenServicePort examenService;
     private TableView<Criterio> tablaCriterios; // 📋 Referencia a la tabla
     private ComboBox<Materia> cmbFiltroMateria; // 📋 Referencia al filtro de materia
     private ComboBox<Integer> cmbFiltroParcial; // 📋 Referencia al filtro de parcial
+    private AgregadosController agregadosController; // 📋 Referencia para notificar cambios
 
     // Referencias a campos del formulario para edición
     private TextField txtNombre;
@@ -34,20 +39,41 @@ public class CriteriosController extends BaseController {
     private TextField txtOrden;
     private Button btnGuardar;
     private Long criterioIdEnEdicion = null; // ID del criterio en edición
+    private Long materiaIdOriginal = null; // Materia original del criterio en edición
+    private Integer parcialOriginal = null; // Parcial original del criterio en edición
 
-    public CriteriosController(CriterioServicePort criterioService, MateriaServicePort materiaService) {
+    public CriteriosController(CriterioServicePort criterioService,
+                              MateriaServicePort materiaService,
+                              ExamenServicePort examenService) {
         this.criterioService = criterioService;
         this.materiaService = materiaService;
+        this.examenService = examenService;
+    }
+
+    /**
+     * Establece la referencia al controlador de Agregados para notificar cambios
+     */
+    public void setAgregadosController(AgregadosController agregadosController) {
+        this.agregadosController = agregadosController;
     }
 
     public VBox crearVista() {
         VBox vista = new VBox(20);
         vista.setStyle("-fx-padding: 20; -fx-background-color: #f5f5f5;");
-        vista.getChildren().addAll(
-            crearFormulario(),
-            crearFiltros(),
-            crearTabla()
-        );
+
+        // Crear componentes en el orden correcto
+        VBox formulario = crearFormulario();
+        VBox filtrosYTabla = crearFiltrosYTabla();
+
+        vista.getChildren().addAll(formulario, filtrosYTabla);
+
+        // Aplicar filtros iniciales después de crear todos los componentes
+        javafx.application.Platform.runLater(() -> {
+            if (cmbFiltroMateria.getValue() != null || cmbFiltroParcial.getValue() != null) {
+                aplicarFiltros(cmbFiltroMateria, cmbFiltroParcial);
+            }
+        });
+
         return vista;
     }
 
@@ -143,13 +169,11 @@ public class CriteriosController extends BaseController {
         return formulario;
     }
 
-    private VBox crearFiltros() {
-        VBox filtros = new VBox(10);
-        filtros.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
+    private VBox crearFiltrosYTabla() {
+        VBox contenedor = new VBox(15);
+        contenedor.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
 
-        Label lblFiltrosTitle = new Label("Filtros");
-        lblFiltrosTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");
-
+        // Sección de filtros
         javafx.scene.layout.HBox filterBox = new javafx.scene.layout.HBox(10);
         filterBox.setStyle("-fx-alignment: center-left;");
 
@@ -169,40 +193,29 @@ public class CriteriosController extends BaseController {
         cmbFiltroParcial.setItems(FXCollections.observableArrayList(1, 2, 3));
         cmbFiltroParcial.setPrefWidth(150);
 
-        // Agregar listeners para refrescar tabla al cambiar filtros
+        // Inicializar con el primer valor si hay valores disponibles
+        if (!cmbFiltroMateria.getItems().isEmpty()) {
+            cmbFiltroMateria.getSelectionModel().selectFirst();
+        }
+        if (!cmbFiltroParcial.getItems().isEmpty()) {
+            cmbFiltroParcial.getSelectionModel().selectFirst();
+        }
+
+        // Agregar listeners para aplicar filtros automáticamente al cambiar selección
         cmbFiltroMateria.valueProperty().addListener((obs, oldVal, newVal) -> {
-            if (tablaCriterios != null) {
-                tablaCriterios.refresh();
-            }
+            aplicarFiltros(cmbFiltroMateria, cmbFiltroParcial);
         });
 
         cmbFiltroParcial.valueProperty().addListener((obs, oldVal, newVal) -> {
-            if (tablaCriterios != null) {
-                tablaCriterios.refresh();
-            }
+            aplicarFiltros(cmbFiltroMateria, cmbFiltroParcial);
         });
 
-        Button btnFiltrar = new Button("Filtrar");
-        btnFiltrar.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8 20; -fx-cursor: hand;");
-        btnFiltrar.setOnAction(e -> aplicarFiltros(cmbFiltroMateria, cmbFiltroParcial));
+        filterBox.getChildren().addAll(lblMateria, cmbFiltroMateria, lblParcial, cmbFiltroParcial);
 
-        Button btnLimpiarFiltros = new Button("Limpiar filtros");
-        btnLimpiarFiltros.setStyle("-fx-background-color: #757575; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8 20; -fx-cursor: hand;");
-        btnLimpiarFiltros.setOnAction(e -> limpiarFiltros(cmbFiltroMateria, cmbFiltroParcial));
+        // Separador visual entre filtros y tabla
+        javafx.scene.control.Separator separator = new javafx.scene.control.Separator();
 
-        filterBox.getChildren().addAll(lblMateria, cmbFiltroMateria, lblParcial, cmbFiltroParcial, btnFiltrar, btnLimpiarFiltros);
-        filtros.getChildren().addAll(lblFiltrosTitle, filterBox);
-
-        return filtros;
-    }
-
-    private VBox crearTabla() {
-        VBox contenedor = new VBox(10);
-        contenedor.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
-
-        Label lblTableTitle = new Label("Lista de Criterios de Evaluación");
-        lblTableTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
-
+        // Tabla de criterios
         tablaCriterios = new TableView<>(); // 📋 Guardar referencia
 
         TableColumn<Criterio, String> colNombre = new TableColumn<>("Nombre");
@@ -368,7 +381,7 @@ public class CriteriosController extends BaseController {
         Label lblInfo = new Label("💡 Selecciona Materia y Parcial en los filtros para poder ordenar los criterios usando ↑ ↓");
         lblInfo.setStyle("-fx-text-fill: #666; -fx-font-style: italic;");
 
-        contenedor.getChildren().addAll(lblTableTitle, tablaCriterios, lblInfo, btnGuardarOrden);
+        contenedor.getChildren().addAll(filterBox, separator, tablaCriterios, lblInfo, btnGuardarOrden);
         return contenedor;
     }
 
@@ -387,16 +400,15 @@ public class CriteriosController extends BaseController {
                 }
             }
 
-            Integer orden = null;
-            // Solo usar el campo orden si estamos editando
-            if (criterioIdEnEdicion != null && !txtOrden.getText().trim().isEmpty()) {
-                try {
-                    orden = Integer.parseInt(txtOrden.getText().trim());
-                } catch (NumberFormatException e) {
-                    mostrarError("El orden debe ser un número válido");
-                    return;
-                }
+            // ⚠️ VALIDAR QUE LA SUMA NO EXCEDA 100 PUNTOS
+            Long materiaId = cmbMateria.getValue().getId();
+            Integer parcial = cmbParcial.getValue();
+
+            if (!validarLimitePuntos(materiaId, parcial, puntuacion)) {
+                return; // No continuar si la validación falla
             }
+
+            Integer orden = null;
 
             if (criterioIdEnEdicion == null) {
                 // CREAR nuevo criterio - orden será asignado automáticamente por el servicio
@@ -412,18 +424,43 @@ public class CriteriosController extends BaseController {
                 mostrarExito("Criterio creado correctamente. El orden fue asignado automáticamente.");
             } else {
                 // ACTUALIZAR criterio existente
+                Long materiaIdActual = cmbMateria.getValue().getId();
+                Integer parcialActual = cmbParcial.getValue();
+
+                // Verificar si cambió la materia o el parcial
+                boolean cambioMateriaParcial = !materiaIdActual.equals(materiaIdOriginal) ||
+                                               !parcialActual.equals(parcialOriginal);
+
+                if (!cambioMateriaParcial) {
+                    // Si no cambió materia ni parcial, mantener el orden actual del campo
+                    if (!txtOrden.getText().trim().isEmpty()) {
+                        try {
+                            orden = Integer.parseInt(txtOrden.getText().trim());
+                        } catch (NumberFormatException e) {
+                            mostrarError("El orden debe ser un número válido");
+                            return;
+                        }
+                    }
+                }
+                // Si cambió materia o parcial, orden queda null y será reasignado por el servicio
+
                 Criterio criterio = Criterio.builder()
                     .id(criterioIdEnEdicion)
                     .nombre(txtNombre.getText().trim())
                     .tipoEvaluacion(cmbTipoEvaluacion.getValue())
                     .puntuacionMaxima(puntuacion)
-                    .materiaId(cmbMateria.getValue().getId())
-                    .parcial(cmbParcial.getValue())
+                    .materiaId(materiaIdActual)
+                    .parcial(parcialActual)
                     .orden(orden)
                     .build();
 
                 criterioService.actualizarCriterio(criterio);
-                mostrarExito("Criterio actualizado correctamente");
+
+                if (cambioMateriaParcial) {
+                    mostrarExito("Criterio actualizado. Se asignó un nuevo orden porque cambió la materia o el parcial.");
+                } else {
+                    mostrarExito("Criterio actualizado correctamente.");
+                }
             }
 
             limpiarFormulario();
@@ -436,6 +473,11 @@ public class CriteriosController extends BaseController {
                 } else {
                     cargarDatos(tablaCriterios);
                 }
+            }
+
+            // 🔔 Notificar al controlador de Agregados para que actualice su lista de criterios
+            if (agregadosController != null) {
+                agregadosController.refrescarListaCriterios();
             }
         } catch (Exception e) {
             manejarExcepcion("guardar criterio", e);
@@ -460,6 +502,88 @@ public class CriteriosController extends BaseController {
             }
         } catch (Exception e) {
             manejarExcepcion("eliminar criterio", e);
+        }
+    }
+
+    /**
+     * Valida que la suma de puntuación máxima de criterios y total de puntos del examen
+     * no supere 100 puntos para una materia y parcial específicos
+     *
+     * @param materiaId ID de la materia
+     * @param parcial Número de parcial
+     * @param puntuacionNueva Puntuación del criterio que se está guardando
+     * @return true si la validación es exitosa, false si se excede el límite
+     */
+    private boolean validarLimitePuntos(Long materiaId, Integer parcial, Double puntuacionNueva) {
+        try {
+            // Si no hay puntuación, no validar (criterios tipo Check sin puntuación)
+            if (puntuacionNueva == null || puntuacionNueva == 0) {
+                return true;
+            }
+
+            // Obtener todos los criterios de la materia y parcial (excluyendo el que se está editando)
+            List<Criterio> criteriosExistentes = criterioService.obtenerCriteriosPorMateria(materiaId)
+                .stream()
+                .filter(c -> c.getParcial().equals(parcial))
+                .filter(c -> criterioIdEnEdicion == null || !c.getId().equals(criterioIdEnEdicion))
+                .toList();
+
+            // Sumar la puntuación máxima de todos los criterios existentes
+            double totalCriterios = criteriosExistentes.stream()
+                .mapToDouble(c -> c.getPuntuacionMaxima() != null ? c.getPuntuacionMaxima() : 0.0)
+                .sum();
+
+            // Obtener el examen de la materia y parcial
+            Optional<Examen> examenOpt = examenService.obtenerExamenPorGrupoMateriaParcial(
+                null, materiaId, parcial); // null en grupoId porque no necesitamos filtrar por grupo
+
+            // Si no encuentra por grupoId null, buscar en todos los exámenes
+            if (examenOpt.isEmpty()) {
+                List<Examen> todosExamenes = examenService.obtenerTodosLosExamenes();
+                examenOpt = todosExamenes.stream()
+                    .filter(e -> e.getMateriaId().equals(materiaId) && e.getParcial().equals(parcial))
+                    .findFirst();
+            }
+
+            double totalExamen = 0.0;
+            if (examenOpt.isPresent()) {
+                totalExamen = examenOpt.get().getTotalPuntosExamen() != null ?
+                    examenOpt.get().getTotalPuntosExamen() : 0.0;
+            }
+
+            // Calcular el total sumando criterios existentes + nueva puntuación + examen
+            double sumaTotal = totalCriterios + puntuacionNueva + totalExamen;
+
+            // Validar que no exceda 100
+            if (sumaTotal > 100) {
+                String mensaje = String.format(
+                    "⚠️ SE SOBREPASA EL MÁXIMO DE PUNTOS PERMITIDOS\n\n" +
+                    "Desglose:\n" +
+                    "• Suma de criterios existentes: %.1f puntos\n" +
+                    "• Puntuación de este criterio: %.1f puntos\n" +
+                    "• Total puntos del examen: %.1f puntos\n" +
+                    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n" +
+                    "• TOTAL: %.1f puntos\n\n" +
+                    "⚠️ El máximo permitido es 100 puntos.\n" +
+                    "Sobrepasa por: %.1f puntos\n\n" +
+                    "Por favor, ajuste la puntuación máxima del criterio.",
+                    totalCriterios,
+                    puntuacionNueva,
+                    totalExamen,
+                    sumaTotal,
+                    sumaTotal - 100
+                );
+
+                mostrarAdvertencia(mensaje);
+                return false;
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            LOG.error("Error al validar límite de puntos: {}", e.getMessage());
+            mostrarError("Error al validar el límite de puntos: " + e.getMessage());
+            return false;
         }
     }
 
@@ -491,6 +615,8 @@ public class CriteriosController extends BaseController {
 
     private void limpiarFormulario() {
         criterioIdEnEdicion = null;
+        materiaIdOriginal = null;
+        parcialOriginal = null;
         txtNombre.clear();
         cmbTipoEvaluacion.setValue(null);
         txtPuntuacionMaxima.clear();
@@ -517,6 +643,11 @@ public class CriteriosController extends BaseController {
 
     private void cargarCriterioEnFormulario(Criterio criterio) {
         criterioIdEnEdicion = criterio.getId();
+
+        // Guardar valores originales de materia y parcial
+        materiaIdOriginal = criterio.getMateriaId();
+        parcialOriginal = criterio.getParcial();
+
         txtNombre.setText(criterio.getNombre());
         cmbTipoEvaluacion.setValue(criterio.getTipoEvaluacion());
 
@@ -556,6 +687,18 @@ public class CriteriosController extends BaseController {
         }
     }
 
+    /**
+     * Método público para refrescar la lista de materias (llamado desde MateriasController)
+     */
+    public void refrescarListaMaterias() {
+        if (cmbMateria != null) {
+            cargarMaterias(cmbMateria);
+        }
+        if (cmbFiltroMateria != null) {
+            cargarMaterias(cmbFiltroMateria);
+        }
+    }
+
     private void cargarMaterias(ComboBox<Materia> combo) {
         try {
             List<Materia> materias = materiaService.obtenerTodasLasMaterias();
@@ -578,6 +721,7 @@ public class CriteriosController extends BaseController {
             });
 
             tabla.setItems(FXCollections.observableArrayList(criterios));
+            tabla.refresh(); // 🔄 Forzar refresco de la tabla para que se rendericen los botones
         } catch (Exception e) {
             manejarExcepcion("cargar criterios", e);
         }
@@ -614,20 +758,13 @@ public class CriteriosController extends BaseController {
             // Actualizar tabla con resultados filtrados
             if (tablaCriterios != null) {
                 tablaCriterios.setItems(FXCollections.observableArrayList(criterios));
+                tablaCriterios.refresh(); // 🔄 Forzar refresco de la tabla para que se rendericen los botones
             }
         } catch (Exception e) {
             manejarExcepcion("aplicar filtros", e);
         }
     }
 
-    private void limpiarFiltros(ComboBox<Materia> cmbMateria, ComboBox<Integer> cmbParcial) {
-        cmbMateria.setValue(null);
-        cmbParcial.setValue(null);
-        // Recargar todos los datos sin filtros
-        if (tablaCriterios != null) {
-            cargarDatos(tablaCriterios);
-        }
-    }
 
     private void guardarOrdenCriterios() {
         try {

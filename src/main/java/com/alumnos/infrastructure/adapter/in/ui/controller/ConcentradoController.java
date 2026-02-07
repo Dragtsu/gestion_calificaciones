@@ -295,6 +295,11 @@ public class ConcentradoController extends BaseController {
             // Lista para recopilar información de todos los agregados de todos los criterios
             List<Map<String, Object>> criteriosInfo = new java.util.ArrayList<>();
 
+            // Obtener total de puntos del examen si existe (para el recálculo)
+            Optional<Examen> examenOptTemp = examenService.obtenerExamenPorGrupoMateriaParcial(
+                grupo.getId(), materia.getId(), parcial);
+            final Integer totalPuntosExamenFinal = examenOptTemp.map(Examen::getTotalPuntosExamen).orElse(null);
+
             // Crear columnas dinámicamente por criterio
             for (Criterio criterio : criterios) {
                 // Obtener agregados del criterio
@@ -354,6 +359,10 @@ public class ConcentradoController extends BaseController {
                                         if (!isUpdating && getTableRow() != null && getTableRow().getItem() != null) {
                                             Map<String, Object> fila = getTableRow().getItem();
                                             fila.put("agregado_" + agregado.getId(), checkBox.isSelected());
+
+                                            // ⚡ Recalcular puntosParcial y calificacionParcial
+                                            recalcularPuntosParcial(fila, totalPuntosExamenFinal, criteriosInfo);
+
                                             tabla.refresh();
                                         }
                                     });
@@ -419,6 +428,10 @@ public class ConcentradoController extends BaseController {
                                             String valorTexto = textField.getText();
                                             Map<String, Object> fila = getTableRow().getItem();
                                             fila.put("agregado_" + agregado.getId(), valorTexto);
+
+                                            // ⚡ Recalcular puntosParcial y calificacionParcial
+                                            recalcularPuntosParcial(fila, totalPuntosExamenFinal, criteriosInfo);
+
                                             tabla.refresh();
                                         }
                                     });
@@ -575,7 +588,10 @@ public class ConcentradoController extends BaseController {
                 final Integer totalPuntosExamen = examen.getTotalPuntosExamen();
 
                 // Columna Puntos Examen (EDITABLE)
-                TableColumn<Map<String, Object>, String> colPuntosExamen = new TableColumn<>("Puntos Examen");
+                String headerPuntosExamen = totalPuntosExamen != null
+                    ? "Puntos Examen (" + totalPuntosExamen + " pts)"
+                    : "Puntos Examen";
+                TableColumn<Map<String, Object>, String> colPuntosExamen = new TableColumn<>(headerPuntosExamen);
                 colPuntosExamen.setPrefWidth(100);
                 colPuntosExamen.setMinWidth(100);
                 colPuntosExamen.setMaxWidth(100);
@@ -862,9 +878,19 @@ public class ConcentradoController extends BaseController {
                 }
 
                 double puntosExamen = 0.0;
-                Object calificacionExamenObj = fila.get("calificacionExamen");
-                if (calificacionExamenObj != null && calificacionExamenObj instanceof Double) {
-                    puntosExamen = (Double) calificacionExamenObj;
+                Object aciertosExamenObj = fila.get("aciertosExamen");
+                if (aciertosExamenObj != null) {
+                    try {
+                        if (aciertosExamenObj instanceof Number) {
+                            puntosExamen = ((Number) aciertosExamenObj).doubleValue();
+                        } else if (aciertosExamenObj instanceof String && !((String) aciertosExamenObj).isEmpty()) {
+                            puntosExamen = Double.parseDouble((String) aciertosExamenObj);
+                        } else if (aciertosExamenObj instanceof Integer) {
+                            puntosExamen = ((Integer) aciertosExamenObj).doubleValue();
+                        }
+                    } catch (NumberFormatException e) {
+                        // Ignorar, dejar en 0.0
+                    }
                 }
 
                 double puntosParcial = totalPortafolio + puntosExamen;
@@ -1404,28 +1430,24 @@ public class ConcentradoController extends BaseController {
                 totalPortafolio += puntosObtenidosCriterio;
             }
 
-            // Calcular puntos del examen (calificación sobre 10)
+            // Obtener puntos del examen directamente (aciertos, no la calificación)
             double puntosExamen = 0.0;
             Object aciertosExamenObj = fila.get("aciertosExamen");
 
-            if (aciertosExamenObj != null && totalPuntosExamen != null && totalPuntosExamen > 0) {
+            if (aciertosExamenObj != null) {
                 try {
-                    int aciertosExamen = 0;
                     if (aciertosExamenObj instanceof Number) {
-                        aciertosExamen = ((Number) aciertosExamenObj).intValue();
+                        puntosExamen = ((Number) aciertosExamenObj).doubleValue();
                     } else if (aciertosExamenObj instanceof String && !((String) aciertosExamenObj).isEmpty()) {
-                        aciertosExamen = Integer.parseInt((String) aciertosExamenObj);
+                        puntosExamen = Double.parseDouble((String) aciertosExamenObj);
                     }
-
-                    // Calcular porcentaje y convertir a calificación sobre 10
-                    double porcentaje = (aciertosExamen * 100.0) / totalPuntosExamen;
-                    puntosExamen = (porcentaje * 10.0) / 100.0;
                 } catch (NumberFormatException e) {
                     // Si hay error, dejar puntosExamen en 0.0
                 }
             }
 
             // Calcular puntos parcial y calificación parcial
+            // Puntos Parcial = Portafolio + Puntos Examen (aciertos directos)
             double puntosParcial = totalPortafolio + puntosExamen;
             double calificacionParcial = (puntosParcial * 10.0) / 100.0;
 

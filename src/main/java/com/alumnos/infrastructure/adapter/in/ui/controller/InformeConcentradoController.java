@@ -548,9 +548,13 @@ public class InformeConcentradoController extends BaseController {
 
             if (examenOpt.isPresent()) {
                 Examen examen = examenOpt.get();
+                final Integer totalPuntosExamen = examen.getTotalPuntosExamen();
 
                 // Columna Puntos Examen
-                TableColumn<Map<String, Object>, String> colPuntosExamen = new TableColumn<>("Puntos Examen");
+                String headerPuntosExamen = totalPuntosExamen != null
+                    ? "Puntos Examen (" + totalPuntosExamen + " pts)"
+                    : "Puntos Examen";
+                TableColumn<Map<String, Object>, String> colPuntosExamen = new TableColumn<>(headerPuntosExamen);
                 colPuntosExamen.setPrefWidth(100);
                 colPuntosExamen.setMinWidth(100);
                 colPuntosExamen.setMaxWidth(100);
