@@ -4,6 +4,7 @@ import com.alumnos.domain.model.Agregado;
 import com.alumnos.domain.model.Criterio;
 import com.alumnos.domain.model.Materia;
 import com.alumnos.domain.port.in.AgregadoServicePort;
+import com.alumnos.domain.port.in.CalificacionConcentradoServicePort;
 import com.alumnos.domain.port.in.CriterioServicePort;
 import com.alumnos.domain.port.in.MateriaServicePort;
 import javafx.collections.FXCollections;
@@ -24,17 +25,33 @@ public class AgregadosController extends BaseController {
     private final AgregadoServicePort agregadoService;
     private final CriterioServicePort criterioService;
     private final MateriaServicePort materiaService;
+    private final CalificacionConcentradoServicePort calificacionConcentradoService;
     private TableView<Agregado> tablaAgregados; // 📋 Referencia a la tabla
+
+    // 📋 Referencias a los componentes del formulario
+    private Label lblFormTitle; // 📋 Referencia al título del formulario
+    private ComboBox<Materia> cmbFormMateria;
+    private ComboBox<Integer> cmbFormParcial;
+    private ComboBox<Criterio> cmbFormCriterio;
+    private TextField txtFormNombre; // 📋 Referencia al campo nombre del formulario
+    private TextField txtFormDescripcion; // 📋 Referencia al campo descripcion del formulario
+    private Button btnCancelarEdicion; // 📋 Referencia al botón Cancelar Edición
+    private List<Criterio> todosCriteriosFormulario; // 📋 Lista de criterios para el formulario
+    private Long agregadoIdEnEdicion = null; // 📋 ID del agregado en edición (null si es nuevo)
+    private Long criterioIdOriginal = null; // 📋 Criterio original del agregado en edición
+    private Integer ordenOriginal = null; // 📋 Orden original del agregado en edición
 
     // 📋 Referencias a los filtros de tabla
     private ComboBox<Materia> cmbFiltroMateria;
     private ComboBox<Integer> cmbFiltroParcial;
     private ComboBox<Criterio> cmbFiltroCriterio;
 
-    public AgregadosController(AgregadoServicePort agregadoService, CriterioServicePort criterioService, MateriaServicePort materiaService) {
+    public AgregadosController(AgregadoServicePort agregadoService, CriterioServicePort criterioService,
+                               MateriaServicePort materiaService, CalificacionConcentradoServicePort calificacionConcentradoService) {
         this.agregadoService = agregadoService;
         this.criterioService = criterioService;
         this.materiaService = materiaService;
+        this.calificacionConcentradoService = calificacionConcentradoService;
     }
 
     public VBox crearVista() {
@@ -51,7 +68,7 @@ public class AgregadosController extends BaseController {
         VBox formulario = new VBox(10);
         formulario.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
 
-        Label lblFormTitle = new Label("Registrar Nuevo Agregado");
+        lblFormTitle = new Label("Registrar Nuevo Agregado"); // 📋 Guardar referencia
         lblFormTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
 
         javafx.scene.layout.GridPane gridForm = new javafx.scene.layout.GridPane();
@@ -61,115 +78,121 @@ public class AgregadosController extends BaseController {
         // ========== COLUMNA 1 (izquierda) ==========
         Label lblNombre = new Label("Nombre:");
         lblNombre.setStyle("-fx-font-weight: bold;");
-        TextField txtNombre = new TextField();
-        txtNombre.setPromptText("Nombre del agregado");
-        txtNombre.setPrefWidth(250);
+        txtFormNombre = new TextField(); // 📋 Guardar referencia
+        txtFormNombre.setPromptText("Nombre del agregado");
+        txtFormNombre.setPrefWidth(250);
+
+        Label lblDescripcion = new Label("Descripción:");
+        lblDescripcion.setStyle("-fx-font-weight: bold;");
+        txtFormDescripcion = new TextField(); // 📋 Guardar referencia
+        txtFormDescripcion.setPromptText("Descripción del agregado (opcional)");
+        txtFormDescripcion.setPrefWidth(250);
 
         // ========== COLUMNA 2 (derecha) ==========
         Label lblMateria = new Label("Materia:");
         lblMateria.setStyle("-fx-font-weight: bold;");
-        ComboBox<Materia> cmbMateria = new ComboBox<>();
-        cmbMateria.setPromptText("Seleccione una materia");
-        cmbMateria.setPrefWidth(250);
-        cargarMaterias(cmbMateria);
+        cmbFormMateria = new ComboBox<>();
+        cmbFormMateria.setPromptText("Seleccione una materia");
+        cmbFormMateria.setPrefWidth(250);
+        cargarMaterias(cmbFormMateria);
 
         Label lblParcial = new Label("Parcial:");
         lblParcial.setStyle("-fx-font-weight: bold;");
-        ComboBox<Integer> cmbParcial = new ComboBox<>();
-        cmbParcial.setPromptText("Seleccione un parcial");
-        cmbParcial.setPrefWidth(250);
-        cmbParcial.setDisable(true); // Deshabilitado hasta que se seleccione materia
-        cmbParcial.setItems(FXCollections.observableArrayList(1, 2, 3));
+        cmbFormParcial = new ComboBox<>(); // 📋 Guardar referencia
+        cmbFormParcial.setPromptText("Seleccione un parcial");
+        cmbFormParcial.setPrefWidth(250);
+        cmbFormParcial.setDisable(true); // Deshabilitado hasta que se seleccione materia
+        cmbFormParcial.setItems(FXCollections.observableArrayList(1, 2, 3));
 
         Label lblCriterio = new Label("Criterio:");
         lblCriterio.setStyle("-fx-font-weight: bold;");
-        ComboBox<Criterio> cmbCriterio = new ComboBox<>();
-        cmbCriterio.setPromptText("Seleccione materia y parcial primero");
-        cmbCriterio.setPrefWidth(250);
-        cmbCriterio.setDisable(true); // Deshabilitado hasta que se seleccione materia y parcial
+        cmbFormCriterio = new ComboBox<>(); // 📋 Guardar referencia
+        cmbFormCriterio.setPromptText("Seleccione materia y parcial primero");
+        cmbFormCriterio.setPrefWidth(250);
+        cmbFormCriterio.setDisable(true); // Deshabilitado hasta que se seleccione materia y parcial
 
         // Lista completa de criterios para filtrar
-        final List<Criterio> todosCriterios = new java.util.ArrayList<>();
+        todosCriteriosFormulario = new java.util.ArrayList<>(); // 📋 Guardar referencia
         try {
-            todosCriterios.addAll(criterioService.obtenerTodosLosCriterios());
+            todosCriteriosFormulario.addAll(criterioService.obtenerTodosLosCriterios());
         } catch (Exception e) {
             manejarExcepcion("cargar criterios", e);
         }
 
         // Evento: Al seleccionar materia, habilitar parcial
-        cmbMateria.setOnAction(event -> {
-            if (cmbMateria.getValue() != null) {
-                cmbParcial.setDisable(false);
-                cmbParcial.setValue(null);
-                cmbCriterio.setValue(null);
-                cmbCriterio.setDisable(true);
-                cmbCriterio.setPromptText("Seleccione un parcial primero");
+        cmbFormMateria.setOnAction(event -> {
+            if (cmbFormMateria.getValue() != null) {
+                cmbFormParcial.setDisable(false);
+                cmbFormParcial.setValue(null);
+                cmbFormCriterio.setValue(null);
+                cmbFormCriterio.setDisable(true);
+                cmbFormCriterio.setPromptText("Seleccione un parcial primero");
             } else {
-                cmbParcial.setDisable(true);
-                cmbParcial.setValue(null);
-                cmbCriterio.setValue(null);
-                cmbCriterio.setDisable(true);
-                cmbCriterio.setPromptText("Seleccione materia y parcial primero");
+                cmbFormParcial.setDisable(true);
+                cmbFormParcial.setValue(null);
+                cmbFormCriterio.setValue(null);
+                cmbFormCriterio.setDisable(true);
+                cmbFormCriterio.setPromptText("Seleccione materia y parcial primero");
             }
         });
 
         // Evento: Al seleccionar parcial, filtrar y habilitar criterio
-        cmbParcial.setOnAction(event -> {
-            if (cmbParcial.getValue() != null && cmbMateria.getValue() != null) {
+        cmbFormParcial.setOnAction(event -> {
+            if (cmbFormParcial.getValue() != null && cmbFormMateria.getValue() != null) {
                 // Filtrar criterios por materia y parcial
-                Long materiaId = cmbMateria.getValue().getId();
-                Integer parcial = cmbParcial.getValue();
+                Long materiaId = cmbFormMateria.getValue().getId();
+                Integer parcial = cmbFormParcial.getValue();
 
-                List<Criterio> criteriosFiltrados = todosCriterios.stream()
+                List<Criterio> criteriosFiltrados = todosCriteriosFormulario.stream()
                     .filter(c -> c.getMateriaId() != null && c.getMateriaId().equals(materiaId))
                     .filter(c -> c.getParcial() != null && c.getParcial().equals(parcial))
                     .collect(Collectors.toList());
 
-                cmbCriterio.setItems(FXCollections.observableArrayList(criteriosFiltrados));
-                cmbCriterio.setDisable(false);
-                cmbCriterio.setValue(null);
-                cmbCriterio.setPromptText(criteriosFiltrados.isEmpty() ?
+                cmbFormCriterio.setItems(FXCollections.observableArrayList(criteriosFiltrados));
+                cmbFormCriterio.setDisable(false);
+                cmbFormCriterio.setValue(null);
+                cmbFormCriterio.setPromptText(criteriosFiltrados.isEmpty() ?
                     "No hay criterios disponibles" : "Seleccione un criterio");
             } else {
-                cmbCriterio.setValue(null);
-                cmbCriterio.setDisable(true);
-                cmbCriterio.setPromptText("Seleccione un parcial primero");
+                cmbFormCriterio.setValue(null);
+                cmbFormCriterio.setDisable(true);
+                cmbFormCriterio.setPromptText("Seleccione un parcial primero");
             }
         });
 
         // Agregar componentes al GridPane en 2 columnas
         // Columna 1 (izquierda): columnas 0-1
         gridForm.add(lblNombre, 0, 0);
-        gridForm.add(txtNombre, 1, 0);
+        gridForm.add(txtFormNombre, 1, 0);
+        gridForm.add(lblDescripcion, 0, 1);
+        gridForm.add(txtFormDescripcion, 1, 1);
 
-        // Columna 2 (derecha): columnas 2-3
+        // Columna 2 (derecha): columnas 2-3        // Columna 2 (derecha): columnas 2-3
         gridForm.add(lblMateria, 2, 0);
-        gridForm.add(cmbMateria, 3, 0);
+        gridForm.add(cmbFormMateria, 3, 0);
         gridForm.add(lblParcial, 2, 1);
-        gridForm.add(cmbParcial, 3, 1);
+        gridForm.add(cmbFormParcial, 3, 1);
         gridForm.add(lblCriterio, 2, 2);
-        gridForm.add(cmbCriterio, 3, 2);
+        gridForm.add(cmbFormCriterio, 3, 2);
 
         javafx.scene.layout.HBox buttonBox = new javafx.scene.layout.HBox(10);
         buttonBox.setStyle("-fx-alignment: center; -fx-padding: 15 0 0 0;");
 
         Button btnGuardar = new Button("Guardar");
         btnGuardar.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand;");
-        btnGuardar.setOnAction(e -> guardarAgregado(txtNombre, cmbCriterio));
+        btnGuardar.setOnAction(e -> guardarAgregado());
+
+        btnCancelarEdicion = new Button("Cancelar Edición"); // 📋 Guardar referencia
+        btnCancelarEdicion.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand;");
+        btnCancelarEdicion.setVisible(false); // Oculto por defecto
+        btnCancelarEdicion.setManaged(false); // No ocupa espacio cuando está oculto
+        btnCancelarEdicion.setOnAction(e -> limpiarFormulario());
 
         Button btnLimpiar = new Button("Limpiar");
         btnLimpiar.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand;");
-        btnLimpiar.setOnAction(e -> {
-            txtNombre.clear();
-            cmbMateria.setValue(null);
-            cmbParcial.setValue(null);
-            cmbParcial.setDisable(true);
-            cmbCriterio.setValue(null);
-            cmbCriterio.setDisable(true);
-            cmbCriterio.setPromptText("Seleccione materia y parcial primero");
-        });
+        btnLimpiar.setOnAction(e -> limpiarFormulario());
 
-        buttonBox.getChildren().addAll(btnGuardar, btnLimpiar);
+        buttonBox.getChildren().addAll(btnGuardar, btnCancelarEdicion, btnLimpiar);
 
         formulario.getChildren().addAll(lblFormTitle, new javafx.scene.control.Separator(), gridForm, buttonBox);
         return formulario;
@@ -180,8 +203,6 @@ public class AgregadosController extends BaseController {
         VBox contenedor = new VBox(10);
         contenedor.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
 
-        Label lblTableTitle = new Label("Lista de Agregados");
-        lblTableTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
 
         // ========== FILTROS (sin título) ==========
         javafx.scene.layout.HBox filterBox = new javafx.scene.layout.HBox(10);
@@ -191,7 +212,7 @@ public class AgregadosController extends BaseController {
         Label lblFiltroMateria = new Label("Materia:");
         lblFiltroMateria.setStyle("-fx-font-weight: bold;");
         cmbFiltroMateria = new ComboBox<>();
-        cmbFiltroMateria.setPromptText("Seleccione materia");
+        cmbFiltroMateria.setPromptText("Todas las materias");
         cmbFiltroMateria.setPrefWidth(200);
         cargarMaterias(cmbFiltroMateria);
 
@@ -199,16 +220,15 @@ public class AgregadosController extends BaseController {
         Label lblFiltroParcial = new Label("Parcial:");
         lblFiltroParcial.setStyle("-fx-font-weight: bold;");
         cmbFiltroParcial = new ComboBox<>();
-        cmbFiltroParcial.setPromptText("Seleccione parcial");
+        cmbFiltroParcial.setPromptText("Todos los parciales");
         cmbFiltroParcial.setPrefWidth(150);
-        cmbFiltroParcial.setDisable(true);
         cmbFiltroParcial.setItems(FXCollections.observableArrayList(1, 2, 3));
 
         // ComboBox Criterio
         Label lblFiltroCriterio = new Label("Criterio:");
         lblFiltroCriterio.setStyle("-fx-font-weight: bold;");
         cmbFiltroCriterio = new ComboBox<>();
-        cmbFiltroCriterio.setPromptText("Seleccione criterio");
+        cmbFiltroCriterio.setPromptText("Todos los criterios");
         cmbFiltroCriterio.setPrefWidth(250);
         cmbFiltroCriterio.setDisable(true);
 
@@ -220,26 +240,34 @@ public class AgregadosController extends BaseController {
             manejarExcepcion("cargar criterios", e);
         }
 
-        // Evento: Al seleccionar materia, habilitar parcial
-        cmbFiltroMateria.setOnAction(event -> {
-            if (cmbFiltroMateria.getValue() != null) {
+        // Evento: Al seleccionar materia, habilitar parcial y aplicar filtro automáticamente
+        cmbFiltroMateria.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
                 cmbFiltroParcial.setDisable(false);
-                cmbFiltroParcial.setValue(null);
-                cmbFiltroCriterio.setValue(null);
-                cmbFiltroCriterio.setDisable(true);
+                // Seleccionar el primer parcial por defecto si no hay ninguno seleccionado
+                if (!cmbFiltroParcial.getItems().isEmpty() && cmbFiltroParcial.getValue() == null) {
+                    cmbFiltroParcial.getSelectionModel().selectFirst();
+                } else if (oldVal != null) {
+                    // Si se cambió de materia, resetear parcial y criterio
+                    cmbFiltroParcial.setValue(null);
+                    cmbFiltroCriterio.setValue(null);
+                    cmbFiltroCriterio.setDisable(true);
+                    // Seleccionar el primer parcial
+                    if (!cmbFiltroParcial.getItems().isEmpty()) {
+                        cmbFiltroParcial.getSelectionModel().selectFirst();
+                    }
+                }
             } else {
                 cmbFiltroParcial.setDisable(true);
                 cmbFiltroParcial.setValue(null);
                 cmbFiltroCriterio.setValue(null);
                 cmbFiltroCriterio.setDisable(true);
             }
-            // Refrescar tabla para actualizar botones de orden
-            if (tablaAgregados != null) {
-                tablaAgregados.refresh();
-            }
+            // Aplicar filtros automáticamente
+            aplicarFiltrosTabla(cmbFiltroMateria, cmbFiltroParcial, cmbFiltroCriterio);
         });
 
-        // Evento: Al seleccionar parcial, filtrar y habilitar criterio
+        // Evento: Al seleccionar parcial, filtrar y habilitar criterio automáticamente
         cmbFiltroParcial.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null && cmbFiltroMateria.getValue() != null) {
                 Long materiaId = cmbFiltroMateria.getValue().getId();
@@ -251,49 +279,35 @@ public class AgregadosController extends BaseController {
                     .collect(Collectors.toList());
 
                 cmbFiltroCriterio.setItems(FXCollections.observableArrayList(criteriosFiltrados));
-                cmbFiltroCriterio.setDisable(false);
-                cmbFiltroCriterio.setValue(null);
+                cmbFiltroCriterio.setDisable(criteriosFiltrados.isEmpty());
+
+                // 🎯 Seleccionar el primer criterio automáticamente si hay datos disponibles
+                if (!criteriosFiltrados.isEmpty()) {
+                    cmbFiltroCriterio.getSelectionModel().selectFirst();
+                } else {
+                    cmbFiltroCriterio.setValue(null);
+                }
             } else {
                 cmbFiltroCriterio.setValue(null);
                 cmbFiltroCriterio.setDisable(true);
             }
-            // Refrescar tabla para actualizar botones de orden
-            if (tablaAgregados != null) {
-                tablaAgregados.refresh();
-            }
+            // Aplicar filtros automáticamente
+            aplicarFiltrosTabla(cmbFiltroMateria, cmbFiltroParcial, cmbFiltroCriterio);
         });
 
-        // Evento: Al seleccionar criterio, refrescar tabla
+        // Evento: Al seleccionar criterio, aplicar filtro automáticamente
         cmbFiltroCriterio.valueProperty().addListener((obs, oldVal, newVal) -> {
-            // Refrescar tabla para actualizar botones de orden
-            if (tablaAgregados != null) {
-                tablaAgregados.refresh();
-            }
-        });
-
-        Button btnFiltrar = new Button("Filtrar");
-        btnFiltrar.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8 20; -fx-cursor: hand;");
-        btnFiltrar.setOnAction(e -> aplicarFiltrosTabla(cmbFiltroMateria, cmbFiltroParcial, cmbFiltroCriterio));
-
-        Button btnLimpiarFiltros = new Button("Limpiar filtros");
-        btnLimpiarFiltros.setStyle("-fx-background-color: #757575; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8 20; -fx-cursor: hand;");
-        btnLimpiarFiltros.setOnAction(e -> {
-            cmbFiltroMateria.setValue(null);
-            cmbFiltroParcial.setValue(null);
-            cmbFiltroParcial.setDisable(true);
-            cmbFiltroCriterio.setValue(null);
-            cmbFiltroCriterio.setDisable(true);
-            cargarDatos(tablaAgregados);
+            // Aplicar filtros automáticamente
+            aplicarFiltrosTabla(cmbFiltroMateria, cmbFiltroParcial, cmbFiltroCriterio);
         });
 
         filterBox.getChildren().addAll(
             lblFiltroMateria, cmbFiltroMateria,
             lblFiltroParcial, cmbFiltroParcial,
-            lblFiltroCriterio, cmbFiltroCriterio,
-            btnFiltrar, btnLimpiarFiltros
+            lblFiltroCriterio, cmbFiltroCriterio
         );
 
-        tablaAgregados = new TableView<>(); // 📋 Guardar referencia
+        tablaAgregados = new TableView<>(); // 📋 Guardar referencia (DEBE estar antes de selectFirst)
 
         // Columna Nombre
         TableColumn<Agregado, String> colNombre = new TableColumn<>("Nombre");
@@ -436,14 +450,33 @@ public class AgregadosController extends BaseController {
             }
         });
 
+        // Columna Descripción
+        TableColumn<Agregado, String> colDescripcion = new TableColumn<>("Descripción");
+        colDescripcion.setCellValueFactory(data ->
+            new javafx.beans.property.SimpleStringProperty(
+                data.getValue().getDescripcion() != null ? data.getValue().getDescripcion() : ""));
+        colDescripcion.setPrefWidth(200);
+
         // Columna Acciones
         TableColumn<Agregado, Void> colAcciones = new TableColumn<>("Acciones");
-        colAcciones.setPrefWidth(100);
+        colAcciones.setPrefWidth(180);
         colAcciones.setCellFactory(param -> new TableCell<Agregado, Void>() {
+            private final Button btnEditar = new Button("Editar");
             private final Button btnEliminar = new Button("Eliminar");
+            private final javafx.scene.layout.HBox contenedor = new javafx.scene.layout.HBox(5);
 
             {
+                btnEditar.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 12px; -fx-padding: 5 15; -fx-cursor: hand;");
                 btnEliminar.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-font-size: 12px; -fx-padding: 5 15; -fx-cursor: hand;");
+
+                contenedor.setAlignment(javafx.geometry.Pos.CENTER);
+                contenedor.getChildren().addAll(btnEditar, btnEliminar);
+
+                btnEditar.setOnAction(e -> {
+                    Agregado agregado = getTableView().getItems().get(getIndex());
+                    editarAgregado(agregado);
+                });
+
                 btnEliminar.setOnAction(e -> {
                     Agregado agregado = getTableView().getItems().get(getIndex());
                     eliminarAgregado(agregado, tablaAgregados);
@@ -456,13 +489,15 @@ public class AgregadosController extends BaseController {
                 if (empty) {
                     setGraphic(null);
                 } else {
-                    setGraphic(btnEliminar);
+                    setGraphic(contenedor);
                 }
             }
         });
 
-        tablaAgregados.getColumns().addAll(colNombre, colCriterio, colMateria, colParcial, colOrden, colOrdenAcciones, colAcciones);
-        cargarDatos(tablaAgregados);
+        tablaAgregados.getColumns().addAll(colNombre, colCriterio, colMateria, colParcial, colOrden, colOrdenAcciones, colDescripcion, colAcciones);
+
+        // NO cargar datos inicialmente, dejar que los filtros automáticos se encarguen
+        // cargarDatos(tablaAgregados); // ❌ Eliminado - los filtros se encargarán de la carga inicial
 
         // Botón para guardar el orden
         Button btnGuardarOrden = new Button("💾 Guardar Orden");
@@ -472,23 +507,55 @@ public class AgregadosController extends BaseController {
         Label lblInfo = new Label("💡 Selecciona Materia, Parcial y Criterio en los filtros para ordenar los agregados usando ↑ ↓");
         lblInfo.setStyle("-fx-text-fill: #666; -fx-font-style: italic;");
 
-        contenedor.getChildren().addAll(lblTableTitle, filterBox, new javafx.scene.control.Separator(), tablaAgregados, lblInfo, btnGuardarOrden);
+        contenedor.getChildren().addAll(filterBox, new javafx.scene.control.Separator(), tablaAgregados, lblInfo, btnGuardarOrden);
+
+        // 🎯 Seleccionar el primer valor por defecto DESPUÉS de que TODO esté creado
+        // Esto disparará automáticamente los eventos y aplicará los filtros
+        if (!cmbFiltroMateria.getItems().isEmpty()) {
+            cmbFiltroMateria.getSelectionModel().selectFirst();
+        }
+
         return contenedor;
     }
 
-    private void guardarAgregado(TextField txtNombre, ComboBox<Criterio> cmbCriterio) {
+    private void guardarAgregado() {
         try {
-            if (!validarFormulario(txtNombre, cmbCriterio)) return;
+            if (!validarFormulario(txtFormNombre, cmbFormCriterio)) return;
 
-            // El orden será asignado automáticamente por el servicio
-            Agregado agregado = Agregado.builder()
-                .nombre(txtNombre.getText())
-                .criterioId(cmbCriterio.getValue().getId())
-                .build();
+            if (agregadoIdEnEdicion != null) {
+                // MODO EDICIÓN
+                Long criterioIdActual = cmbFormCriterio.getValue().getId();
+                boolean cambioDeCriterio = !criterioIdActual.equals(criterioIdOriginal);
 
-            agregadoService.crearAgregado(agregado);
-            mostrarExito("Agregado guardado correctamente. El orden fue asignado automáticamente.");
-            limpiarFormulario(txtNombre, cmbCriterio);
+                Agregado agregado = Agregado.builder()
+                    .id(agregadoIdEnEdicion)
+                    .nombre(txtFormNombre.getText().trim())
+                    .descripcion(txtFormDescripcion.getText().trim().isEmpty() ? null : txtFormDescripcion.getText().trim())
+                    .criterioId(criterioIdActual)
+                    .orden(cambioDeCriterio ? null : ordenOriginal) // Mantener orden si no cambió criterio, null si cambió
+                    .build();
+
+                agregadoService.actualizarAgregado(agregado);
+
+                if (cambioDeCriterio) {
+                    mostrarExito("Agregado actualizado correctamente. Se asignó al final del nuevo criterio.");
+                } else {
+                    mostrarExito("Agregado actualizado correctamente.");
+                }
+            } else {
+                // MODO CREAR
+                Agregado agregado = Agregado.builder()
+                    .nombre(txtFormNombre.getText().trim())
+                    .descripcion(txtFormDescripcion.getText().trim().isEmpty() ? null : txtFormDescripcion.getText().trim())
+                    .criterioId(cmbFormCriterio.getValue().getId())
+                    .build();
+
+                agregadoService.crearAgregado(agregado);
+                mostrarExito("Agregado guardado correctamente. El orden fue asignado automáticamente.");
+            }
+
+            // Limpiar formulario y ocultar botón Cancelar
+            limpiarFormulario();
 
             // ⚡ RECARGAR LA TABLA después de guardar manteniendo los filtros
             if (tablaAgregados != null) {
@@ -498,14 +565,123 @@ public class AgregadosController extends BaseController {
                 } else {
                     cargarDatos(tablaAgregados);
                 }
+
+                // ✅ Refrescar la tabla para actualizar los botones de orden
+                tablaAgregados.refresh();
             }
         } catch (Exception e) {
             manejarExcepcion("guardar agregado", e);
         }
     }
 
+    private void editarAgregado(Agregado agregado) {
+        try {
+            // Verificar si el agregado está siendo usado en el concentrado de calificaciones
+            List<com.alumnos.domain.model.CalificacionConcentrado> calificaciones =
+                calificacionConcentradoService.obtenerCalificacionesPorAgregado(agregado.getId());
+
+            if (!calificaciones.isEmpty()) {
+                // El agregado está siendo usado, no se puede cambiar materia-parcial-criterio
+                mostrarAdvertencia("Este agregado ya ha sido utilizado en el concentrado de calificaciones.\n" +
+                    "Solo puede editar el nombre y la descripción.");
+
+                // Cargar datos en el formulario pero deshabilitar los combos
+                cargarAgregadoEnFormulario(agregado, true);
+            } else {
+                // El agregado no está siendo usado, se puede editar todo
+                cargarAgregadoEnFormulario(agregado, false);
+            }
+        } catch (Exception e) {
+            manejarExcepcion("editar agregado", e);
+        }
+    }
+
+    private void cargarAgregadoEnFormulario(Agregado agregado, boolean bloquearCriterio) {
+        try {
+            // Guardar ID, criterio y orden original en edición
+            agregadoIdEnEdicion = agregado.getId();
+            criterioIdOriginal = agregado.getCriterioId();
+            ordenOriginal = agregado.getOrden();
+
+            // Cambiar título del formulario
+            lblFormTitle.setText("Editar Agregado");
+            lblFormTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #FF9800;");
+
+            // Mostrar el botón Cancelar Edición
+            if (btnCancelarEdicion != null) {
+                btnCancelarEdicion.setVisible(true);
+                btnCancelarEdicion.setManaged(true);
+            }
+
+            // Cargar datos del agregado
+            txtFormNombre.setText(agregado.getNombre());
+            txtFormDescripcion.setText(agregado.getDescripcion() != null ? agregado.getDescripcion() : "");
+
+            if (bloquearCriterio) {
+                // Bloquear cambios en materia-parcial-criterio
+                // Cargar el criterio actual pero deshabilitar los combos
+                criterioService.obtenerCriterioPorId(agregado.getCriterioId()).ifPresent(criterio -> {
+                    materiaService.obtenerMateriaPorId(criterio.getMateriaId()).ifPresent(materia -> {
+                        cmbFormMateria.setValue(materia);
+                        cmbFormMateria.setDisable(true);
+
+                        cmbFormParcial.setValue(criterio.getParcial());
+                        cmbFormParcial.setDisable(true);
+
+                        // Filtrar y cargar criterios
+                        List<Criterio> criteriosFiltrados = todosCriteriosFormulario.stream()
+                            .filter(c -> c.getMateriaId() != null && c.getMateriaId().equals(materia.getId()))
+                            .filter(c -> c.getParcial() != null && c.getParcial().equals(criterio.getParcial()))
+                            .collect(Collectors.toList());
+
+                        cmbFormCriterio.setItems(FXCollections.observableArrayList(criteriosFiltrados));
+                        cmbFormCriterio.setValue(criterio);
+                        cmbFormCriterio.setDisable(true);
+                    });
+                });
+            } else {
+                // Permitir cambios en materia-parcial-criterio
+                criterioService.obtenerCriterioPorId(agregado.getCriterioId()).ifPresent(criterio -> {
+                    materiaService.obtenerMateriaPorId(criterio.getMateriaId()).ifPresent(materia -> {
+                        cmbFormMateria.setValue(materia);
+                        cmbFormMateria.setDisable(false);
+
+                        cmbFormParcial.setValue(criterio.getParcial());
+                        cmbFormParcial.setDisable(false);
+
+                        // Filtrar y cargar criterios
+                        List<Criterio> criteriosFiltrados = todosCriteriosFormulario.stream()
+                            .filter(c -> c.getMateriaId() != null && c.getMateriaId().equals(materia.getId()))
+                            .filter(c -> c.getParcial() != null && c.getParcial().equals(criterio.getParcial()))
+                            .collect(Collectors.toList());
+
+                        cmbFormCriterio.setItems(FXCollections.observableArrayList(criteriosFiltrados));
+                        cmbFormCriterio.setValue(criterio);
+                        cmbFormCriterio.setDisable(false);
+                    });
+                });
+            }
+
+            // Hacer scroll al formulario
+            txtFormNombre.requestFocus();
+
+        } catch (Exception e) {
+            manejarExcepcion("cargar agregado en formulario", e);
+        }
+    }
+
     private void eliminarAgregado(Agregado agregado, TableView<Agregado> tabla) {
         try {
+            // Verificar si el agregado está siendo usado en el concentrado de calificaciones
+            List<com.alumnos.domain.model.CalificacionConcentrado> calificaciones =
+                calificacionConcentradoService.obtenerCalificacionesPorAgregado(agregado.getId());
+
+            if (!calificaciones.isEmpty()) {
+                mostrarError("No se puede eliminar este agregado porque ya ha sido utilizado en el concentrado de calificaciones.\n" +
+                    "Total de calificaciones registradas: " + calificaciones.size());
+                return;
+            }
+
             if (confirmarAccion("Confirmar eliminación", "¿Está seguro de eliminar este agregado?")) {
                 agregadoService.eliminarAgregado(agregado.getId());
                 mostrarExito("Agregado eliminado correctamente");
@@ -536,9 +712,36 @@ public class AgregadosController extends BaseController {
         return true;
     }
 
-    private void limpiarFormulario(TextField txtNombre, ComboBox<Criterio> cmbCriterio) {
-        txtNombre.clear();
-        cmbCriterio.setValue(null);
+    private void limpiarFormulario() {
+        // Limpiar campos
+        txtFormNombre.clear();
+        txtFormDescripcion.clear();
+        cmbFormMateria.setValue(null);
+        cmbFormParcial.setValue(null);
+        cmbFormParcial.setDisable(true);
+        cmbFormCriterio.setValue(null);
+        cmbFormCriterio.setDisable(true);
+        cmbFormCriterio.setPromptText("Seleccione materia y parcial primero");
+
+        // Habilitar combos si estaban deshabilitados
+        cmbFormMateria.setDisable(false);
+        cmbFormParcial.setDisable(true);
+        cmbFormCriterio.setDisable(true);
+
+        // Limpiar modo edición
+        agregadoIdEnEdicion = null;
+        criterioIdOriginal = null;
+        ordenOriginal = null;
+
+        // Restaurar título del formulario
+        lblFormTitle.setText("Registrar Nuevo Agregado");
+        lblFormTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
+
+        // Ocultar botón Cancelar Edición
+        if (btnCancelarEdicion != null) {
+            btnCancelarEdicion.setVisible(false);
+            btnCancelarEdicion.setManaged(false);
+        }
     }
 
     private void cargarCriterios(ComboBox<Criterio> combo) {
@@ -547,6 +750,68 @@ public class AgregadosController extends BaseController {
             combo.setItems(FXCollections.observableArrayList(criterios));
         } catch (Exception e) {
             manejarExcepcion("cargar criterios", e);
+        }
+    }
+
+    /**
+     * Método público para refrescar la lista de materias (llamado desde MateriasController)
+     */
+    public void refrescarListaMaterias() {
+        if (cmbFormMateria != null) {
+            cargarMaterias(cmbFormMateria);
+        }
+        if (cmbFiltroMateria != null) {
+            cargarMaterias(cmbFiltroMateria);
+        }
+    }
+
+    /**
+     * Método público para refrescar la lista de criterios (llamado desde CriteriosController)
+     */
+    public void refrescarListaCriterios() {
+        try {
+            // Recargar la lista completa de criterios
+            List<Criterio> nuevosCriterios = criterioService.obtenerTodosLosCriterios();
+
+            // Actualizar la lista del formulario
+            if (todosCriteriosFormulario != null) {
+                todosCriteriosFormulario.clear();
+                todosCriteriosFormulario.addAll(nuevosCriterios);
+
+                // Si hay materia y parcial seleccionados en el formulario, actualizar el combo
+                if (cmbFormMateria != null && cmbFormMateria.getValue() != null &&
+                    cmbFormParcial != null && cmbFormParcial.getValue() != null) {
+
+                    Long materiaId = cmbFormMateria.getValue().getId();
+                    Integer parcial = cmbFormParcial.getValue();
+
+                    List<Criterio> criteriosFiltrados = nuevosCriterios.stream()
+                        .filter(c -> c.getMateriaId() != null && c.getMateriaId().equals(materiaId))
+                        .filter(c -> c.getParcial() != null && c.getParcial().equals(parcial))
+                        .collect(Collectors.toList());
+
+                    if (cmbFormCriterio != null) {
+                        cmbFormCriterio.setItems(FXCollections.observableArrayList(criteriosFiltrados));
+                    }
+                }
+            }
+
+            // Actualizar el combo de filtros de tabla si hay filtros activos
+            if (cmbFiltroCriterio != null && cmbFiltroParcial != null && cmbFiltroMateria != null) {
+                if (cmbFiltroMateria.getValue() != null && cmbFiltroParcial.getValue() != null) {
+                    Long materiaId = cmbFiltroMateria.getValue().getId();
+                    Integer parcial = cmbFiltroParcial.getValue();
+
+                    List<Criterio> criteriosFiltrados = nuevosCriterios.stream()
+                        .filter(c -> c.getMateriaId() != null && c.getMateriaId().equals(materiaId))
+                        .filter(c -> c.getParcial() != null && c.getParcial().equals(parcial))
+                        .collect(Collectors.toList());
+
+                    cmbFiltroCriterio.setItems(FXCollections.observableArrayList(criteriosFiltrados));
+                }
+            }
+        } catch (Exception e) {
+            manejarExcepcion("refrescar criterios", e);
         }
     }
 
@@ -563,6 +828,8 @@ public class AgregadosController extends BaseController {
         try {
             List<Agregado> agregados = agregadoService.obtenerTodosLosAgregados();
             tabla.setItems(FXCollections.observableArrayList(agregados));
+            // ✅ Refrescar la tabla para actualizar los botones de orden
+            tabla.refresh();
         } catch (Exception e) {
             manejarExcepcion("cargar agregados", e);
         }
@@ -570,6 +837,11 @@ public class AgregadosController extends BaseController {
 
     private void aplicarFiltrosTabla(ComboBox<Materia> cmbMateria, ComboBox<Integer> cmbParcial, ComboBox<Criterio> cmbCriterio) {
         try {
+            // ⚠️ Validar que la tabla esté inicializada antes de usarla
+            if (tablaAgregados == null) {
+                return; // La tabla aún no está creada, no hacer nada
+            }
+
             List<Agregado> agregados = agregadoService.obtenerTodosLosAgregados();
 
             // Filtrar por criterio si está seleccionado
@@ -618,9 +890,10 @@ public class AgregadosController extends BaseController {
 
             tablaAgregados.setItems(FXCollections.observableArrayList(agregados));
 
-            if (agregados.isEmpty()) {
-                mostrarInformacion("No se encontraron agregados con los filtros seleccionados");
-            }
+            // ✅ Refrescar la tabla para actualizar los botones de orden
+            tablaAgregados.refresh();
+
+            // No mostrar alerta si no hay datos - simplemente mostrar tabla vacía
         } catch (Exception e) {
             manejarExcepcion("aplicar filtros", e);
         }
@@ -660,6 +933,9 @@ public class AgregadosController extends BaseController {
             } else {
                 cargarDatos(tablaAgregados);
             }
+
+            // ✅ Refrescar la tabla para actualizar los botones de orden
+            tablaAgregados.refresh();
 
         } catch (Exception e) {
             manejarExcepcion("guardar orden de agregados", e);

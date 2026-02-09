@@ -24,6 +24,8 @@ public class AsignacionesController extends BaseController {
     private final GrupoServicePort grupoService;
     private final MateriaServicePort materiaService;
     private TableView<GrupoMateria> tablaAsignaciones; // 📋 Referencia a la tabla
+    private ComboBox<Grupo> cmbGrupo; // 📋 Referencia al ComboBox de grupos
+    private ComboBox<Materia> cmbMateria; // 📋 Referencia al ComboBox de materias
 
     public AsignacionesController(GrupoMateriaServicePort grupoMateriaService,
                                   GrupoServicePort grupoService,
@@ -56,13 +58,13 @@ public class AsignacionesController extends BaseController {
 
         Label lblGrupo = new Label("Grupo:");
         lblGrupo.setStyle("-fx-font-weight: bold;");
-        ComboBox<Grupo> cmbGrupo = new ComboBox<>();
+        cmbGrupo = new ComboBox<>();
         cmbGrupo.setPromptText("Seleccione un grupo");
         cargarGrupos(cmbGrupo);
 
         Label lblMateria = new Label("Materia:");
         lblMateria.setStyle("-fx-font-weight: bold;");
-        ComboBox<Materia> cmbMateria = new ComboBox<>();
+        cmbMateria = new ComboBox<>();
         cmbMateria.setPromptText("Seleccione una materia");
         cargarMaterias(cmbMateria);
 
@@ -209,6 +211,24 @@ public class AsignacionesController extends BaseController {
         }
     }
 
+    /**
+     * Método público para recargar la lista de grupos (llamado desde GruposController)
+     */
+    public void refrescarListaGrupos() {
+        if (cmbGrupo != null) {
+            cargarGrupos(cmbGrupo);
+        }
+    }
+
+    /**
+     * Método público para recargar la lista de materias (llamado desde MateriasController)
+     */
+    public void refrescarListaMaterias() {
+        if (cmbMateria != null) {
+            cargarMaterias(cmbMateria);
+        }
+    }
+
     private void cargarMaterias(ComboBox<Materia> combo) {
         try {
             List<Materia> materias = materiaService.obtenerTodasLasMaterias();
@@ -222,6 +242,7 @@ public class AsignacionesController extends BaseController {
         try {
             List<GrupoMateria> asignaciones = grupoMateriaService.obtenerTodasLasAsignaciones();
             tabla.setItems(FXCollections.observableArrayList(asignaciones));
+            tabla.refresh(); // 🔄 Forzar refresco de la tabla para que se rendericen los botones
         } catch (Exception e) {
             manejarExcepcion("cargar asignaciones", e);
         }

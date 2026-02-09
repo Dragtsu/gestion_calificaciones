@@ -42,6 +42,17 @@ public class StageManager {
         primaryStage.setTitle(title);
         primaryStage.setScene(scene);
 
+          // Añadir icono a la ventana principal
+        try {
+            primaryStage.getIcons().add(
+                new javafx.scene.image.Image(
+                    getClass().getResourceAsStream("/icon/gemicasco.ico")
+                )
+            );
+        } catch (Exception e) {
+            LOG.warn("No se pudo cargar el icono de la aplicación", e);
+        }
+
         // Configurar ventana sin decoraciones (sin barra de título)
         primaryStage.initStyle(javafx.stage.StageStyle.UNDECORATED);
 
@@ -84,6 +95,18 @@ public class StageManager {
         stage.initStyle(javafx.stage.StageStyle.UNDECORATED);
         stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
         stage.setTitle(view.getTitle());
+
+        // Añadir icono a la ventana modal
+        try {
+            stage.getIcons().add(
+                new javafx.scene.image.Image(
+                    getClass().getResourceAsStream("/icon/gemicasco.ico")
+                )
+            );
+        } catch (Exception e) {
+            LOG.warn("No se pudo cargar el icono para la ventana modal", e);
+        }
+
         stage.setScene(new Scene(viewRootNodeHierarchy));
         stage.centerOnScreen();
         return stage;

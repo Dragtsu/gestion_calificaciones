@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class Agregado {
     private Long id;
     private String nombre;
+    private String descripcion;
     private Long criterioId;
     private Integer orden;  // Orden dinámico basado en la materia
 

@@ -33,6 +33,9 @@ public class AlumnoService implements AlumnoServicePort {
     @Override
     @Transactional
     public Alumno crearAlumno(Alumno alumno) {
+        // Capitalizar la primera letra de los campos de texto
+        normalizarNombres(alumno);
+
         // Calcular el número de lista antes de guardar
         calcularNumeroLista(alumno);
         Alumno alumnoGuardado = alumnoRepositoryPort.save(alumno);
@@ -63,6 +66,9 @@ public class AlumnoService implements AlumnoServicePort {
         if (alumno.getId() == null) {
             throw new IllegalArgumentException("El ID del alumno no puede ser nulo");
         }
+
+        // Capitalizar la primera letra de los campos de texto
+        normalizarNombres(alumno);
 
         // Obtener el alumno anterior para verificar si cambió de grupo
         Optional<Alumno> alumnoAnterior = alumnoRepositoryPort.findById(alumno.getId());
@@ -201,5 +207,33 @@ public class AlumnoService implements AlumnoServicePort {
         if (s1 == null) return 1;
         if (s2 == null) return -1;
         return s1.compareToIgnoreCase(s2);
+    }
+
+    /**
+     * Normaliza los nombres del alumno capitalizando la primera letra
+     */
+    private void normalizarNombres(Alumno alumno) {
+        if (alumno.getNombre() != null) {
+            alumno.setNombre(capitalizarPrimeraLetra(alumno.getNombre()));
+        }
+        if (alumno.getApellidoPaterno() != null) {
+            alumno.setApellidoPaterno(capitalizarPrimeraLetra(alumno.getApellidoPaterno()));
+        }
+        if (alumno.getApellidoMaterno() != null) {
+            alumno.setApellidoMaterno(capitalizarPrimeraLetra(alumno.getApellidoMaterno()));
+        }
+    }
+
+    /**
+     * Capitaliza la primera letra de un texto y el resto en minúsculas
+     * Preserva los acentos correctamente
+     */
+    private String capitalizarPrimeraLetra(String texto) {
+        if (texto == null || texto.isEmpty()) {
+            return texto;
+        }
+
+        // Convertir todo a minúsculas y capitalizar la primera letra
+        return texto.substring(0, 1).toUpperCase() + texto.substring(1).toLowerCase();
     }
 }

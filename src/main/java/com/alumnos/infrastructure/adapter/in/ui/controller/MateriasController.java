@@ -17,6 +17,9 @@ public class MateriasController extends BaseController {
 
     private final MateriaServicePort materiaService;
     private TableView<Materia> tablaMaterias; // 📋 Referencia a la tabla
+    private AsignacionesController asignacionesController; // 🔗 Referencia para sincronización
+    private CriteriosController criteriosController; // 🔗 Referencia para sincronización
+    private AgregadosController agregadosController; // 🔗 Referencia para sincronización
 
     // 📝 Campos del formulario
     private TextField txtNombre;
@@ -26,6 +29,27 @@ public class MateriasController extends BaseController {
 
     public MateriasController(MateriaServicePort materiaService) {
         this.materiaService = materiaService;
+    }
+
+    /**
+     * Configura la referencia al controlador de asignaciones para sincronización
+     */
+    public void setAsignacionesController(AsignacionesController asignacionesController) {
+        this.asignacionesController = asignacionesController;
+    }
+
+    /**
+     * Configura la referencia al controlador de criterios para sincronización
+     */
+    public void setCriteriosController(CriteriosController criteriosController) {
+        this.criteriosController = criteriosController;
+    }
+
+    /**
+     * Configura la referencia al controlador de agregados para sincronización
+     */
+    public void setAgregadosController(AgregadosController agregadosController) {
+        this.agregadosController = agregadosController;
     }
 
     public VBox crearVista() {
@@ -148,6 +172,21 @@ public class MateriasController extends BaseController {
             if (tablaMaterias != null) {
                 cargarDatos(tablaMaterias);
             }
+
+            // 🔗 SINCRONIZAR con AsignacionesController
+            if (asignacionesController != null) {
+                asignacionesController.refrescarListaMaterias();
+            }
+
+            // 🔗 SINCRONIZAR con CriteriosController
+            if (criteriosController != null) {
+                criteriosController.refrescarListaMaterias();
+            }
+
+            // 🔗 SINCRONIZAR con AgregadosController
+            if (agregadosController != null) {
+                agregadosController.refrescarListaMaterias();
+            }
         } catch (Exception e) {
             manejarExcepcion("guardar materia", e);
         }
@@ -164,6 +203,7 @@ public class MateriasController extends BaseController {
         try {
             List<Materia> materias = materiaService.obtenerTodasLasMaterias();
             tabla.setItems(FXCollections.observableArrayList(materias));
+            tabla.refresh(); // 🔄 Forzar refresco de la tabla para que se rendericen los botones
         } catch (Exception e) {
             manejarExcepcion("cargar materias", e);
         }
@@ -190,6 +230,21 @@ public class MateriasController extends BaseController {
                     // Recargar la tabla
                     if (tablaMaterias != null) {
                         cargarDatos(tablaMaterias);
+                    }
+
+                    // 🔗 SINCRONIZAR con AsignacionesController
+                    if (asignacionesController != null) {
+                        asignacionesController.refrescarListaMaterias();
+                    }
+
+                    // 🔗 SINCRONIZAR con CriteriosController
+                    if (criteriosController != null) {
+                        criteriosController.refrescarListaMaterias();
+                    }
+
+                    // 🔗 SINCRONIZAR con AgregadosController
+                    if (agregadosController != null) {
+                        agregadosController.refrescarListaMaterias();
                     }
                 } catch (IllegalStateException e) {
                     // Error de validación de dependencias

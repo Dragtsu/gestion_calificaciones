@@ -1296,7 +1296,102 @@ public class ConcentradoController extends BaseController {
             mostrarError("Debe seleccionar un parcial");
             return false;
         }
-        return validarCampoNoVacio(txtPuntuacion.getText(), "Puntuación");
+        if (!validarCampoNoVacio(txtPuntuacion.getText(), "Puntuación")) {
+            return false;
+        }
+
+        // Validar que la suma de agregados no supere el valor del criterio
+        return validarSumaAgregadosNoPasaCriterio(cmbAlumno, cmbAgregado, cmbCriterio,
+                                                  cmbGrupo, cmbMateria, cmbParcial, txtPuntuacion);
+    }
+
+    /**
+     * Valida que la suma de las puntuaciones de los agregados tipo "Puntuacion"
+     * no supere el valor máximo del criterio
+     */
+    private boolean validarSumaAgregadosNoPasaCriterio(ComboBox<Alumno> cmbAlumno, ComboBox<Agregado> cmbAgregado,
+                                                       ComboBox<Criterio> cmbCriterio, ComboBox<Grupo> cmbGrupo,
+                                                       ComboBox<Materia> cmbMateria, ComboBox<Integer> cmbParcial,
+                                                       TextField txtPuntuacion) {
+        try {
+            Criterio criterio = cmbCriterio.getValue();
+
+            // Solo validar para criterios de tipo "Puntuacion"
+            if (!"Puntuacion".equalsIgnoreCase(criterio.getTipoEvaluacion())) {
+                return true;
+            }
+
+            // Obtener la puntuación máxima del criterio
+            Double puntuacionMaximaCriterio = criterio.getPuntuacionMaxima();
+            if (puntuacionMaximaCriterio == null) {
+                mostrarError("El criterio no tiene una puntuación máxima definida");
+                return false;
+            }
+
+            // Parsear la puntuación actual a ingresar
+            double puntuacionActual;
+            try {
+                puntuacionActual = Double.parseDouble(txtPuntuacion.getText().trim());
+            } catch (NumberFormatException e) {
+                mostrarError("La puntuación debe ser un valor numérico válido");
+                return false;
+            }
+
+            // Obtener todos los agregados del criterio
+            List<Agregado> agregadosCriterio = agregadoService.obtenerTodosLosAgregados().stream()
+                .filter(a -> a.getCriterioId() != null && a.getCriterioId().equals(criterio.getId()))
+                .toList();
+
+            // Obtener todas las calificaciones existentes del alumno para este grupo, materia y parcial
+            List<CalificacionConcentrado> calificacionesExistentes =
+                calificacionConcentradoService.obtenerCalificacionesPorGrupoMateriaYParcial(
+                    cmbGrupo.getValue().getId(),
+                    cmbMateria.getValue().getId(),
+                    cmbParcial.getValue()
+                ).stream()
+                .filter(cal -> cal.getAlumnoId().equals(cmbAlumno.getValue().getId()))
+                .toList();
+
+            // Sumar las puntuaciones de los agregados de este criterio (excluyendo el agregado actual si ya existe)
+            double sumaAgregadosExistentes = 0.0;
+            Long agregadoActualId = cmbAgregado.getValue().getId();
+
+            for (Agregado agregado : agregadosCriterio) {
+                // Buscar si existe una calificación para este agregado
+                Optional<CalificacionConcentrado> calExistente = calificacionesExistentes.stream()
+                    .filter(cal -> cal.getAgregadoId().equals(agregado.getId()))
+                    .findFirst();
+
+                if (calExistente.isPresent()) {
+                    // Si es el agregado actual que estamos editando, no lo sumamos aún
+                    if (!agregado.getId().equals(agregadoActualId)) {
+                        sumaAgregadosExistentes += calExistente.get().getPuntuacion();
+                    }
+                }
+            }
+
+            // Calcular la suma total incluyendo la nueva puntuación
+            double sumaTotal = sumaAgregadosExistentes + puntuacionActual;
+
+            // Validar que no supere la puntuación máxima del criterio
+            if (sumaTotal > puntuacionMaximaCriterio) {
+                mostrarError(String.format(
+                    "La suma de los agregados (%.2f) supera la puntuación máxima del criterio (%.2f).\n" +
+                    "Suma actual de otros agregados: %.2f\n" +
+                    "Puntuación que intenta ingresar: %.2f\n" +
+                    "Puntuación máxima disponible: %.2f",
+                    sumaTotal, puntuacionMaximaCriterio, sumaAgregadosExistentes,
+                    puntuacionActual, puntuacionMaximaCriterio - sumaAgregadosExistentes
+                ));
+                return false;
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            manejarExcepcion("validar suma de agregados", e);
+            return false;
+        }
     }
 
     private void limpiarFormulario(ComboBox<Alumno> cmbAlumno, ComboBox<Agregado> cmbAgregado,

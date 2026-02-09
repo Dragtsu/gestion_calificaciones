@@ -119,6 +119,14 @@ public class HomeControllerRefactored {
             // Pasar el mainContent a ConcentradoController para los diálogos de guardar archivo
             concentradoController.setMainContent(mainContent);
 
+            // 🔗 Configurar las referencias entre controladores para sincronización
+            gruposController.setEstudiantesController(estudiantesController);
+            gruposController.setAsignacionesController(asignacionesController);
+            materiasController.setAsignacionesController(asignacionesController);
+            materiasController.setCriteriosController(criteriosController);
+            materiasController.setAgregadosController(agregadosController);
+            criteriosController.setAgregadosController(agregadosController); // 🔗 Nueva conexión
+
             // Cada controlador crea su propia vista
             vistaEstudiantes = estudiantesController.crearVista();
             vistaGrupos = gruposController.crearVista();

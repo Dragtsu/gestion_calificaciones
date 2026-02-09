@@ -59,8 +59,11 @@ public class AgregadoService implements AgregadoServicePort {
 
         // Verificar si cambió de criterio
         Agregado agregadoAnterior = agregadoRepositoryPort.findById(agregado.getId()).orElse(null);
-        if (agregadoAnterior != null && !agregadoAnterior.getCriterioId().equals(agregado.getCriterioId())) {
-            // Cambió de criterio, recalcular orden
+        Long criterioIdAnterior = agregadoAnterior != null ? agregadoAnterior.getCriterioId() : null;
+        boolean cambioDeCriterio = agregadoAnterior != null && !agregadoAnterior.getCriterioId().equals(agregado.getCriterioId());
+
+        if (cambioDeCriterio) {
+            // Cambió de criterio, asignar al final del nuevo criterio
             List<Agregado> agregadosDelNuevoCriterio = agregadoRepositoryPort.findByCriterioId(agregado.getCriterioId());
             int nuevoOrden = agregadosDelNuevoCriterio.size() + 1;
             agregado.setOrden(nuevoOrden);
@@ -70,8 +73,16 @@ public class AgregadoService implements AgregadoServicePort {
             int nuevoOrden = agregadosDelCriterio.size();
             agregado.setOrden(nuevoOrden > 0 ? nuevoOrden : 1);
         }
+        // Si no cambió de criterio y tiene orden, mantener el orden actual
 
-        return agregadoRepositoryPort.save(agregado);
+        Agregado agregadoActualizado = agregadoRepositoryPort.save(agregado);
+
+        // Si cambió de criterio, recalcular órdenes del criterio anterior
+        if (cambioDeCriterio && criterioIdAnterior != null) {
+            recalcularOrdenesDelCriterio(criterioIdAnterior);
+        }
+
+        return agregadoActualizado;
     }
 
     @Override

@@ -7,9 +7,16 @@ import com.alumnos.domain.port.in.GrupoServicePort;
 import javafx.collections.FXCollections;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Controlador para la gestión de estudiantes (alumnos)
@@ -30,6 +37,10 @@ public class EstudiantesController extends BaseController {
     private Label lblFormTitle;
     private Button btnGuardar;
     private Long alumnoIdEnEdicion = null; // ID del alumno en edición (null = crear nuevo)
+
+    // 🔍 Filtro de grupo
+    private ComboBox<Grupo> cmbFiltroGrupo;
+    private List<Alumno> todosLosAlumnos = new ArrayList<>(); // Cache de todos los alumnos
 
     public EstudiantesController(AlumnoServicePort alumnoService, GrupoServicePort grupoService) {
         this.alumnoService = alumnoService;
@@ -98,7 +109,11 @@ public class EstudiantesController extends BaseController {
         btnLimpiar.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 30; -fx-cursor: hand;");
         btnLimpiar.setOnAction(e -> limpiarFormulario());
 
-        buttonBox.getChildren().addAll(btnGuardar, btnLimpiar);
+        Button btnImportar = new Button("Importar");
+        btnImportar.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 30; -fx-cursor: hand;");
+        btnImportar.setOnAction(e -> mostrarDialogoImportacion());
+
+        buttonBox.getChildren().addAll(btnGuardar, btnLimpiar, btnImportar);
 
         formulario.getChildren().addAll(lblFormTitle, new javafx.scene.control.Separator(), gridForm, buttonBox);
         return formulario;
@@ -108,10 +123,35 @@ public class EstudiantesController extends BaseController {
         VBox contenedor = new VBox(10);
         contenedor.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
 
-        Label lblTableTitle = new Label("Lista de Alumnos");
-        lblTableTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
+        // Filtro de grupo
+        javafx.scene.layout.HBox headerBox = new javafx.scene.layout.HBox(15);
+        headerBox.setStyle("-fx-alignment: center-left; -fx-padding: 0 0 10 0;");
+
+        Label lblFiltro = new Label("Filtrar por grupo:");
+        lblFiltro.setStyle("-fx-font-weight: bold;");
+
+        cmbFiltroGrupo = new ComboBox<>();
+        cmbFiltroGrupo.setPromptText("Seleccione un grupo");
+        cmbFiltroGrupo.setPrefWidth(200);
+
+        // Cargar grupos en el filtro
+        cargarGruposEnFiltro();
+
+        // Listener para filtrar cuando cambie el valor
+        cmbFiltroGrupo.setOnAction(e -> aplicarFiltroGrupo());
+
+        headerBox.getChildren().addAll(lblFiltro, cmbFiltroGrupo);
 
         tablaAlumnos = new TableView<>(); // 📋 Guardar referencia
+
+        // 📝 Columna Número de Lista (NO EDITABLE) - Primera columna
+        TableColumn<Alumno, Integer> colNumeroLista = new TableColumn<>("N° Lista");
+        colNumeroLista.setCellValueFactory(data ->
+            new javafx.beans.property.SimpleObjectProperty<>(data.getValue().getNumeroLista()));
+        colNumeroLista.setPrefWidth(80);
+        colNumeroLista.setStyle("-fx-alignment: CENTER;");
+        colNumeroLista.setEditable(false);
+        colNumeroLista.setSortable(false);
 
         TableColumn<Alumno, String> colNombre = new TableColumn<>("Nombre");
         colNombre.setCellValueFactory(data -> 
@@ -124,6 +164,23 @@ public class EstudiantesController extends BaseController {
         TableColumn<Alumno, String> colApellidoM = new TableColumn<>("Apellido Materno");
         colApellidoM.setCellValueFactory(data ->
             new javafx.beans.property.SimpleStringProperty(data.getValue().getApellidoMaterno()));
+
+        // 🆕 Columna de Grupo
+        TableColumn<Alumno, String> colGrupo = new TableColumn<>("Grupo");
+        colGrupo.setCellValueFactory(data -> {
+            Long grupoId = data.getValue().getGrupoId();
+            if (grupoId != null) {
+                try {
+                    Optional<Grupo> grupo = grupoService.obtenerGrupoPorId(grupoId);
+                    return new javafx.beans.property.SimpleStringProperty(
+                        grupo.map(Grupo::getNombre).orElse("Sin grupo")
+                    );
+                } catch (Exception e) {
+                    return new javafx.beans.property.SimpleStringProperty("Error");
+                }
+            }
+            return new javafx.beans.property.SimpleStringProperty("Sin grupo");
+        });
 
         // Columna de acciones con botones editar y eliminar
         TableColumn<Alumno, Void> colAcciones = new TableColumn<>("Acciones");
@@ -159,10 +216,10 @@ public class EstudiantesController extends BaseController {
             }
         });
 
-        tablaAlumnos.getColumns().addAll(colNombre, colApellidoP, colApellidoM, colAcciones);
+        tablaAlumnos.getColumns().addAll(colNumeroLista, colNombre, colApellidoP, colApellidoM, colGrupo, colAcciones);
         cargarDatos(tablaAlumnos);
 
-        contenedor.getChildren().addAll(lblTableTitle, tablaAlumnos);
+        contenedor.getChildren().addAll(headerBox, tablaAlumnos);
         return contenedor;
     }
 
@@ -225,10 +282,36 @@ public class EstudiantesController extends BaseController {
         }
     }
 
+    /**
+     * Método público para recargar la lista de grupos (llamado desde GruposController)
+     */
+    public void refrescarListaGrupos() {
+        if (cmbGrupo != null) {
+            cargarGrupos(cmbGrupo);
+        }
+    }
+
     private void cargarDatos(TableView<Alumno> tabla) {
         try {
-            List<Alumno> alumnos = alumnoService.obtenerTodosLosAlumnos();
-            tabla.setItems(FXCollections.observableArrayList(alumnos));
+            todosLosAlumnos = alumnoService.obtenerTodosLosAlumnos();
+
+            // Ordenar por número de lista
+            List<Alumno> alumnosOrdenados = todosLosAlumnos.stream()
+                .sorted((a1, a2) -> {
+                    if (a1.getNumeroLista() == null && a2.getNumeroLista() == null) return 0;
+                    if (a1.getNumeroLista() == null) return 1;
+                    if (a2.getNumeroLista() == null) return -1;
+                    return a1.getNumeroLista().compareTo(a2.getNumeroLista());
+                })
+                .toList();
+
+            tabla.setItems(FXCollections.observableArrayList(alumnosOrdenados));
+            tabla.refresh(); // 🔄 Forzar refresco de la tabla para que se rendericen los botones
+
+            // Si hay un filtro seleccionado, aplicarlo
+            if (cmbFiltroGrupo != null && cmbFiltroGrupo.getValue() != null) {
+                aplicarFiltroGrupo();
+            }
         } catch (Exception e) {
             manejarExcepcion("cargar alumnos", e);
         }
@@ -294,5 +377,319 @@ public class EstudiantesController extends BaseController {
 
         // Hacer scroll hacia arriba para mostrar el formulario (opcional)
         txtNombre.requestFocus();
+    }
+
+    /**
+     * Carga los grupos en el ComboBox de filtro
+     */
+    private void cargarGruposEnFiltro() {
+        try {
+            List<Grupo> grupos = grupoService.obtenerTodosLosGrupos();
+
+            cmbFiltroGrupo.setItems(FXCollections.observableArrayList(grupos));
+
+            // Seleccionar el primer elemento por defecto si hay grupos
+            if (!grupos.isEmpty()) {
+                cmbFiltroGrupo.setValue(grupos.get(0));
+                // Aplicar el filtro automáticamente
+                aplicarFiltroGrupo();
+            }
+        } catch (Exception e) {
+            manejarExcepcion("cargar grupos en filtro", e);
+        }
+    }
+
+    /**
+     * Aplica el filtro de grupo a la tabla de alumnos
+     */
+    private void aplicarFiltroGrupo() {
+        if (cmbFiltroGrupo == null || tablaAlumnos == null) {
+            return;
+        }
+
+        Grupo grupoSeleccionado = cmbFiltroGrupo.getValue();
+
+        if (grupoSeleccionado == null) {
+            // Si no hay grupo seleccionado, mostrar todos ordenados por número de lista
+            List<Alumno> alumnosOrdenados = todosLosAlumnos.stream()
+                .sorted((a1, a2) -> {
+                    if (a1.getNumeroLista() == null && a2.getNumeroLista() == null) return 0;
+                    if (a1.getNumeroLista() == null) return 1;
+                    if (a2.getNumeroLista() == null) return -1;
+                    return a1.getNumeroLista().compareTo(a2.getNumeroLista());
+                })
+                .toList();
+            tablaAlumnos.setItems(FXCollections.observableArrayList(alumnosOrdenados));
+        } else {
+            // Filtrar por grupo seleccionado y ordenar por número de lista
+            List<Alumno> alumnosFiltrados = todosLosAlumnos.stream()
+                .filter(alumno -> grupoSeleccionado.getId().equals(alumno.getGrupoId()))
+                .sorted((a1, a2) -> {
+                    if (a1.getNumeroLista() == null && a2.getNumeroLista() == null) return 0;
+                    if (a1.getNumeroLista() == null) return 1;
+                    if (a2.getNumeroLista() == null) return -1;
+                    return a1.getNumeroLista().compareTo(a2.getNumeroLista());
+                })
+                .toList();
+            tablaAlumnos.setItems(FXCollections.observableArrayList(alumnosFiltrados));
+        }
+
+        tablaAlumnos.refresh();
+    }
+
+    /**
+     * Muestra el diálogo de importación de alumnos desde Excel
+     */
+    private void mostrarDialogoImportacion() {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Importar Alumnos desde Excel");
+        dialog.setHeaderText("Seleccione el archivo Excel y el formato de los nombres");
+
+        // Crear contenido del diálogo
+        VBox content = new VBox(15);
+        content.setStyle("-fx-padding: 20;");
+
+        // Label de instrucciones
+        Label lblInstrucciones = new Label("El archivo Excel debe contener los nombres completos de los alumnos en la primera columna.");
+        lblInstrucciones.setWrapText(true);
+        lblInstrucciones.setStyle("-fx-font-size: 12px;");
+
+        // Selector de archivo
+        javafx.scene.layout.HBox fileBox = new javafx.scene.layout.HBox(10);
+        TextField txtArchivo = new TextField();
+        txtArchivo.setPromptText("Seleccione un archivo Excel...");
+        txtArchivo.setEditable(false);
+        txtArchivo.setPrefWidth(300);
+
+        Button btnSeleccionar = new Button("Seleccionar");
+        btnSeleccionar.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white;");
+
+        fileBox.getChildren().addAll(txtArchivo, btnSeleccionar);
+
+        // Radio buttons para formato
+        Label lblFormato = new Label("Formato de nombres:");
+        lblFormato.setStyle("-fx-font-weight: bold;");
+
+        ToggleGroup formatoGroup = new ToggleGroup();
+
+        RadioButton rbNombreApellidos = new RadioButton("Nombre(s) - Apellidos");
+        rbNombreApellidos.setToggleGroup(formatoGroup);
+        rbNombreApellidos.setSelected(true);
+
+        RadioButton rbApellidosNombre = new RadioButton("Apellidos - Nombre(s)");
+        rbApellidosNombre.setToggleGroup(formatoGroup);
+
+        VBox formatoBox = new VBox(8);
+        formatoBox.getChildren().addAll(lblFormato, rbNombreApellidos, rbApellidosNombre);
+
+        // Selector de grupo
+        Label lblGrupoImport = new Label("Grupo destino:");
+        lblGrupoImport.setStyle("-fx-font-weight: bold;");
+        ComboBox<Grupo> cmbGrupoImport = new ComboBox<>();
+        cmbGrupoImport.setPromptText("Seleccione un grupo");
+        cargarGrupos(cmbGrupoImport);
+
+        // Variable para guardar el archivo seleccionado
+        final File[] archivoSeleccionado = {null};
+
+        btnSeleccionar.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Seleccionar archivo Excel");
+            fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Archivos Excel", "*.xlsx", "*.xls")
+            );
+
+            File file = fileChooser.showOpenDialog(dialog.getOwner());
+            if (file != null) {
+                archivoSeleccionado[0] = file;
+                txtArchivo.setText(file.getName());
+            }
+        });
+
+        content.getChildren().addAll(
+            lblInstrucciones,
+            fileBox,
+            new Separator(),
+            formatoBox,
+            new Separator(),
+            lblGrupoImport,
+            cmbGrupoImport
+        );
+
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        // Acción del botón OK
+        dialog.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                if (archivoSeleccionado[0] == null) {
+                    mostrarError("Por favor seleccione un archivo Excel");
+                    return;
+                }
+                if (cmbGrupoImport.getValue() == null) {
+                    mostrarError("Por favor seleccione un grupo");
+                    return;
+                }
+
+                boolean esFormatoNombreApellidos = rbNombreApellidos.isSelected();
+                importarAlumnosDesdeExcel(archivoSeleccionado[0], esFormatoNombreApellidos, cmbGrupoImport.getValue());
+            }
+        });
+    }
+
+    /**
+     * Importa alumnos desde un archivo Excel
+     * @param archivo Archivo Excel a importar
+     * @param esFormatoNombreApellidos true si el formato es Nombre(s)-Apellidos, false si es Apellidos-Nombre(s)
+     * @param grupo Grupo al que se asignarán los alumnos
+     */
+    private void importarAlumnosDesdeExcel(File archivo, boolean esFormatoNombreApellidos, Grupo grupo) {
+        try {
+            FileInputStream fis = new FileInputStream(archivo);
+            Workbook workbook = new XSSFWorkbook(fis);
+            Sheet sheet = workbook.getSheetAt(0); // Leer la primera hoja
+
+            List<Alumno> alumnosImportados = new ArrayList<>();
+            int errores = 0;
+            int filasProcesadas = 0;
+
+            for (Row row : sheet) {
+                // Saltar la primera fila si es encabezado (opcional)
+                if (row.getRowNum() == 0) {
+                    org.apache.poi.ss.usermodel.Cell firstCell = row.getCell(0);
+                    if (firstCell != null && firstCell.getCellType() == CellType.STRING) {
+                        String valor = firstCell.getStringCellValue().trim().toLowerCase();
+                        if (valor.contains("nombre") || valor.contains("alumno")) {
+                            continue; // Es encabezado, saltar
+                        }
+                    }
+                }
+
+                org.apache.poi.ss.usermodel.Cell cell = row.getCell(0);
+                if (cell != null && cell.getCellType() == CellType.STRING) {
+                    String nombreCompleto = cell.getStringCellValue().trim();
+
+                    if (!nombreCompleto.isEmpty()) {
+                        filasProcesadas++;
+                        try {
+                            Alumno alumno = parsearNombreCompleto(nombreCompleto, esFormatoNombreApellidos, grupo.getId());
+                            if (alumno != null) {
+                                alumnosImportados.add(alumno);
+                            } else {
+                                errores++;
+                            }
+                        } catch (Exception e) {
+                            errores++;
+                        }
+                    }
+                }
+            }
+
+            workbook.close();
+            fis.close();
+
+            // Guardar alumnos importados
+            int guardados = 0;
+            for (Alumno alumno : alumnosImportados) {
+                try {
+                    alumnoService.crearAlumno(alumno);
+                    guardados++;
+                } catch (Exception e) {
+                    errores++;
+                }
+            }
+
+            // Recargar tabla
+            if (tablaAlumnos != null) {
+                cargarDatos(tablaAlumnos);
+            }
+
+            // Mostrar resultado
+            Alert alerta = new Alert(Alert.AlertType.INFORMATION);
+            alerta.setTitle("Importación completada");
+            alerta.setHeaderText("Resultado de la importación");
+            alerta.setContentText(
+                "Filas procesadas: " + filasProcesadas + "\n" +
+                "Alumnos importados: " + guardados + "\n" +
+                "Errores: " + errores
+            );
+            alerta.showAndWait();
+
+        } catch (Exception e) {
+            manejarExcepcion("importar alumnos desde Excel", e);
+        }
+    }
+
+    /**
+     * Parsea un nombre completo y lo divide en nombre, apellido paterno y apellido materno
+     * @param nombreCompleto Nombre completo del alumno
+     * @param esFormatoNombreApellidos true si el formato es Nombre(s)-Apellidos, false si es Apellidos-Nombre(s)
+     * @param grupoId ID del grupo
+     * @return Objeto Alumno con los datos parseados
+     */
+    private Alumno parsearNombreCompleto(String nombreCompleto, boolean esFormatoNombreApellidos, Long grupoId) {
+        if (nombreCompleto == null || nombreCompleto.trim().isEmpty()) {
+            return null;
+        }
+
+        nombreCompleto = nombreCompleto.trim();
+        String[] partes = nombreCompleto.split("\\s+");
+
+        if (partes.length < 3) {
+            // No hay suficientes partes (mínimo: 1 nombre + 2 apellidos)
+            return null;
+        }
+
+        String nombre;
+        String apellidoPaterno;
+        String apellidoMaterno;
+
+        if (esFormatoNombreApellidos) {
+            // Formato: Nombre(s) - Apellidos
+            // Los últimos 2 elementos son los apellidos, el resto es el nombre
+            apellidoMaterno = capitalizarPrimeraLetra(partes[partes.length - 1]);
+            apellidoPaterno = capitalizarPrimeraLetra(partes[partes.length - 2]);
+
+            // El nombre es todo lo que queda antes de los apellidos
+            StringBuilder nombreBuilder = new StringBuilder();
+            for (int i = 0; i < partes.length - 2; i++) {
+                if (i > 0) nombreBuilder.append(" ");
+                nombreBuilder.append(capitalizarPrimeraLetra(partes[i]));
+            }
+            nombre = nombreBuilder.toString();
+
+        } else {
+            // Formato: Apellidos - Nombre(s)
+            // Los primeros 2 elementos son los apellidos, el resto es el nombre
+            apellidoPaterno = capitalizarPrimeraLetra(partes[0]);
+            apellidoMaterno = capitalizarPrimeraLetra(partes[1]);
+
+            // El nombre es todo lo que queda después de los apellidos
+            StringBuilder nombreBuilder = new StringBuilder();
+            for (int i = 2; i < partes.length; i++) {
+                if (i > 2) nombreBuilder.append(" ");
+                nombreBuilder.append(capitalizarPrimeraLetra(partes[i]));
+            }
+            nombre = nombreBuilder.toString();
+        }
+
+        return Alumno.builder()
+            .nombre(nombre)
+            .apellidoPaterno(apellidoPaterno)
+            .apellidoMaterno(apellidoMaterno)
+            .grupoId(grupoId)
+            .build();
+    }
+
+    /**
+     * Capitaliza la primera letra de cada palabra
+     */
+    private String capitalizarPrimeraLetra(String texto) {
+        if (texto == null || texto.isEmpty()) {
+            return texto;
+        }
+
+        texto = texto.toLowerCase();
+        return Character.toUpperCase(texto.charAt(0)) + texto.substring(1);
     }
 }

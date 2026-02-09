@@ -1,0 +1,162 @@
+# Funcionalidad de Importación de Alumnos desde Excel
+
+## Descripción
+
+Se ha implementado una nueva funcionalidad que permite importar alumnos en lote desde archivos Excel (.xlsx, .xls). Esta característica facilita la carga masiva de estudiantes al sistema.
+
+## Ubicación
+
+La funcionalidad se encuentra en el módulo de **Estudiantes** (alumnos), accesible desde el botón **"Importar"** ubicado junto a los botones "Guardar" y "Limpiar".
+
+## Características
+
+### 1. Selector de Archivo Excel
+- Permite seleccionar archivos con extensiones `.xlsx` y `.xls`
+- El archivo debe contener los nombres completos de los alumnos en la **primera columna**
+- La primera fila puede ser un encabezado (será detectada automáticamente y omitida)
+
+### 2. Formatos de Nombre Soportados
+
+La aplicación soporta dos formatos de nombres mediante radio buttons:
+
+#### Formato 1: Nombre(s) - Apellidos
+Los últimos dos elementos son los apellidos, todo lo anterior es el nombre.
+
+**Ejemplos:**
+- `Juan García López` → Nombre: Juan, Apellido Paterno: García, Apellido Materno: López
+- `María Fernanda Rodríguez Martínez` → Nombre: María Fernanda, Apellido Paterno: Rodríguez, Apellido Materno: Martínez
+- `Luis Miguel Torres Sánchez` → Nombre: Luis Miguel, Apellido Paterno: Torres, Apellido Materno: Sánchez
+
+#### Formato 2: Apellidos - Nombre(s)
+Los primeros dos elementos son los apellidos, todo lo posterior es el nombre.
+
+**Ejemplos:**
+- `García López Juan` → Nombre: Juan, Apellido Paterno: García, Apellido Materno: López
+- `Rodríguez Martínez María Fernanda` → Nombre: María Fernanda, Apellido Paterno: Rodríguez, Apellido Materno: Martínez
+- `Torres Sánchez Luis Miguel` → Nombre: Luis Miguel, Apellido Paterno: Torres, Apellido Materno: Sánchez
+
+### 3. Asignación de Grupo
+- Se debe seleccionar el grupo al que se asignarán todos los alumnos importados
+- Es obligatorio seleccionar un grupo antes de realizar la importación
+
+### 4. Capitalización Automática
+- Todos los nombres y apellidos se capitalizan automáticamente (primera letra en mayúscula, resto en minúscula)
+
+## Estructura del Archivo Excel
+
+### Ejemplo 1: Formato Nombre-Apellidos
+
+```
+| A                                  |
+|------------------------------------|
+| Nombre Completo                    |
+| Juan García López                  |
+| María Fernanda Rodríguez Martínez  |
+| Carlos Hernández Pérez             |
+| Ana Sofía González Ramírez         |
+```
+
+### Ejemplo 2: Formato Apellidos-Nombre
+
+```
+| A                                  |
+|------------------------------------|
+| Nombre Completo                    |
+| García López Juan                  |
+| Rodríguez Martínez María Fernanda  |
+| Hernández Pérez Carlos             |
+| González Ramírez Ana Sofía         |
+```
+
+## Proceso de Importación
+
+1. Hacer clic en el botón **"Importar"**
+2. Aparecerá un diálogo modal con las siguientes opciones:
+   - **Seleccionar archivo**: Click en "Seleccionar" para elegir el archivo Excel
+   - **Formato de nombres**: Elegir entre "Nombre(s) - Apellidos" o "Apellidos - Nombre(s)"
+   - **Grupo destino**: Seleccionar el grupo al que pertenecerán los alumnos
+3. Hacer clic en **"OK"** para iniciar la importación
+4. El sistema mostrará un resumen con:
+   - Número de filas procesadas
+   - Número de alumnos importados exitosamente
+   - Número de errores (si los hubo)
+
+## Validaciones
+
+### Requisitos Mínimos
+- Cada nombre debe tener al menos **3 partes** (1 nombre + 2 apellidos)
+- Los nombres no pueden estar vacíos
+- Se debe seleccionar un grupo antes de importar
+
+### Manejo de Errores
+- Las filas con nombres incompletos (menos de 3 partes) serán omitidas
+- Los alumnos duplicados o con errores de base de datos no se guardarán
+- Al final de la importación se muestra un resumen con el conteo de errores
+
+## Comportamiento Post-Importación
+
+- La tabla de alumnos se recarga automáticamente mostrando los nuevos registros
+- Los alumnos importados se asignan al grupo seleccionado
+- Se muestra un diálogo de confirmación con estadísticas de la importación
+
+## Implementación Técnica
+
+### Archivos Modificados
+- `EstudiantesController.java`: Se agregaron los siguientes métodos:
+  - `mostrarDialogoImportacion()`: Muestra el diálogo de importación
+  - `importarAlumnosDesdeExcel()`: Procesa el archivo Excel
+  - `parsearNombreCompleto()`: Parsea y divide los nombres
+  - `capitalizarPrimeraLetra()`: Capitaliza nombres
+
+### Dependencias Utilizadas
+- **Apache POI**: Para lectura de archivos Excel (ya presente en el proyecto)
+- **JavaFX FileChooser**: Para selección de archivos
+
+### Tecnologías
+- Java 22
+- JavaFX 21.0.1
+- Apache POI 5.2.5
+- Spring Boot 3.2.1
+
+## Notas Importantes
+
+1. **Formato Consistente**: Todos los nombres en el archivo deben seguir el mismo formato (no se pueden mezclar formatos)
+2. **Dos Apellidos**: El sistema asume que **siempre hay dos apellidos**
+3. **Nombres Múltiples**: Se soportan nombres compuestos (María Fernanda, Luis Miguel, etc.)
+4. **Encabezados**: Si la primera fila contiene palabras como "nombre" o "alumno", será ignorada automáticamente
+5. **Primera Columna**: Solo se lee la primera columna (columna A) del archivo Excel
+6. **Primera Hoja**: Solo se lee la primera hoja del libro de Excel
+
+## Casos de Uso
+
+### Caso 1: Inicio de Ciclo Escolar
+Importar listas completas de alumnos nuevos al inicio del ciclo escolar.
+
+### Caso 2: Cambio de Grupo
+Importar alumnos que cambian de grupo en masa.
+
+### Caso 3: Migración de Datos
+Migrar datos de alumnos desde otros sistemas.
+
+## Solución de Problemas
+
+### Error: "No hay suficientes partes"
+- **Causa**: El nombre tiene menos de 3 palabras
+- **Solución**: Verificar que todos los nombres tengan al menos 1 nombre + 2 apellidos
+
+### Error: "Por favor seleccione un grupo"
+- **Causa**: No se seleccionó un grupo antes de importar
+- **Solución**: Seleccionar un grupo de la lista desplegable
+
+### Error: "Por favor seleccione un archivo Excel"
+- **Causa**: No se seleccionó ningún archivo
+- **Solución**: Hacer clic en "Seleccionar" y elegir un archivo .xlsx o .xls
+
+## Mejoras Futuras Sugeridas
+
+1. Soporte para importación de múltiples columnas (email, teléfono, etc.)
+2. Vista previa de los datos antes de importar
+3. Validación de nombres duplicados antes de guardar
+4. Exportación de plantilla Excel vacía
+5. Soporte para archivos CSV
+6. Registro detallado de errores por fila

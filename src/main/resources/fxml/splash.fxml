@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      alignment="CENTER"
+      spacing="20"
+      style="-fx-background-color: linear-gradient(to bottom, #2c3e50, #3498db); -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0, 0, 5);">
+
+    <padding>
+        <Insets top="60" right="80" bottom="60" left="80"/>
+    </padding>
+
+    <Label text="Sistema de Gestión de Alumnos"
+           textFill="WHITE"
+           style="-fx-font-weight: bold;">
+        <font>
+            <Font size="28"/>
+        </font>
+    </Label>
+
+    <ProgressIndicator
+        prefWidth="60"
+        prefHeight="60"
+        style="-fx-progress-color: white;"/>
+
+    <Label text="Cargando..."
+           textFill="#ecf0f1"
+           style="-fx-font-weight: normal;">
+        <font>
+            <Font size="14"/>
+        </font>
+    </Label>
+
+</VBox>

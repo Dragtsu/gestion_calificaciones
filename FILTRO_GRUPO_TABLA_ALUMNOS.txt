@@ -1,0 +1,242 @@
+# Funcionalidad de Filtro de Grupo en Tabla de Alumnos
+
+## Descripción
+
+Se ha agregado una columna de "Grupo" en la tabla de alumnos y un filtro de grupo que permite visualizar alumnos por grupo específico o todos los grupos.
+
+## Cambios Realizados
+
+### 1. Modelo Grupo (`Grupo.java`)
+
+**Métodos agregados**:
+- `toString()`: Retorna el ID del grupo como String, o "Todos los grupos" si el ID es null
+- `getNombre()`: Método auxiliar que retorna el resultado de toString()
+
+```java
+@Override
+public String toString() {
+    if (id == null) {
+        return "Todos los grupos";
+    }
+    return String.valueOf(id);
+}
+
+public String getNombre() {
+    return toString();
+}
+```
+
+### 2. EstudiantesController (`EstudiantesController.java`)
+
+#### Campos agregados:
+```java
+private ComboBox<Grupo> cmbFiltroGrupo;
+private List<Alumno> todosLosAlumnos = new ArrayList<>();
+```
+
+#### Modificaciones en `crearTabla()`:
+
+1. **Header con filtro**: Se agregó un HBox que contiene el título y el ComboBox de filtro
+2. **Columna de Grupo**: Nueva columna que muestra el grupo al que pertenece cada alumno
+3. **ComboBox de filtro**: Se carga con todos los grupos más una opción "Todos los grupos"
+4. **Listener de cambio**: El ComboBox tiene un listener que aplica el filtro automáticamente
+
+```java
+// Filtro de grupo
+Label lblFiltro = new Label("Filtrar por grupo:");
+cmbFiltroGrupo = new ComboBox<>();
+cmbFiltroGrupo.setPromptText("Todos los grupos");
+cmbFiltroGrupo.setOnAction(e -> aplicarFiltroGrupo());
+
+// Columna de Grupo
+TableColumn<Alumno, String> colGrupo = new TableColumn<>("Grupo");
+colGrupo.setCellValueFactory(data -> {
+    Long grupoId = data.getValue().getGrupoId();
+    if (grupoId != null) {
+        Optional<Grupo> grupo = grupoService.obtenerGrupoPorId(grupoId);
+        return new javafx.beans.property.SimpleStringProperty(
+            grupo.map(Grupo::getNombre).orElse("Sin grupo")
+        );
+    }
+    return new javafx.beans.property.SimpleStringProperty("Sin grupo");
+});
+```
+
+#### Métodos nuevos:
+
+**`cargarGruposEnFiltro()`**
+- Carga todos los grupos en el ComboBox de filtro
+- Agrega una opción especial "Todos los grupos" con ID null
+- Selecciona automáticamente el primer elemento (Todos) al cargar
+
+```java
+private void cargarGruposEnFiltro() {
+    List<Grupo> grupos = grupoService.obtenerTodosLosGrupos();
+
+    Grupo grupoTodos = Grupo.builder().id(null).build();
+
+    List<Grupo> gruposConTodos = new ArrayList<>();
+    gruposConTodos.add(grupoTodos);
+    gruposConTodos.addAll(grupos);
+
+    cmbFiltroGrupo.setItems(FXCollections.observableArrayList(gruposConTodos));
+
+    if (!gruposConTodos.isEmpty()) {
+        cmbFiltroGrupo.setValue(gruposConTodos.get(0));
+    }
+}
+```
+
+**`aplicarFiltroGrupo()`**
+- Filtra la tabla de alumnos según el grupo seleccionado
+- Si se selecciona "Todos los grupos", muestra todos los alumnos
+- Si se selecciona un grupo específico, filtra por ese grupo
+
+```java
+private void aplicarFiltroGrupo() {
+    Grupo grupoSeleccionado = cmbFiltroGrupo.getValue();
+
+    if (grupoSeleccionado == null || grupoSeleccionado.getId() == null) {
+        // Mostrar todos los alumnos
+        tablaAlumnos.setItems(FXCollections.observableArrayList(todosLosAlumnos));
+    } else {
+        // Filtrar por grupo seleccionado
+        List<Alumno> alumnosFiltrados = todosLosAlumnos.stream()
+            .filter(alumno -> grupoSeleccionado.getId().equals(alumno.getGrupoId()))
+            .toList();
+        tablaAlumnos.setItems(FXCollections.observableArrayList(alumnosFiltrados));
+    }
+
+    tablaAlumnos.refresh();
+}
+```
+
+#### Modificación en `cargarDatos()`:
+- Ahora guarda todos los alumnos en `todosLosAlumnos` para poder filtrar
+- Mantiene el filtro seleccionado al recargar datos
+
+```java
+private void cargarDatos(TableView<Alumno> tabla) {
+    todosLosAlumnos = alumnoService.obtenerTodosLosAlumnos();
+    tabla.setItems(FXCollections.observableArrayList(todosLosAlumnos));
+    tabla.refresh();
+
+    // Si hay un filtro seleccionado, aplicarlo
+    if (cmbFiltroGrupo != null && cmbFiltroGrupo.getValue() != null) {
+        aplicarFiltroGrupo();
+    }
+}
+```
+
+## Características Implementadas
+
+### 1. Columna de Grupo en la Tabla
+- ✅ Nueva columna que muestra el grupo (ID) al que pertenece cada alumno
+- ✅ Muestra "Sin grupo" si el alumno no tiene grupo asignado
+- ✅ Manejo de errores al obtener el grupo
+
+### 2. Filtro de Grupo
+- ✅ ComboBox ubicado en el header de la tabla
+- ✅ Carga automática de todos los grupos disponibles
+- ✅ Opción "Todos los grupos" para ver todos los alumnos
+- ✅ Selección automática del primer valor (Todos) al cargar
+- ✅ Filtrado automático al cambiar la selección
+
+### 3. Comportamiento del Filtro
+- ✅ **Selección automática**: Al cargar la vista, se selecciona "Todos los grupos"
+- ✅ **Filtrado instantáneo**: Al cambiar el grupo, se filtra inmediatamente
+- ✅ **Persistencia del filtro**: Al recargar datos (después de guardar/eliminar), se mantiene el filtro seleccionado
+- ✅ **Sin grupo**: Los alumnos sin grupo se muestran solo en "Todos los grupos"
+
+## Interfaz de Usuario
+
+### Estructura de la Tabla:
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Lista de Alumnos   Filtrar por grupo: [Todos los grupos ▼] │
+├─────────────────────────────────────────────────────────────┤
+│ Nombre    │ Apellido P. │ Apellido M. │ Grupo │ Acciones  │
+├───────────┼─────────────┼─────────────┼───────┼───────────┤
+│ Juan      │ García      │ López       │ 101   │ [E] [X]   │
+│ María F.  │ Rodríguez   │ Martínez    │ 101   │ [E] [X]   │
+│ Carlos    │ Hernández   │ Pérez       │ 102   │ [E] [X]   │
+└───────────┴─────────────┴─────────────┴───────┴───────────┘
+```
+
+### Opciones del Filtro:
+- **Todos los grupos** (ID null)
+- **101** (Grupo específico)
+- **102** (Grupo específico)
+- **...** (Otros grupos)
+
+## Flujo de Funcionamiento
+
+1. **Al cargar la vista**:
+   - Se cargan todos los alumnos
+   - Se cargan todos los grupos en el filtro
+   - Se selecciona automáticamente "Todos los grupos"
+   - Se muestran todos los alumnos en la tabla
+
+2. **Al cambiar el filtro**:
+   - Se ejecuta `aplicarFiltroGrupo()`
+   - Si es "Todos", se muestran todos los alumnos
+   - Si es un grupo específico, se filtran los alumnos de ese grupo
+   - La tabla se actualiza inmediatamente
+
+3. **Al guardar/eliminar un alumno**:
+   - Se recarga la lista completa de alumnos
+   - Se mantiene el filtro seleccionado
+   - Se aplica automáticamente el filtro
+
+4. **Al importar alumnos**:
+   - Se recarga la lista completa de alumnos
+   - Se mantiene el filtro seleccionado
+   - Los nuevos alumnos se muestran si pertenecen al grupo filtrado
+
+## Ventajas
+
+1. **Organización**: Permite ver alumnos por grupo de forma rápida
+2. **Navegación**: Facilita la búsqueda de alumnos específicos
+3. **Eficiencia**: El filtrado es instantáneo (no requiere consultas a la BD)
+4. **Usabilidad**: Interfaz intuitiva con selección automática
+5. **Mantenimiento**: Código limpio y bien estructurado
+
+## Casos de Uso
+
+### Caso 1: Ver todos los alumnos
+1. El filtro muestra "Todos los grupos" por defecto
+2. La tabla muestra todos los alumnos registrados
+
+### Caso 2: Ver alumnos de un grupo específico
+1. Seleccionar el grupo deseado del ComboBox
+2. La tabla se actualiza automáticamente mostrando solo los alumnos de ese grupo
+
+### Caso 3: Agregar un alumno con el filtro activo
+1. El filtro está configurado en un grupo específico (ej: 101)
+2. Se agrega un nuevo alumno al grupo 101
+3. Al guardar, la tabla se recarga y el alumno aparece (porque pertenece al grupo filtrado)
+4. Si se agrega a otro grupo (ej: 102), no aparecerá hasta cambiar el filtro
+
+### Caso 4: Importación masiva con filtro activo
+1. El filtro está en el grupo 101
+2. Se importan 10 alumnos al grupo 101
+3. Los 10 alumnos aparecen inmediatamente en la tabla
+4. Si se importan alumnos a otro grupo, no se mostrarán
+
+## Mejoras Futuras Sugeridas
+
+1. Agregar contador de alumnos por grupo en el filtro (ej: "101 (25 alumnos)")
+2. Botón para limpiar el filtro rápidamente
+3. Búsqueda de texto dentro del grupo filtrado
+4. Exportar solo los alumnos del grupo filtrado
+5. Mostrar estadísticas del grupo seleccionado
+6. Filtros adicionales (por nombre, apellido, etc.)
+
+## Archivos Modificados
+
+1. **`EstudiantesController.java`**: Lógica del filtro y columna de grupo
+2. **`Grupo.java`**: Métodos toString() y getNombre()
+
+## Estado: ✅ COMPLETADO
+
+La funcionalidad está implementada y lista para usar. El filtro se activa automáticamente al cargar la vista con la opción "Todos los grupos" seleccionada.

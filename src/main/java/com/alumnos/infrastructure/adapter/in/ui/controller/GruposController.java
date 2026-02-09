@@ -17,9 +17,27 @@ public class GruposController extends BaseController {
 
     private final GrupoServicePort grupoService;
     private TableView<Grupo> tablaGrupos; // 📋 Referencia a la tabla
+    private EstudiantesController estudiantesController; // 🔗 Para notificar cambios
+    private AsignacionesController asignacionesController; // 🔗 Para notificar cambios
 
     public GruposController(GrupoServicePort grupoService) {
         this.grupoService = grupoService;
+    }
+
+    /**
+     * Método para establecer la referencia al controlador de estudiantes
+     * Permite notificar cuando se crea o elimina un grupo
+     */
+    public void setEstudiantesController(EstudiantesController estudiantesController) {
+        this.estudiantesController = estudiantesController;
+    }
+
+    /**
+     * Método para establecer la referencia al controlador de asignaciones
+     * Permite notificar cuando se crea o elimina un grupo
+     */
+    public void setAsignacionesController(AsignacionesController asignacionesController) {
+        this.asignacionesController = asignacionesController;
     }
 
     public VBox crearVista() {
@@ -123,6 +141,14 @@ public class GruposController extends BaseController {
             if (tablaGrupos != null) {
                 cargarDatos(tablaGrupos);
             }
+
+            // 🔔 NOTIFICAR a otros controladores para actualizar sus ComboBox de grupos
+            if (estudiantesController != null) {
+                estudiantesController.refrescarListaGrupos();
+            }
+            if (asignacionesController != null) {
+                asignacionesController.refrescarListaGrupos();
+            }
         } catch (NumberFormatException e) {
             mostrarError("El ID del grupo debe ser un número válido");
         } catch (Exception e) {
@@ -134,6 +160,7 @@ public class GruposController extends BaseController {
         try {
             List<Grupo> grupos = grupoService.obtenerTodosLosGrupos();
             tabla.setItems(FXCollections.observableArrayList(grupos));
+            tabla.refresh(); // 🔄 Forzar refresco de la tabla para que se rendericen los botones
         } catch (Exception e) {
             manejarExcepcion("cargar grupos", e);
         }
@@ -160,6 +187,14 @@ public class GruposController extends BaseController {
                     // Recargar la tabla
                     if (tablaGrupos != null) {
                         cargarDatos(tablaGrupos);
+                    }
+
+                    // 🔔 NOTIFICAR a otros controladores para actualizar sus ComboBox de grupos
+                    if (estudiantesController != null) {
+                        estudiantesController.refrescarListaGrupos();
+                    }
+                    if (asignacionesController != null) {
+                        asignacionesController.refrescarListaGrupos();
                     }
                 } catch (IllegalStateException e) {
                     // Error de validación de dependencias
