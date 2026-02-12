@@ -292,10 +292,11 @@ public class InformeConcentradoController extends BaseController {
 
                 // Crear una columna por agregado
                 for (Agregado agregado : agregados) {
-                    TableColumn<Map<String, Object>, String> colAgregado = new TableColumn<>(agregado.getNombre());
-                    colAgregado.setPrefWidth(esCheck ? 80 : 100);
-                    colAgregado.setMinWidth(esCheck ? 80 : 100);
-                    colAgregado.setMaxWidth(esCheck ? 80 : 100);
+                    TableColumn<Map<String, Object>, String> colAgregado = new TableColumn<>();
+                    colAgregado.setGraphic(crearHeaderConBotonDescripcion(agregado));
+                    colAgregado.setPrefWidth(esCheck ? 110 : 130);
+                    colAgregado.setMinWidth(esCheck ? 110 : 130);
+                    colAgregado.setMaxWidth(esCheck ? 110 : 130);
                     colAgregado.setResizable(false);
 
                     if (esCheck) {
@@ -434,7 +435,7 @@ public class InformeConcentradoController extends BaseController {
                         }
                     }
 
-                    return new javafx.beans.property.SimpleStringProperty(String.format("%.2f", acumulado));
+                    return new javafx.beans.property.SimpleStringProperty(String.format("%.1f", acumulado));
                 });
 
                 colAcumulado.setCellFactory(col -> new TableCell<Map<String, Object>, String>() {
@@ -506,7 +507,7 @@ public class InformeConcentradoController extends BaseController {
                     }
                 }
 
-                return new javafx.beans.property.SimpleStringProperty(String.format("%.2f", totalPortafolio));
+                return new javafx.beans.property.SimpleStringProperty(String.format("%.1f", totalPortafolio));
             });
 
             colPortafolio.setCellFactory(col -> new TableCell<Map<String, Object>, String>() {
@@ -634,9 +635,9 @@ public class InformeConcentradoController extends BaseController {
                 colCalificacionExamen.setCellValueFactory(cellData -> {
                     Object calif = cellData.getValue().get("calificacionExamen");
                     if (calif != null) {
-                        return new javafx.beans.property.SimpleStringProperty(String.format("%.2f", (Double) calif));
+                        return new javafx.beans.property.SimpleStringProperty(String.format("%.1f", (Double) calif));
                     }
-                    return new javafx.beans.property.SimpleStringProperty("0.00");
+                    return new javafx.beans.property.SimpleStringProperty("0.0");
                 });
 
                 colCalificacionExamen.setStyle("-fx-alignment: CENTER;");
@@ -653,7 +654,7 @@ public class InformeConcentradoController extends BaseController {
             colPuntosParcial.setCellValueFactory(cellData -> {
                 Object valor = cellData.getValue().get("puntosParcial");
                 return new javafx.beans.property.SimpleStringProperty(
-                    valor != null ? String.format("%.2f", (Double) valor) : "0.00"
+                    valor != null ? String.format("%.1f", (Double) valor) : "0.0"
                 );
             });
 
@@ -670,7 +671,7 @@ public class InformeConcentradoController extends BaseController {
             colCalificacionParcial.setCellValueFactory(cellData -> {
                 Object valor = cellData.getValue().get("calificacionParcial");
                 return new javafx.beans.property.SimpleStringProperty(
-                    valor != null ? String.format("%.2f", (Double) valor) : "0.00"
+                    valor != null ? String.format("%.1f", (Double) valor) : "0.0"
                 );
             });
 
@@ -818,6 +819,43 @@ public class InformeConcentradoController extends BaseController {
         }
     }
 
+    /**
+     * Crea un header personalizado para las columnas de agregados con un botón para mostrar la descripción
+     */
+    private HBox crearHeaderConBotonDescripcion(Agregado agregado) {
+        HBox header = new HBox(3);
+        header.setAlignment(Pos.CENTER);
+
+        Label lblNombre = new Label(agregado.getNombre());
+        lblNombre.setStyle("-fx-font-size: 11px;");
+
+        // Solo agregar botón si hay descripción
+        if (agregado.getDescripcion() != null && !agregado.getDescripcion().trim().isEmpty()) {
+            Button btnInfo = new Button("ⓘ");
+            btnInfo.setStyle("-fx-font-size: 9px; -fx-padding: 1 4px; -fx-background-radius: 8; " +
+                           "-fx-cursor: hand; -fx-min-width: 18px; -fx-max-width: 18px; " +
+                           "-fx-min-height: 18px; -fx-max-height: 18px;");
+            btnInfo.setTooltip(new Tooltip("Ver descripción"));
+
+            btnInfo.setOnAction(e -> {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Descripción de " + agregado.getNombre());
+                alert.setHeaderText(agregado.getNombre());
+                alert.setContentText(agregado.getDescripcion());
+
+                // Ajustar tamaño del diálogo
+                alert.getDialogPane().setPrefWidth(400);
+                alert.showAndWait();
+            });
+
+            header.getChildren().addAll(lblNombre, btnInfo);
+        } else {
+            header.getChildren().add(lblNombre);
+        }
+
+        return header;
+    }
+
     private void cargarGrupos(ComboBox<Grupo> combo) {
         try {
             List<Grupo> grupos = grupoService.obtenerTodosLosGrupos();
@@ -906,6 +944,11 @@ public class InformeConcentradoController extends BaseController {
             dataStyle.setAlignment(HorizontalAlignment.CENTER);
             dataStyle.setVerticalAlignment(VerticalAlignment.CENTER);
 
+            // Estilo para números con 1 decimal
+            CellStyle dataStyleDecimal = workbook.createCellStyle();
+            dataStyleDecimal.cloneStyleFrom(dataStyle);
+            dataStyleDecimal.setDataFormat(workbook.createDataFormat().getFormat("0.0"));
+
             CellStyle checkVerdaderoStyle = workbook.createCellStyle();
             checkVerdaderoStyle.cloneStyleFrom(dataStyle);
             org.apache.poi.ss.usermodel.Font checkVerdaderoFont = workbook.createFont();
@@ -931,6 +974,7 @@ public class InformeConcentradoController extends BaseController {
             calificacionFinalStyle.cloneStyleFrom(dataStyle);
             calificacionFinalStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
             calificacionFinalStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            calificacionFinalStyle.setDataFormat(workbook.createDataFormat().getFormat("0.0"));
             org.apache.poi.ss.usermodel.Font calificacionFont = workbook.createFont();
             calificacionFont.setBold(true);
             calificacionFinalStyle.setFont(calificacionFont);
@@ -1030,7 +1074,15 @@ public class InformeConcentradoController extends BaseController {
                         cell.setCellStyle(dataStyle);
                     } else if (value instanceof Double) {
                         cell.setCellValue((Double) value);
-                        cell.setCellStyle(dataStyle);
+                        // Aplicar formato de 1 decimal para columnas específicas
+                        if (columnName.startsWith("Acum ") ||
+                            "Total Portafolio".equals(columnName) ||
+                            "Calif. Examen".equals(columnName) ||
+                            "Puntos Parcial".equals(columnName)) {
+                            cell.setCellStyle(dataStyleDecimal);
+                        } else {
+                            cell.setCellStyle(dataStyle);
+                        }
                     } else if (value instanceof Boolean) {
                         // Check: true = ✓, false = ✗
                         cell.setCellValue((Boolean) value ? "✓" : "✗");
@@ -1045,7 +1097,8 @@ public class InformeConcentradoController extends BaseController {
                                 // Intentar parsear como número
                                 double numValue = Double.parseDouble(strValue);
                                 cell.setCellValue(numValue);
-                                cell.setCellStyle(dataStyle);
+                                // Aplicar formato de 1 decimal para columnas de agregados
+                                cell.setCellStyle(dataStyleDecimal);
                             } catch (NumberFormatException e) {
                                 cell.setCellValue(strValue);
                                 cell.setCellStyle(dataStyle);

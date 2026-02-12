@@ -2,6 +2,7 @@ package com.alumnos.infrastructure.adapter.in.ui.controller;
 
 import com.alumnos.domain.model.*;
 import com.alumnos.domain.port.in.*;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.*;
@@ -326,10 +327,11 @@ public class ConcentradoController extends BaseController {
                     for (Agregado agregado : agregados) {
                         if (esCheck) {
                             // Columna con CheckBox para tipo Check
-                            TableColumn<Map<String, Object>, Boolean> colAgregadoCheck = new TableColumn<>(agregado.getNombre());
-                            colAgregadoCheck.setPrefWidth(100);
-                            colAgregadoCheck.setMinWidth(100);
-                            colAgregadoCheck.setMaxWidth(100);
+                            TableColumn<Map<String, Object>, Boolean> colAgregadoCheck = new TableColumn<>();
+                            colAgregadoCheck.setGraphic(crearHeaderConBotonDescripcion(agregado));
+                            colAgregadoCheck.setPrefWidth(130);
+                            colAgregadoCheck.setMinWidth(130);
+                            colAgregadoCheck.setMaxWidth(130);
                             colAgregadoCheck.setResizable(false);
                             colAgregadoCheck.setEditable(true);
 
@@ -387,10 +389,11 @@ public class ConcentradoController extends BaseController {
 
                         } else {
                             // Columna con TextField para tipo Puntuacion
-                            TableColumn<Map<String, Object>, String> colAgregadoPuntos = new TableColumn<>(agregado.getNombre());
-                            colAgregadoPuntos.setPrefWidth(100);
-                            colAgregadoPuntos.setMinWidth(100);
-                            colAgregadoPuntos.setMaxWidth(100);
+                            TableColumn<Map<String, Object>, String> colAgregadoPuntos = new TableColumn<>();
+                            colAgregadoPuntos.setGraphic(crearHeaderConBotonDescripcion(agregado));
+                            colAgregadoPuntos.setPrefWidth(130);
+                            colAgregadoPuntos.setMinWidth(130);
+                            colAgregadoPuntos.setMaxWidth(130);
                             colAgregadoPuntos.setResizable(false);
                             colAgregadoPuntos.setEditable(true);
 
@@ -427,6 +430,16 @@ public class ConcentradoController extends BaseController {
                                         if (!newVal && getTableRow() != null && getTableRow().getItem() != null) {
                                             String valorTexto = textField.getText();
                                             Map<String, Object> fila = getTableRow().getItem();
+
+                                            // Validar que la suma de agregados no supere el máximo del criterio
+                                            if (!valorTexto.isEmpty() && !validarSumaAgregadosEnTabla(
+                                                    fila, agregado.getId(), valorTexto, criterio, agregados)) {
+                                                // Restaurar el valor anterior
+                                                Object valorAnterior = fila.get("agregado_" + agregado.getId());
+                                                textField.setText(valorAnterior != null ? valorAnterior.toString() : "");
+                                                return;
+                                            }
+
                                             fila.put("agregado_" + agregado.getId(), valorTexto);
 
                                             // ⚡ Recalcular puntosParcial y calificacionParcial
@@ -487,7 +500,7 @@ public class ConcentradoController extends BaseController {
                         }
 
                         return new javafx.beans.property.SimpleStringProperty(
-                            String.format("%.2f / %.2f", puntosObtenidos, puntuacionMaximaCriterio)
+                            String.format("%.1f / %.1f", puntosObtenidos, puntuacionMaximaCriterio)
                         );
                     });
 
@@ -559,7 +572,7 @@ public class ConcentradoController extends BaseController {
                         totalPortafolio += puntosObtenidosCriterio;
                     }
 
-                    return new javafx.beans.property.SimpleStringProperty(String.format("%.2f", totalPortafolio));
+                    return new javafx.beans.property.SimpleStringProperty(String.format("%.1f", totalPortafolio));
                 });
 
                 colPortafolio.setCellFactory(col -> new TableCell<Map<String, Object>, String>() {
@@ -735,7 +748,7 @@ public class ConcentradoController extends BaseController {
                             }
                             double porcentaje = (puntosExamen * 100.0) / totalPuntosExamen;
                             double calificacion = (porcentaje * 10.0) / 100.0;
-                            return new javafx.beans.property.SimpleStringProperty(String.format("%.2f", calificacion));
+                            return new javafx.beans.property.SimpleStringProperty(String.format("%.1f", calificacion));
                         } catch (NumberFormatException e) {
                             return new javafx.beans.property.SimpleStringProperty("-");
                         }
@@ -756,7 +769,7 @@ public class ConcentradoController extends BaseController {
             colPuntosParcial.setCellValueFactory(cellData -> {
                 Object valor = cellData.getValue().get("puntosParcial");
                 return new javafx.beans.property.SimpleStringProperty(
-                    valor != null ? String.format("%.2f", (Double) valor) : "0.00"
+                    valor != null ? String.format("%.1f", (Double) valor) : "0.0"
                 );
             });
 
@@ -772,7 +785,7 @@ public class ConcentradoController extends BaseController {
             colCalificacionParcial.setCellValueFactory(cellData -> {
                 Object valor = cellData.getValue().get("calificacionParcial");
                 return new javafx.beans.property.SimpleStringProperty(
-                    valor != null ? String.format("%.2f", (Double) valor) : "0.00"
+                    valor != null ? String.format("%.1f", (Double) valor) : "0.0"
                 );
             });
 
@@ -1376,10 +1389,10 @@ public class ConcentradoController extends BaseController {
             // Validar que no supere la puntuación máxima del criterio
             if (sumaTotal > puntuacionMaximaCriterio) {
                 mostrarError(String.format(
-                    "La suma de los agregados (%.2f) supera la puntuación máxima del criterio (%.2f).\n" +
-                    "Suma actual de otros agregados: %.2f\n" +
-                    "Puntuación que intenta ingresar: %.2f\n" +
-                    "Puntuación máxima disponible: %.2f",
+                    "La suma de los agregados (%.1f) supera la puntuación máxima del criterio (%.1f).\n" +
+                    "Suma actual de otros agregados: %.1f\n" +
+                    "Puntuación que intenta ingresar: %.1f\n" +
+                    "Puntuación máxima disponible: %.1f",
                     sumaTotal, puntuacionMaximaCriterio, sumaAgregadosExistentes,
                     puntuacionActual, puntuacionMaximaCriterio - sumaAgregadosExistentes
                 ));
@@ -1392,6 +1405,116 @@ public class ConcentradoController extends BaseController {
             manejarExcepcion("validar suma de agregados", e);
             return false;
         }
+    }
+
+    /**
+     * Valida que la suma de los agregados de tipo "Puntuacion" no supere el máximo del criterio
+     * cuando se edita directamente en la tabla
+     */
+    private boolean validarSumaAgregadosEnTabla(Map<String, Object> fila, Long agregadoIdActual,
+                                                String nuevoPuntuacionStr, Criterio criterio,
+                                                List<Agregado> agregadosCriterio) {
+        try {
+            // Solo validar para criterios de tipo "Puntuacion"
+            if (!"Puntuacion".equalsIgnoreCase(criterio.getTipoEvaluacion())) {
+                return true;
+            }
+
+            // Obtener la puntuación máxima del criterio
+            Double puntuacionMaximaCriterio = criterio.getPuntuacionMaxima();
+            if (puntuacionMaximaCriterio == null) {
+                mostrarError("El criterio no tiene una puntuación máxima definida");
+                return false;
+            }
+
+            // Parsear la nueva puntuación
+            double nuevaPuntuacion;
+            try {
+                nuevaPuntuacion = Double.parseDouble(nuevoPuntuacionStr.trim());
+            } catch (NumberFormatException e) {
+                // Si no es válido, el listener de validación de formato ya lo manejó
+                return true;
+            }
+
+            // Sumar las puntuaciones de todos los agregados del criterio
+            double sumaTotal = 0.0;
+
+            for (Agregado agregado : agregadosCriterio) {
+                if (agregado.getId().equals(agregadoIdActual)) {
+                    // Para el agregado actual, usar la nueva puntuación
+                    sumaTotal += nuevaPuntuacion;
+                } else {
+                    // Para los demás agregados, usar el valor de la fila
+                    Object valor = fila.get("agregado_" + agregado.getId());
+                    if (valor instanceof String && !((String) valor).isEmpty()) {
+                        try {
+                            sumaTotal += Double.parseDouble((String) valor);
+                        } catch (NumberFormatException e) {
+                            // Ignorar valores inválidos
+                        }
+                    }
+                }
+            }
+
+            // Validar que no supere la puntuación máxima del criterio
+            if (sumaTotal > puntuacionMaximaCriterio) {
+                // Calcular la suma de los otros agregados
+                double sumaOtros = sumaTotal - nuevaPuntuacion;
+
+                mostrarError(String.format(
+                    "La suma de los agregados (%.1f) supera la puntuación máxima del criterio '%s' (%.1f).\n" +
+                    "Suma actual de otros agregados: %.1f\n" +
+                    "Puntuación que intenta ingresar: %.1f\n" +
+                    "Puntuación máxima disponible: %.1f",
+                    sumaTotal, criterio.getNombre(), puntuacionMaximaCriterio,
+                    sumaOtros, nuevaPuntuacion, puntuacionMaximaCriterio - sumaOtros
+                ));
+                return false;
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            manejarExcepcion("validar suma de agregados en tabla", e);
+            return false;
+        }
+    }
+
+    /**
+     * Crea un header personalizado para las columnas de agregados con un botón para mostrar la descripción
+     */
+    private HBox crearHeaderConBotonDescripcion(Agregado agregado) {
+        HBox header = new HBox(3);
+        header.setAlignment(Pos.CENTER);
+
+        Label lblNombre = new Label(agregado.getNombre());
+        lblNombre.setStyle("-fx-font-size: 11px;");
+
+        // Solo agregar botón si hay descripción
+        if (agregado.getDescripcion() != null && !agregado.getDescripcion().trim().isEmpty()) {
+            Button btnInfo = new Button("ⓘ");
+            btnInfo.setStyle("-fx-font-size: 9px; -fx-padding: 1 4px; -fx-background-radius: 8; " +
+                           "-fx-cursor: hand; -fx-min-width: 18px; -fx-max-width: 18px; " +
+                           "-fx-min-height: 18px; -fx-max-height: 18px;");
+            btnInfo.setTooltip(new Tooltip("Ver descripción"));
+
+            btnInfo.setOnAction(e -> {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Descripción de " + agregado.getNombre());
+                alert.setHeaderText(agregado.getNombre());
+                alert.setContentText(agregado.getDescripcion());
+
+                // Ajustar tamaño del diálogo
+                alert.getDialogPane().setPrefWidth(400);
+                alert.showAndWait();
+            });
+
+            header.getChildren().addAll(lblNombre, btnInfo);
+        } else {
+            header.getChildren().add(lblNombre);
+        }
+
+        return header;
     }
 
     private void limpiarFormulario(ComboBox<Alumno> cmbAlumno, ComboBox<Agregado> cmbAgregado,
@@ -1479,6 +1602,9 @@ public class ConcentradoController extends BaseController {
         try {
             List<CalificacionConcentrado> calificaciones = calificacionConcentradoService.obtenerTodasLasCalificaciones();
             tabla.setItems(FXCollections.observableArrayList(calificaciones));
+
+            // 📏 Ajustar columnas al contenido (incluyendo botones)
+            Platform.runLater(() -> ajustarColumnasAlContenido(tabla));
         } catch (Exception e) {
             manejarExcepcion("cargar calificaciones", e);
         }
@@ -2206,5 +2332,29 @@ public class ConcentradoController extends BaseController {
             nuevoRun.setBold(bold);
             nuevoRun.setItalic(italic);
         }
+    }
+
+    private void ajustarColumnasAlContenido(TableView<CalificacionConcentrado> tabla) {
+        tabla.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+
+        for (TableColumn<CalificacionConcentrado, ?> columna : tabla.getColumns()) {
+            if ("Acciones".equals(columna.getText())) {
+                columna.setPrefWidth(180);
+                columna.setMinWidth(180);
+                columna.setMaxWidth(180);
+                continue;
+            }
+
+            double anchoMaximo = calcularAnchoColumna(columna);
+            columna.setPrefWidth(anchoMaximo);
+        }
+    }
+
+    private double calcularAnchoColumna(TableColumn<CalificacionConcentrado, ?> columna) {
+        javafx.scene.text.Text textoHeader = new javafx.scene.text.Text(columna.getText());
+        double anchoMaximo = textoHeader.getLayoutBounds().getWidth() + 40;
+
+        // Nota: Esta tabla puede estar vacía, así que solo calculamos por el header
+        return anchoMaximo < 100 ? 100 : anchoMaximo;
     }
 }
