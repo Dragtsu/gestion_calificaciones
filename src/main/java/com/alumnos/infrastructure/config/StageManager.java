@@ -42,7 +42,7 @@ public class StageManager {
         primaryStage.setTitle(title);
         primaryStage.setScene(scene);
 
-          // Añadir icono a la ventana principal
+        // Añadir icono a la ventana principal
         try {
             primaryStage.getIcons().add(
                 new javafx.scene.image.Image(
@@ -55,6 +55,25 @@ public class StageManager {
 
         // Configurar ventana sin decoraciones (sin barra de título)
         primaryStage.initStyle(javafx.stage.StageStyle.UNDECORATED);
+
+        // Configurar tamaño mínimo para la ventana
+        primaryStage.setMinWidth(800);
+        primaryStage.setMinHeight(600);
+
+        // Obtener dimensiones de la pantalla
+        javafx.stage.Screen screen = javafx.stage.Screen.getPrimary();
+        javafx.geometry.Rectangle2D bounds = screen.getVisualBounds();
+
+        // Configurar tamaño inicial de la ventana (95% de la pantalla)
+        double width = bounds.getWidth() * 0.95;
+        double height = bounds.getHeight() * 0.95;
+
+        primaryStage.setWidth(width);
+        primaryStage.setHeight(height);
+
+        // Centrar la ventana
+        primaryStage.setX((bounds.getWidth() - width) / 2 + bounds.getMinX());
+        primaryStage.setY((bounds.getHeight() - height) / 2 + bounds.getMinY());
 
         // Maximizar la ventana
         primaryStage.setMaximized(true);

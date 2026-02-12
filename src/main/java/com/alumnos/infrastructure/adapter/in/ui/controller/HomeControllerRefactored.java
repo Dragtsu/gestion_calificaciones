@@ -76,6 +76,10 @@ public class HomeControllerRefactored {
 
     private boolean menuAbierto = false;
 
+    // Variables para arrastrar la ventana
+    private double xOffset = 0;
+    private double yOffset = 0;
+
     public HomeControllerRefactored(
             EstudiantesController estudiantesController,
             GruposController gruposController,
@@ -105,8 +109,36 @@ public class HomeControllerRefactored {
             LOG.warn("Ya inicializado, saltando");
             return;
         }
+
+        configurarArrastreVentana();
         cargarVistas();
         mostrarVista("estudiantes");
+    }
+
+    /**
+     * Configurar el arrastre de la ventana desde el header
+     */
+    private void configurarArrastreVentana() {
+        // Obtener el VBox del header (top de BorderPane)
+        VBox header = (VBox) mainContent.getTop();
+
+        header.setOnMousePressed(event -> {
+            javafx.stage.Stage stage = (javafx.stage.Stage) lblTitulo.getScene().getWindow();
+            // Solo permitir arrastre si la ventana NO está maximizada
+            if (!stage.isMaximized()) {
+                xOffset = event.getSceneX();
+                yOffset = event.getSceneY();
+            }
+        });
+
+        header.setOnMouseDragged(event -> {
+            javafx.stage.Stage stage = (javafx.stage.Stage) lblTitulo.getScene().getWindow();
+            // Solo permitir arrastre si la ventana NO está maximizada
+            if (!stage.isMaximized()) {
+                stage.setX(event.getScreenX() - xOffset);
+                stage.setY(event.getScreenY() - yOffset);
+            }
+        });
     }
 
     /**
@@ -268,6 +300,7 @@ public class HomeControllerRefactored {
     private void minimizeWindow() {
         ((javafx.stage.Stage) lblTitulo.getScene().getWindow()).setIconified(true);
     }
+
 
     @FXML
     private void closeWindow() {

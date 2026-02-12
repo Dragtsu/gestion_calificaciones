@@ -4,6 +4,7 @@ import com.alumnos.domain.model.Alumno;
 import com.alumnos.domain.model.Grupo;
 import com.alumnos.domain.port.in.AlumnoServicePort;
 import com.alumnos.domain.port.in.GrupoServicePort;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
@@ -307,6 +308,9 @@ public class EstudiantesController extends BaseController {
 
             tabla.setItems(FXCollections.observableArrayList(alumnosOrdenados));
             tabla.refresh(); // 🔄 Forzar refresco de la tabla para que se rendericen los botones
+
+            // 📏 Ajustar columnas al contenido (incluyendo botones)
+            Platform.runLater(() -> ajustarColumnasAlContenido(tabla));
 
             // Si hay un filtro seleccionado, aplicarlo
             if (cmbFiltroGrupo != null && cmbFiltroGrupo.getValue() != null) {
@@ -691,5 +695,84 @@ public class EstudiantesController extends BaseController {
 
         texto = texto.toLowerCase();
         return Character.toUpperCase(texto.charAt(0)) + texto.substring(1);
+    }
+
+    /**
+     * Ajusta el ancho de las columnas al contenido automáticamente
+     * Incluye el ajuste de columnas con botones (Acciones)
+     */
+    private void ajustarColumnasAlContenido(TableView<Alumno> tabla) {
+        tabla.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+
+        for (TableColumn<Alumno, ?> columna : tabla.getColumns()) {
+            // Si es la columna de acciones, establecer un ancho fijo apropiado para los botones
+            if ("Acciones".equals(columna.getText())) {
+                columna.setPrefWidth(180); // Ancho suficiente para "Editar" + "Eliminar"
+                columna.setMinWidth(180);
+                columna.setMaxWidth(180);
+                continue;
+            }
+
+            // Para las demás columnas, calcular el ancho basado en el contenido
+            double anchoMaximo = calcularAnchoColumna(columna);
+            columna.setPrefWidth(anchoMaximo);
+        }
+    }
+
+    /**
+     * Calcula el ancho óptimo para una columna basado en su contenido
+     */
+    private double calcularAnchoColumna(TableColumn<Alumno, ?> columna) {
+        // Ancho mínimo basado en el header
+        javafx.scene.text.Text textoHeader = new javafx.scene.text.Text(columna.getText());
+        double anchoMaximo = textoHeader.getLayoutBounds().getWidth() + 40; // +40 para padding
+
+        // Calcular ancho basado en el contenido de las celdas (máximo 50 filas para rendimiento)
+        int filasARevisar = Math.min(tablaAlumnos.getItems().size(), 50);
+
+        for (int i = 0; i < filasARevisar; i++) {
+            Alumno alumno = tablaAlumnos.getItems().get(i);
+            String valorCelda = obtenerValorCelda(columna, alumno);
+
+            if (valorCelda != null && !valorCelda.isEmpty()) {
+                javafx.scene.text.Text texto = new javafx.scene.text.Text(valorCelda);
+                double ancho = texto.getLayoutBounds().getWidth() + 40; // +40 para padding
+                if (ancho > anchoMaximo) {
+                    anchoMaximo = ancho;
+                }
+            }
+        }
+
+        return anchoMaximo;
+    }
+
+    /**
+     * Obtiene el valor de una celda para calcular su ancho
+     */
+    private String obtenerValorCelda(TableColumn<Alumno, ?> columna, Alumno alumno) {
+        String nombreColumna = columna.getText();
+
+        switch (nombreColumna) {
+            case "N° Lista":
+                return alumno.getNumeroLista() != null ? alumno.getNumeroLista().toString() : "";
+            case "Nombre":
+                return alumno.getNombre() != null ? alumno.getNombre() : "";
+            case "Apellido Paterno":
+                return alumno.getApellidoPaterno() != null ? alumno.getApellidoPaterno() : "";
+            case "Apellido Materno":
+                return alumno.getApellidoMaterno() != null ? alumno.getApellidoMaterno() : "";
+            case "Grupo":
+                if (alumno.getGrupoId() != null) {
+                    try {
+                        Optional<Grupo> grupo = grupoService.obtenerGrupoPorId(alumno.getGrupoId());
+                        return grupo.map(Grupo::getNombre).orElse("Sin grupo");
+                    } catch (Exception e) {
+                        return "Error";
+                    }
+                }
+                return "Sin grupo";
+            default:
+                return "";
+        }
     }
 }
