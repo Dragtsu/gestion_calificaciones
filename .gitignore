@@ -30,7 +30,7 @@ buildNumber.properties
 *.iws
 *.iml
 *.ipr
-out/
+# out/ - Comentado para permitir subir carpeta out al repositorio
 
 # Eclipse
 .classpath
