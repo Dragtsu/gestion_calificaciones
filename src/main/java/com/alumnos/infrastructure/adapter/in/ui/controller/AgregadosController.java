@@ -7,12 +7,14 @@ import com.alumnos.domain.port.in.AgregadoServicePort;
 import com.alumnos.domain.port.in.CalificacionConcentradoServicePort;
 import com.alumnos.domain.port.in.CriterioServicePort;
 import com.alumnos.domain.port.in.MateriaServicePort;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -251,8 +253,7 @@ public class AgregadosController extends BaseController {
                     // Si se cambió de materia, resetear parcial y criterio
                     cmbFiltroParcial.setValue(null);
                     cmbFiltroCriterio.setValue(null);
-                    cmbFiltroCriterio.setDisable(true);
-                    // Seleccionar el primer parcial
+                    // Seleccionar el primer parcial (su listener se encargará de habilitar/deshabilitar criterio)
                     if (!cmbFiltroParcial.getItems().isEmpty()) {
                         cmbFiltroParcial.getSelectionModel().selectFirst();
                     }
@@ -279,14 +280,18 @@ public class AgregadosController extends BaseController {
                     .collect(Collectors.toList());
 
                 cmbFiltroCriterio.setItems(FXCollections.observableArrayList(criteriosFiltrados));
-                cmbFiltroCriterio.setDisable(criteriosFiltrados.isEmpty());
 
-                // 🎯 Seleccionar el primer criterio automáticamente si hay datos disponibles
-                if (!criteriosFiltrados.isEmpty()) {
-                    cmbFiltroCriterio.getSelectionModel().selectFirst();
-                } else {
-                    cmbFiltroCriterio.setValue(null);
-                }
+                // 🎯 Usar Platform.runLater para asegurar que los items se cargaron antes de habilitar
+                Platform.runLater(() -> {
+                    cmbFiltroCriterio.setDisable(criteriosFiltrados.isEmpty());
+
+                    // Seleccionar el primer criterio automáticamente si hay datos disponibles
+                    if (!criteriosFiltrados.isEmpty()) {
+                        cmbFiltroCriterio.getSelectionModel().selectFirst();
+                    } else {
+                        cmbFiltroCriterio.setValue(null);
+                    }
+                });
             } else {
                 cmbFiltroCriterio.setValue(null);
                 cmbFiltroCriterio.setDisable(true);
@@ -511,9 +516,12 @@ public class AgregadosController extends BaseController {
 
         // 🎯 Seleccionar el primer valor por defecto DESPUÉS de que TODO esté creado
         // Esto disparará automáticamente los eventos y aplicará los filtros
-        if (!cmbFiltroMateria.getItems().isEmpty()) {
-            cmbFiltroMateria.getSelectionModel().selectFirst();
-        }
+        // Usar Platform.runLater para asegurar que la UI esté completamente renderizada
+        Platform.runLater(() -> {
+            if (!cmbFiltroMateria.getItems().isEmpty()) {
+                cmbFiltroMateria.getSelectionModel().selectFirst();
+            }
+        });
 
         return contenedor;
     }
@@ -830,6 +838,9 @@ public class AgregadosController extends BaseController {
             tabla.setItems(FXCollections.observableArrayList(agregados));
             // ✅ Refrescar la tabla para actualizar los botones de orden
             tabla.refresh();
+
+            // 📏 Ajustar columnas al contenido (incluyendo botones)
+            Platform.runLater(() -> ajustarColumnasAlContenido(tabla));
         } catch (Exception e) {
             manejarExcepcion("cargar agregados", e);
         }
@@ -893,6 +904,9 @@ public class AgregadosController extends BaseController {
             // ✅ Refrescar la tabla para actualizar los botones de orden
             tablaAgregados.refresh();
 
+            // 📏 Ajustar columnas al contenido después de aplicar filtros
+            Platform.runLater(() -> ajustarColumnasAlContenido(tablaAgregados));
+
             // No mostrar alerta si no hay datos - simplemente mostrar tabla vacía
         } catch (Exception e) {
             manejarExcepcion("aplicar filtros", e);
@@ -939,6 +953,96 @@ public class AgregadosController extends BaseController {
 
         } catch (Exception e) {
             manejarExcepcion("guardar orden de agregados", e);
+        }
+    }
+
+    private void ajustarColumnasAlContenido(TableView<Agregado> tabla) {
+        tabla.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+
+        for (TableColumn<Agregado, ?> columna : tabla.getColumns()) {
+            if ("Acciones".equals(columna.getText()) || "Ordenar".equals(columna.getText())) {
+                columna.setPrefWidth(180);
+                columna.setMinWidth(180);
+                columna.setMaxWidth(180);
+                continue;
+            }
+
+            double anchoMaximo = calcularAnchoColumna(columna);
+            columna.setPrefWidth(anchoMaximo);
+        }
+    }
+
+    private double calcularAnchoColumna(TableColumn<Agregado, ?> columna) {
+        javafx.scene.text.Text textoHeader = new javafx.scene.text.Text(columna.getText());
+        double anchoMaximo = textoHeader.getLayoutBounds().getWidth() + 40;
+
+        int filasARevisar = Math.min(tablaAgregados.getItems().size(), 50);
+
+        for (int i = 0; i < filasARevisar; i++) {
+            Agregado agregado = tablaAgregados.getItems().get(i);
+            String valorCelda = obtenerValorCelda(columna, agregado);
+
+            if (valorCelda != null && !valorCelda.isEmpty()) {
+                javafx.scene.text.Text texto = new javafx.scene.text.Text(valorCelda);
+                double ancho = texto.getLayoutBounds().getWidth() + 40;
+                if (ancho > anchoMaximo) {
+                    anchoMaximo = ancho;
+                }
+            }
+        }
+
+        return anchoMaximo;
+    }
+
+    private String obtenerValorCelda(TableColumn<Agregado, ?> columna, Agregado agregado) {
+        String nombreColumna = columna.getText();
+
+        switch (nombreColumna) {
+            case "Orden":
+                return agregado.getOrden() != null ? String.valueOf(agregado.getOrden()) : "";
+            case "Nombre":
+                return agregado.getNombre() != null ? agregado.getNombre() : "";
+            case "Criterio":
+                if (agregado.getCriterioId() != null) {
+                    try {
+                        return criterioService.obtenerCriterioPorId(agregado.getCriterioId())
+                            .map(Criterio::getNombre)
+                            .orElse("N/A");
+                    } catch (Exception e) {
+                        return "N/A";
+                    }
+                }
+                return "N/A";
+            case "Materia":
+                if (agregado.getCriterioId() != null) {
+                    try {
+                        Optional<Criterio> criterio = criterioService.obtenerCriterioPorId(agregado.getCriterioId());
+                        if (criterio.isPresent() && criterio.get().getMateriaId() != null) {
+                            return materiaService.obtenerMateriaPorId(criterio.get().getMateriaId())
+                                .map(Materia::getNombre)
+                                .orElse("N/A");
+                        }
+                    } catch (Exception e) {
+                        return "N/A";
+                    }
+                }
+                return "N/A";
+            case "Parcial":
+                if (agregado.getCriterioId() != null) {
+                    try {
+                        Optional<Criterio> criterio = criterioService.obtenerCriterioPorId(agregado.getCriterioId());
+                        if (criterio.isPresent() && criterio.get().getParcial() != null) {
+                            return String.valueOf(criterio.get().getParcial());
+                        }
+                    } catch (Exception e) {
+                        return "N/A";
+                    }
+                }
+                return "N/A";
+            case "Descripción":
+                return agregado.getDescripcion() != null ? agregado.getDescripcion() : "";
+            default:
+                return "";
         }
     }
 }

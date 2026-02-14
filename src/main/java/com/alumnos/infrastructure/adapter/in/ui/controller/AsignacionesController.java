@@ -6,6 +6,7 @@ import com.alumnos.domain.model.Materia;
 import com.alumnos.domain.port.in.GrupoMateriaServicePort;
 import com.alumnos.domain.port.in.GrupoServicePort;
 import com.alumnos.domain.port.in.MateriaServicePort;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
@@ -243,8 +244,80 @@ public class AsignacionesController extends BaseController {
             List<GrupoMateria> asignaciones = grupoMateriaService.obtenerTodasLasAsignaciones();
             tabla.setItems(FXCollections.observableArrayList(asignaciones));
             tabla.refresh(); // 🔄 Forzar refresco de la tabla para que se rendericen los botones
+
+            // 📏 Ajustar columnas al contenido (incluyendo botones)
+            Platform.runLater(() -> ajustarColumnasAlContenido(tabla));
         } catch (Exception e) {
             manejarExcepcion("cargar asignaciones", e);
+        }
+    }
+
+    private void ajustarColumnasAlContenido(TableView<GrupoMateria> tabla) {
+        tabla.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+
+        for (TableColumn<GrupoMateria, ?> columna : tabla.getColumns()) {
+            if ("Acciones".equals(columna.getText())) {
+                columna.setPrefWidth(120);
+                columna.setMinWidth(120);
+                columna.setMaxWidth(120);
+                continue;
+            }
+
+            double anchoMaximo = calcularAnchoColumna(columna);
+            columna.setPrefWidth(anchoMaximo);
+        }
+    }
+
+    private double calcularAnchoColumna(TableColumn<GrupoMateria, ?> columna) {
+        javafx.scene.text.Text textoHeader = new javafx.scene.text.Text(columna.getText());
+        double anchoMaximo = textoHeader.getLayoutBounds().getWidth() + 40;
+
+        int filasARevisar = Math.min(tablaAsignaciones.getItems().size(), 50);
+
+        for (int i = 0; i < filasARevisar; i++) {
+            GrupoMateria asignacion = tablaAsignaciones.getItems().get(i);
+            String valorCelda = obtenerValorCelda(columna, asignacion);
+
+            if (valorCelda != null && !valorCelda.isEmpty()) {
+                javafx.scene.text.Text texto = new javafx.scene.text.Text(valorCelda);
+                double ancho = texto.getLayoutBounds().getWidth() + 40;
+                if (ancho > anchoMaximo) {
+                    anchoMaximo = ancho;
+                }
+            }
+        }
+
+        return anchoMaximo;
+    }
+
+    private String obtenerValorCelda(TableColumn<GrupoMateria, ?> columna, GrupoMateria asignacion) {
+        String nombreColumna = columna.getText();
+
+        switch (nombreColumna) {
+            case "Grupo":
+                if (asignacion.getGrupoId() != null) {
+                    try {
+                        return grupoService.obtenerGrupoPorId(asignacion.getGrupoId())
+                            .map(g -> String.valueOf(g.getId()))
+                            .orElse("N/A");
+                    } catch (Exception e) {
+                        return "N/A";
+                    }
+                }
+                return "N/A";
+            case "Materia":
+                if (asignacion.getMateriaId() != null) {
+                    try {
+                        return materiaService.obtenerMateriaPorId(asignacion.getMateriaId())
+                            .map(Materia::getNombre)
+                            .orElse("N/A");
+                    } catch (Exception e) {
+                        return "N/A";
+                    }
+                }
+                return "N/A";
+            default:
+                return "";
         }
     }
 }

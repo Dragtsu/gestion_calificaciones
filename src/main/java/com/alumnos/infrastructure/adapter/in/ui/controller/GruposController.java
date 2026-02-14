@@ -2,6 +2,7 @@ package com.alumnos.infrastructure.adapter.in.ui.controller;
 
 import com.alumnos.domain.model.Grupo;
 import com.alumnos.domain.port.in.GrupoServicePort;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
@@ -161,6 +162,9 @@ public class GruposController extends BaseController {
             List<Grupo> grupos = grupoService.obtenerTodosLosGrupos();
             tabla.setItems(FXCollections.observableArrayList(grupos));
             tabla.refresh(); // 🔄 Forzar refresco de la tabla para que se rendericen los botones
+
+            // 📏 Ajustar columnas al contenido (incluyendo botones)
+            Platform.runLater(() -> ajustarColumnasAlContenido(tabla));
         } catch (Exception e) {
             manejarExcepcion("cargar grupos", e);
         }
@@ -204,5 +208,50 @@ public class GruposController extends BaseController {
                 }
             }
         });
+    }
+
+    private void ajustarColumnasAlContenido(TableView<Grupo> tabla) {
+        tabla.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+
+        for (TableColumn<Grupo, ?> columna : tabla.getColumns()) {
+            if ("Acciones".equals(columna.getText())) {
+                columna.setPrefWidth(120);
+                columna.setMinWidth(120);
+                columna.setMaxWidth(120);
+                continue;
+            }
+
+            double anchoMaximo = calcularAnchoColumna(columna);
+            columna.setPrefWidth(anchoMaximo);
+        }
+    }
+
+    private double calcularAnchoColumna(TableColumn<Grupo, ?> columna) {
+        javafx.scene.text.Text textoHeader = new javafx.scene.text.Text(columna.getText());
+        double anchoMaximo = textoHeader.getLayoutBounds().getWidth() + 40;
+
+        int filasARevisar = Math.min(tablaGrupos.getItems().size(), 50);
+
+        for (int i = 0; i < filasARevisar; i++) {
+            Grupo grupo = tablaGrupos.getItems().get(i);
+            String valorCelda = obtenerValorCelda(columna, grupo);
+
+            if (valorCelda != null && !valorCelda.isEmpty()) {
+                javafx.scene.text.Text texto = new javafx.scene.text.Text(valorCelda);
+                double ancho = texto.getLayoutBounds().getWidth() + 40;
+                if (ancho > anchoMaximo) {
+                    anchoMaximo = ancho;
+                }
+            }
+        }
+
+        return anchoMaximo;
+    }
+
+    private String obtenerValorCelda(TableColumn<Grupo, ?> columna, Grupo grupo) {
+        if ("ID".equals(columna.getText())) {
+            return String.valueOf(grupo.getId());
+        }
+        return "";
     }
 }

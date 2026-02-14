@@ -2,6 +2,7 @@ package com.alumnos.infrastructure.adapter.in.ui.controller;
 
 import com.alumnos.domain.model.Materia;
 import com.alumnos.domain.port.in.MateriaServicePort;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
@@ -204,6 +205,9 @@ public class MateriasController extends BaseController {
             List<Materia> materias = materiaService.obtenerTodasLasMaterias();
             tabla.setItems(FXCollections.observableArrayList(materias));
             tabla.refresh(); // 🔄 Forzar refresco de la tabla para que se rendericen los botones
+
+            // 📏 Ajustar columnas al contenido (incluyendo botones)
+            Platform.runLater(() -> ajustarColumnasAlContenido(tabla));
         } catch (Exception e) {
             manejarExcepcion("cargar materias", e);
         }
@@ -272,5 +276,53 @@ public class MateriasController extends BaseController {
 
         // Poner foco en el campo
         txtNombre.requestFocus();
+    }
+
+    /**
+     * Ajusta el ancho de las columnas al contenido automáticamente
+     */
+    private void ajustarColumnasAlContenido(TableView<Materia> tabla) {
+        tabla.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+
+        for (TableColumn<Materia, ?> columna : tabla.getColumns()) {
+            if ("Acciones".equals(columna.getText())) {
+                columna.setPrefWidth(180);
+                columna.setMinWidth(180);
+                columna.setMaxWidth(180);
+                continue;
+            }
+
+            double anchoMaximo = calcularAnchoColumna(columna);
+            columna.setPrefWidth(anchoMaximo);
+        }
+    }
+
+    private double calcularAnchoColumna(TableColumn<Materia, ?> columna) {
+        javafx.scene.text.Text textoHeader = new javafx.scene.text.Text(columna.getText());
+        double anchoMaximo = textoHeader.getLayoutBounds().getWidth() + 40;
+
+        int filasARevisar = Math.min(tablaMaterias.getItems().size(), 50);
+
+        for (int i = 0; i < filasARevisar; i++) {
+            Materia materia = tablaMaterias.getItems().get(i);
+            String valorCelda = obtenerValorCelda(columna, materia);
+
+            if (valorCelda != null && !valorCelda.isEmpty()) {
+                javafx.scene.text.Text texto = new javafx.scene.text.Text(valorCelda);
+                double ancho = texto.getLayoutBounds().getWidth() + 40;
+                if (ancho > anchoMaximo) {
+                    anchoMaximo = ancho;
+                }
+            }
+        }
+
+        return anchoMaximo;
+    }
+
+    private String obtenerValorCelda(TableColumn<Materia, ?> columna, Materia materia) {
+        if ("Materia".equals(columna.getText())) {
+            return materia.getNombre() != null ? materia.getNombre() : "";
+        }
+        return "";
     }
 }

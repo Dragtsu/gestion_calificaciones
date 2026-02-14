@@ -62,18 +62,26 @@ public class StageManager {
 
         // Obtener dimensiones de la pantalla
         javafx.stage.Screen screen = javafx.stage.Screen.getPrimary();
-        javafx.geometry.Rectangle2D bounds = screen.getVisualBounds();
+
+        //javafx.geometry.Rectangle2D bounds = screen.getVisualBounds();
 
         // Configurar tamaño inicial de la ventana (95% de la pantalla)
-        double width = bounds.getWidth() * 0.95;
-        double height = bounds.getHeight() * 0.95;
+       /* double width = bounds.getWidth() * 0.80;
+        double height = bounds.getHeight() * 0.80;
 
         primaryStage.setWidth(width);
-        primaryStage.setHeight(height);
+        primaryStage.setHeight(height);*/
 
         // Centrar la ventana
-        primaryStage.setX((bounds.getWidth() - width) / 2 + bounds.getMinX());
-        primaryStage.setY((bounds.getHeight() - height) / 2 + bounds.getMinY());
+      //  primaryStage.setX((bounds.getWidth() - width) / 2 + bounds.getMinX());
+       // primaryStage.setY((bounds.getHeight() - height) / 2 + bounds.getMinY());
+
+
+        javafx.geometry.Rectangle2D visualBounds = screen.getVisualBounds(); // Respeta barra de tareas
+        primaryStage.setX(visualBounds.getMinX());
+        primaryStage.setY(visualBounds.getMinY());
+        primaryStage.setWidth(visualBounds.getWidth());
+        primaryStage.setHeight(visualBounds.getHeight());
 
         // Maximizar la ventana
         primaryStage.setMaximized(true);

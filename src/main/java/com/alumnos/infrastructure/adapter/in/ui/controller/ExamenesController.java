@@ -10,6 +10,7 @@ import com.alumnos.domain.port.in.CriterioServicePort;
 import com.alumnos.domain.port.in.ExamenServicePort;
 import com.alumnos.domain.port.in.GrupoServicePort;
 import com.alumnos.domain.port.in.MateriaServicePort;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
@@ -400,6 +401,9 @@ public class ExamenesController extends BaseController {
         try {
             List<Examen> examenes = examenService.obtenerTodosLosExamenes();
             tabla.setItems(FXCollections.observableArrayList(examenes));
+
+            // 📏 Ajustar columnas al contenido (incluyendo botones)
+            Platform.runLater(() -> ajustarColumnasAlContenido(tabla));
         } catch (Exception e) {
             manejarExcepcion("cargar exámenes", e);
         }
@@ -591,6 +595,79 @@ public class ExamenesController extends BaseController {
             LOG.error("Error al validar límite de puntos: {}", e.getMessage());
             mostrarError("Error al validar el límite de puntos: " + e.getMessage());
             return false;
+        }
+    }
+
+    private void ajustarColumnasAlContenido(TableView<Examen> tabla) {
+        tabla.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+
+        for (TableColumn<Examen, ?> columna : tabla.getColumns()) {
+            if ("Acciones".equals(columna.getText())) {
+                columna.setPrefWidth(180);
+                columna.setMinWidth(180);
+                columna.setMaxWidth(180);
+                continue;
+            }
+
+            double anchoMaximo = calcularAnchoColumna(columna);
+            columna.setPrefWidth(anchoMaximo);
+        }
+    }
+
+    private double calcularAnchoColumna(TableColumn<Examen, ?> columna) {
+        javafx.scene.text.Text textoHeader = new javafx.scene.text.Text(columna.getText());
+        double anchoMaximo = textoHeader.getLayoutBounds().getWidth() + 40;
+
+        int filasARevisar = Math.min(tablaExamenes.getItems().size(), 50);
+
+        for (int i = 0; i < filasARevisar; i++) {
+            Examen examen = tablaExamenes.getItems().get(i);
+            String valorCelda = obtenerValorCelda(columna, examen);
+
+            if (valorCelda != null && !valorCelda.isEmpty()) {
+                javafx.scene.text.Text texto = new javafx.scene.text.Text(valorCelda);
+                double ancho = texto.getLayoutBounds().getWidth() + 40;
+                if (ancho > anchoMaximo) {
+                    anchoMaximo = ancho;
+                }
+            }
+        }
+
+        return anchoMaximo;
+    }
+
+    private String obtenerValorCelda(TableColumn<Examen, ?> columna, Examen examen) {
+        String nombreColumna = columna.getText();
+
+        switch (nombreColumna) {
+            case "Grupo":
+                if (examen.getGrupoId() != null) {
+                    try {
+                        Optional<Grupo> grupo = grupoService.obtenerGrupoPorId(examen.getGrupoId());
+                        return grupo.map(g -> String.valueOf(g.getId())).orElse("N/A");
+                    } catch (Exception e) {
+                        return "N/A";
+                    }
+                }
+                return "N/A";
+            case "Materia":
+                if (examen.getMateriaId() != null) {
+                    try {
+                        Optional<Materia> materia = materiaService.obtenerMateriaPorId(examen.getMateriaId());
+                        return materia.map(Materia::getNombre).orElse("N/A");
+                    } catch (Exception e) {
+                        return "N/A";
+                    }
+                }
+                return "N/A";
+            case "Parcial":
+                return examen.getParcial() != null ? String.valueOf(examen.getParcial()) : "N/A";
+            case "Total Puntos":
+                return examen.getTotalPuntosExamen() != null ? String.valueOf(examen.getTotalPuntosExamen()) : "N/A";
+            case "Fecha Aplicación":
+                return examen.getFechaAplicacion() != null ? examen.getFechaAplicacion().format(FORMATO_FECHA) : "N/A";
+            default:
+                return "";
         }
     }
 }

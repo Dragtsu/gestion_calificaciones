@@ -6,6 +6,7 @@ import com.alumnos.domain.model.Materia;
 import com.alumnos.domain.port.in.CriterioServicePort;
 import com.alumnos.domain.port.in.ExamenServicePort;
 import com.alumnos.domain.port.in.MateriaServicePort;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
@@ -722,6 +723,9 @@ public class CriteriosController extends BaseController {
 
             tabla.setItems(FXCollections.observableArrayList(criterios));
             tabla.refresh(); // 🔄 Forzar refresco de la tabla para que se rendericen los botones
+
+            // 📏 Ajustar columnas al contenido (incluyendo botones)
+            Platform.runLater(() -> ajustarColumnasAlContenido(tabla));
         } catch (Exception e) {
             manejarExcepcion("cargar criterios", e);
         }
@@ -814,6 +818,73 @@ public class CriteriosController extends BaseController {
 
         } catch (Exception e) {
             manejarExcepcion("guardar orden de criterios", e);
+        }
+    }
+
+    private void ajustarColumnasAlContenido(TableView<Criterio> tabla) {
+        tabla.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+
+        for (TableColumn<Criterio, ?> columna : tabla.getColumns()) {
+            if ("Acciones".equals(columna.getText()) || "Ordenar".equals(columna.getText())) {
+                columna.setPrefWidth(180);
+                columna.setMinWidth(180);
+                columna.setMaxWidth(180);
+                continue;
+            }
+
+            double anchoMaximo = calcularAnchoColumna(columna);
+            columna.setPrefWidth(anchoMaximo);
+        }
+    }
+
+    private double calcularAnchoColumna(TableColumn<Criterio, ?> columna) {
+        javafx.scene.text.Text textoHeader = new javafx.scene.text.Text(columna.getText());
+        double anchoMaximo = textoHeader.getLayoutBounds().getWidth() + 40;
+
+        int filasARevisar = Math.min(tablaCriterios.getItems().size(), 50);
+
+        for (int i = 0; i < filasARevisar; i++) {
+            Criterio criterio = tablaCriterios.getItems().get(i);
+            String valorCelda = obtenerValorCelda(columna, criterio);
+
+            if (valorCelda != null && !valorCelda.isEmpty()) {
+                javafx.scene.text.Text texto = new javafx.scene.text.Text(valorCelda);
+                double ancho = texto.getLayoutBounds().getWidth() + 40;
+                if (ancho > anchoMaximo) {
+                    anchoMaximo = ancho;
+                }
+            }
+        }
+
+        return anchoMaximo;
+    }
+
+    private String obtenerValorCelda(TableColumn<Criterio, ?> columna, Criterio criterio) {
+        String nombreColumna = columna.getText();
+
+        switch (nombreColumna) {
+            case "Orden":
+                return criterio.getOrden() != null ? String.valueOf(criterio.getOrden()) : "";
+            case "Nombre":
+                return criterio.getNombre() != null ? criterio.getNombre() : "";
+            case "Tipo":
+                return criterio.getTipoEvaluacion() != null ? criterio.getTipoEvaluacion() : "";
+            case "Puntuación Máx":
+                return criterio.getPuntuacionMaxima() != null ? String.valueOf(criterio.getPuntuacionMaxima()) : "N/A";
+            case "Materia":
+                if (criterio.getMateriaId() != null) {
+                    try {
+                        Optional<Materia> materia = materiaService.obtenerMateriaPorId(criterio.getMateriaId());
+                        return materia.map(Materia::getNombre).orElse("N/A");
+                    } catch (Exception e) {
+                        return "N/A";
+                    }
+                }
+                return "N/A";
+            case "Parcial":
+                return criterio.getParcial() != null ? String.valueOf(criterio.getParcial()) : "N/A";
+            default:
+                return "";
         }
     }
 }

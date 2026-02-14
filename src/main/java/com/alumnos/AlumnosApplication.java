@@ -20,6 +20,7 @@ public class AlumnosApplication {
         System.setProperty("sun.jnu.encoding", "UTF-8");
         System.setProperty("javafx.platform.charset", "UTF-8");
 
+
         // Configurar el icono para la barra de tareas de Windows
         try {
             if (Taskbar.isTaskbarSupported()) {
