@@ -59,10 +59,14 @@ public class AgregadosController extends BaseController {
     public VBox crearVista() {
         VBox vista = new VBox(20);
         vista.setStyle("-fx-padding: 20; -fx-background-color: #f5f5f5;");
-        vista.getChildren().addAll(
-            crearFormulario(),
-            crearTabla()
-        );
+        vista.setMaxHeight(Double.MAX_VALUE);
+        vista.setMaxWidth(Double.MAX_VALUE);
+
+        VBox formulario = crearFormulario();
+        VBox tabla = crearTabla();
+        javafx.scene.layout.VBox.setVgrow(tabla, javafx.scene.layout.Priority.ALWAYS);
+
+        vista.getChildren().addAll(formulario, tabla);
         return vista;
     }
 
@@ -204,6 +208,9 @@ public class AgregadosController extends BaseController {
     private VBox crearTabla() {
         VBox contenedor = new VBox(10);
         contenedor.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
+        contenedor.setMaxHeight(Double.MAX_VALUE);
+        contenedor.setMaxWidth(Double.MAX_VALUE);
+        javafx.scene.layout.VBox.setVgrow(contenedor, javafx.scene.layout.Priority.ALWAYS);;
 
 
         // ========== FILTROS (sin título) ==========
@@ -313,6 +320,9 @@ public class AgregadosController extends BaseController {
         );
 
         tablaAgregados = new TableView<>(); // 📋 Guardar referencia (DEBE estar antes de selectFirst)
+        tablaAgregados.setMaxHeight(Double.MAX_VALUE);
+        tablaAgregados.setMaxWidth(Double.MAX_VALUE);
+        javafx.scene.layout.VBox.setVgrow(tablaAgregados, javafx.scene.layout.Priority.ALWAYS);
 
         // Columna Nombre
         TableColumn<Agregado, String> colNombre = new TableColumn<>("Nombre");

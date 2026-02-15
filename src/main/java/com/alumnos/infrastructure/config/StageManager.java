@@ -76,15 +76,16 @@ public class StageManager {
       //  primaryStage.setX((bounds.getWidth() - width) / 2 + bounds.getMinX());
        // primaryStage.setY((bounds.getHeight() - height) / 2 + bounds.getMinY());
 
-
-        javafx.geometry.Rectangle2D visualBounds = screen.getVisualBounds(); // Respeta barra de tareas
+        // Usar getVisualBounds para respetar la barra de tareas
+        javafx.geometry.Rectangle2D visualBounds = screen.getVisualBounds();
         primaryStage.setX(visualBounds.getMinX());
         primaryStage.setY(visualBounds.getMinY());
         primaryStage.setWidth(visualBounds.getWidth());
         primaryStage.setHeight(visualBounds.getHeight());
 
-        // Maximizar la ventana
-        primaryStage.setMaximized(true);
+        // NO maximizar, ya que estamos configurando manualmente el tamaño
+        // para que respete la barra de tareas
+        // primaryStage.setMaximized(true);
 
         try {
             primaryStage.show();

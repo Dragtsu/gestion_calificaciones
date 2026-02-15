@@ -64,6 +64,8 @@ public class InformeConcentradoController extends BaseController {
     public VBox crearVista() {
         VBox vista = new VBox(20);
         vista.setStyle("-fx-padding: 20; -fx-background-color: #f5f5f5;");
+        vista.setMaxHeight(Double.MAX_VALUE);
+        vista.setMaxWidth(Double.MAX_VALUE);
 
         try {
             // Header
@@ -74,10 +76,7 @@ public class InformeConcentradoController extends BaseController {
             VBox filtrosPanel = new VBox(15);
             filtrosPanel.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 2);");
 
-            Label lblFiltros = new Label("Filtros (Obligatorios)");
-            lblFiltros.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");
-
-            // Fila de filtros
+            // Primera fila de filtros (obligatorios)
             HBox filtrosBox = new HBox(20);
             filtrosBox.setAlignment(Pos.CENTER_LEFT);
 
@@ -111,6 +110,30 @@ public class InformeConcentradoController extends BaseController {
             cmbParcial.setItems(FXCollections.observableArrayList(1, 2, 3));
             parcialContainer.getChildren().addAll(lblParcial, cmbParcial);
 
+            filtrosBox.getChildren().addAll(grupoContainer, materiaContainer, parcialContainer);
+
+            // Segunda fila de filtros (opcionales)
+            HBox filtrosOpcionalesBox = new HBox(20);
+            filtrosOpcionalesBox.setAlignment(Pos.CENTER_LEFT);
+
+            // TextField para filtro de Nombre
+            VBox nombreContainer = new VBox(5);
+            Label lblNombre = new Label("Nombre:");
+            lblNombre.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #555;");
+            TextField txtNombre = new TextField();
+            txtNombre.setPrefWidth(200);
+            txtNombre.setPromptText("Buscar por nombre...");
+            nombreContainer.getChildren().addAll(lblNombre, txtNombre);
+
+            // TextField para filtro de Apellido
+            VBox apellidoContainer = new VBox(5);
+            Label lblApellido = new Label("Apellido:");
+            lblApellido.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #555;");
+            TextField txtApellido = new TextField();
+            txtApellido.setPrefWidth(200);
+            txtApellido.setPromptText("Buscar por apellido...");
+            apellidoContainer.getChildren().addAll(lblApellido, txtApellido);
+
             // Botón Buscar
             VBox buscarContainer = new VBox(5);
             Label lblEspacio = new Label(" ");
@@ -118,8 +141,9 @@ public class InformeConcentradoController extends BaseController {
             btnBuscar.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;");
             buscarContainer.getChildren().addAll(lblEspacio, btnBuscar);
 
-            filtrosBox.getChildren().addAll(grupoContainer, materiaContainer, parcialContainer, buscarContainer);
-            filtrosPanel.getChildren().addAll(lblFiltros, filtrosBox);
+            filtrosOpcionalesBox.getChildren().addAll(nombreContainer, apellidoContainer, buscarContainer);
+
+            filtrosPanel.getChildren().addAll(filtrosBox, filtrosOpcionalesBox);
 
             // Panel de tabla
             VBox tablaPanel = new VBox(15);
@@ -128,11 +152,16 @@ public class InformeConcentradoController extends BaseController {
             ScrollPane scrollPane = new ScrollPane();
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);
-            scrollPane.setPrefHeight(500);
+            scrollPane.setMaxHeight(Double.MAX_VALUE);
+            scrollPane.setMaxWidth(Double.MAX_VALUE);
+            javafx.scene.layout.VBox.setVgrow(scrollPane, javafx.scene.layout.Priority.ALWAYS);
             scrollPane.setStyle("-fx-background-color: transparent;");
 
             TableView<Map<String, Object>> tblInforme = new TableView<>();
             tblInforme.setEditable(false);
+            tblInforme.setMaxHeight(Double.MAX_VALUE);
+            tblInforme.setMaxWidth(Double.MAX_VALUE);
+            javafx.scene.layout.VBox.setVgrow(tblInforme, javafx.scene.layout.Priority.ALWAYS);
             tblInforme.setPlaceholder(new Label("Seleccione Grupo, Materia y Parcial, luego presione 'Buscar'"));
             tblInforme.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
 
@@ -185,7 +214,17 @@ public class InformeConcentradoController extends BaseController {
                     mostrarAdvertencia("Debe seleccionar Grupo, Materia y Parcial");
                     return;
                 }
-                generarTablaInforme(tblInforme, cmbGrupo.getValue(), cmbMateria.getValue(), cmbParcial.getValue());
+
+                // Obtener filtros opcionales
+                String filtroNombre = txtNombre.getText() != null && !txtNombre.getText().trim().isEmpty()
+                    ? txtNombre.getText().trim()
+                    : null;
+                String filtroApellido = txtApellido.getText() != null && !txtApellido.getText().trim().isEmpty()
+                    ? txtApellido.getText().trim()
+                    : null;
+
+                generarTablaInforme(tblInforme, cmbGrupo.getValue(), cmbMateria.getValue(), cmbParcial.getValue(),
+                                  filtroNombre, filtroApellido);
                 btnExportarExcel.setDisable(false); // Habilitar botón después de generar
             });
 
@@ -210,7 +249,8 @@ public class InformeConcentradoController extends BaseController {
     /**
      * Genera la tabla de informe de concentrado (solo lectura)
      */
-    private void generarTablaInforme(TableView<Map<String, Object>> tabla, Grupo grupo, Materia materia, Integer parcial) {
+    private void generarTablaInforme(TableView<Map<String, Object>> tabla, Grupo grupo, Materia materia, Integer parcial,
+                                    String filtroNombre, String filtroApellido) {
         try {
             tabla.getColumns().clear();
             tabla.getItems().clear();
@@ -218,6 +258,28 @@ public class InformeConcentradoController extends BaseController {
             // Obtener alumnos del grupo
             List<Alumno> alumnos = alumnoService.obtenerTodosLosAlumnos().stream()
                 .filter(a -> grupo.getId().equals(a.getGrupoId()))
+                .filter(a -> {
+                    // Filtro de nombre (si se proporcionó)
+                    if (filtroNombre != null && !filtroNombre.isEmpty()) {
+                        String nombre = a.getNombre() != null ? a.getNombre().toLowerCase() : "";
+                        String filtro = filtroNombre.toLowerCase();
+                        // Simular LIKE %filtro%
+                        if (!nombre.contains(filtro)) {
+                            return false;
+                        }
+                    }
+                    // Filtro de apellido (si se proporcionó)
+                    if (filtroApellido != null && !filtroApellido.isEmpty()) {
+                        String apellidoPaterno = a.getApellidoPaterno() != null ? a.getApellidoPaterno().toLowerCase() : "";
+                        String apellidoMaterno = a.getApellidoMaterno() != null ? a.getApellidoMaterno().toLowerCase() : "";
+                        String filtro = filtroApellido.toLowerCase();
+                        // Simular LIKE %filtro% en cualquiera de los dos apellidos
+                        if (!apellidoPaterno.contains(filtro) && !apellidoMaterno.contains(filtro)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                })
                 .sorted((a1, a2) -> {
                     String nombre1 = a1.getApellidoPaterno() + " " + a1.getApellidoMaterno() + " " + a1.getNombre();
                     String nombre2 = a2.getApellidoPaterno() + " " + a2.getApellidoMaterno() + " " + a2.getNombre();
@@ -226,7 +288,7 @@ public class InformeConcentradoController extends BaseController {
                 .collect(Collectors.toList());
 
             if (alumnos.isEmpty()) {
-                mostrarInformacion("No hay alumnos en este grupo");
+                mostrarInformacion("No hay alumnos en este grupo con los filtros aplicados");
                 return;
             }
 
@@ -294,6 +356,7 @@ public class InformeConcentradoController extends BaseController {
                 for (Agregado agregado : agregados) {
                     TableColumn<Map<String, Object>, String> colAgregado = new TableColumn<>();
                     colAgregado.setGraphic(crearHeaderConBotonDescripcion(agregado));
+                    colAgregado.setUserData(agregado); // ✅ Guardar el agregado para usarlo en la exportación
                     colAgregado.setPrefWidth(esCheck ? 110 : 130);
                     colAgregado.setMinWidth(esCheck ? 110 : 130);
                     colAgregado.setMaxWidth(esCheck ? 110 : 130);
@@ -448,15 +511,15 @@ public class InformeConcentradoController extends BaseController {
                         } else {
                             setText(item);
 
-                            // Estilo base con fondo azul claro
+                            // Estilo base con fondo morado/púrpura claro
                             String baseStyle = "-fx-alignment: CENTER; -fx-font-weight: bold; ";
 
-                            // Si la fila está seleccionada, usar fondo de selección más oscuro
+                            // Si la fila está seleccionada, usar fondo morado más oscuro
                             if (getTableRow() != null && getTableRow().isSelected()) {
-                                setStyle(baseStyle + "-fx-background-color: #BBDEFB; -fx-text-fill: black;");
+                                setStyle(baseStyle + "-fx-background-color: #CE93D8; -fx-text-fill: black;");
                             } else {
-                                // Fondo azul claro normal
-                                setStyle(baseStyle + "-fx-background-color: #E3F2FD; -fx-text-fill: black;");
+                                // Fondo morado/púrpura claro normal
+                                setStyle(baseStyle + "-fx-background-color: #E1BEE7; -fx-text-fill: black;");
                             }
                         }
                     }
@@ -685,15 +748,15 @@ public class InformeConcentradoController extends BaseController {
                     } else {
                         setText(item);
 
-                        // Estilo base con fondo verde claro
+                        // Estilo base con fondo verde vibrante
                         String baseStyle = "-fx-alignment: CENTER; -fx-font-weight: bold; -fx-font-size: 14px; ";
 
                         // Si la fila está seleccionada, usar fondo verde más oscuro
                         if (getTableRow() != null && getTableRow().isSelected()) {
-                            setStyle(baseStyle + "-fx-background-color: #A5D6A7; -fx-text-fill: black;");
+                            setStyle(baseStyle + "-fx-background-color: #66BB6A; -fx-text-fill: white;");
                         } else {
-                            // Fondo verde claro normal
-                            setStyle(baseStyle + "-fx-background-color: #C8E6C9; -fx-text-fill: black;");
+                            // Fondo verde vibrante normal
+                            setStyle(baseStyle + "-fx-background-color: #81C784; -fx-text-fill: white;");
                         }
                     }
                 }
@@ -795,12 +858,23 @@ public class InformeConcentradoController extends BaseController {
                 }
 
                 double puntosExamen = 0.0;
-                Object calificacionExamenObj = fila.get("calificacionExamen");
-                if (calificacionExamenObj instanceof Double) {
-                    puntosExamen = (Double) calificacionExamenObj;
+                Object aciertosExamenObj = fila.get("aciertosExamen");
+                if (aciertosExamenObj != null) {
+                    if (aciertosExamenObj instanceof Number) {
+                        puntosExamen = ((Number) aciertosExamenObj).doubleValue();
+                    } else if (aciertosExamenObj instanceof String) {
+                        try {
+                            puntosExamen = Double.parseDouble((String) aciertosExamenObj);
+                        } catch (NumberFormatException e) {
+                            puntosExamen = 0.0;
+                        }
+                    }
                 }
 
+                // Puntos Parcial = Total Portafolio + Puntos Examen
                 double puntosParcial = totalPortafolio + puntosExamen;
+
+                // Calificación Parcial es el 10% de Puntos Parcial
                 double calificacionParcial = (puntosParcial * 10.0) / 100.0;
 
                 // Guardar los valores calculados en la fila
@@ -936,6 +1010,22 @@ public class InformeConcentradoController extends BaseController {
             headerFont.setBold(true);
             headerStyle.setFont(headerFont);
 
+            // Estilo para encabezados de columnas Acumulado (morado/púrpura)
+            CellStyle headerAcumuladoStyle = workbook.createCellStyle();
+            headerAcumuladoStyle.cloneStyleFrom(headerStyle);
+            headerAcumuladoStyle.setFillForegroundColor(IndexedColors.LAVENDER.getIndex());
+            headerAcumuladoStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            // Estilo para encabezado de Calificación Parcial (verde vibrante)
+            CellStyle headerCalificacionParcialStyle = workbook.createCellStyle();
+            headerCalificacionParcialStyle.cloneStyleFrom(headerStyle);
+            headerCalificacionParcialStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+            headerCalificacionParcialStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            org.apache.poi.ss.usermodel.Font headerCalifFont = workbook.createFont();
+            headerCalifFont.setBold(true);
+            headerCalifFont.setColor(IndexedColors.BLACK.getIndex());
+            headerCalificacionParcialStyle.setFont(headerCalifFont);
+
             CellStyle dataStyle = workbook.createCellStyle();
             dataStyle.setBorderBottom(BorderStyle.THIN);
             dataStyle.setBorderTop(BorderStyle.THIN);
@@ -970,6 +1060,7 @@ public class InformeConcentradoController extends BaseController {
             ceroRojoFont.setBold(true);
             ceroRojoStyle.setFont(ceroRojoFont);
 
+            // Estilo para Calificación Parcial en datos (verde vibrante)
             CellStyle calificacionFinalStyle = workbook.createCellStyle();
             calificacionFinalStyle.cloneStyleFrom(dataStyle);
             calificacionFinalStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
@@ -977,6 +1068,7 @@ public class InformeConcentradoController extends BaseController {
             calificacionFinalStyle.setDataFormat(workbook.createDataFormat().getFormat("0.0"));
             org.apache.poi.ss.usermodel.Font calificacionFont = workbook.createFont();
             calificacionFont.setBold(true);
+            calificacionFont.setColor(IndexedColors.BLACK.getIndex());
             calificacionFinalStyle.setFont(calificacionFont);
 
             // Fila de título
@@ -1004,10 +1096,35 @@ public class InformeConcentradoController extends BaseController {
             Row headerRow = sheet.createRow(4);
             headerRow.setHeightInPoints(120); // ✅ Altura mayor para texto vertical
             int colIndex = 0;
+
             for (TableColumn<Map<String, Object>, ?> column : tabla.getColumns()) {
                 org.apache.poi.ss.usermodel.Cell cell = headerRow.createCell(colIndex++);
-                cell.setCellValue(column.getText());
-                cell.setCellStyle(headerStyle);
+
+                String columnText = "";
+
+                // Si la columna tiene un agregado en userData, usar su nombre
+                if (column.getUserData() instanceof Agregado) {
+                    Agregado agregado = (Agregado) column.getUserData();
+                    columnText = agregado.getNombre();
+                    cell.setCellValue(columnText);
+                    cell.setCellStyle(headerStyle);
+                } else {
+                    // Para otras columnas, usar el texto de la columna
+                    columnText = column.getText();
+                    cell.setCellValue(columnText != null ? columnText : "");
+
+                    // Aplicar estilo específico según el tipo de columna
+                    if (columnText != null && columnText.startsWith("Acum ")) {
+                        // Encabezado de Acumulado - morado
+                        cell.setCellStyle(headerAcumuladoStyle);
+                    } else if ("Calificación Parcial".equals(columnText)) {
+                        // Encabezado de Calificación Parcial - verde
+                        cell.setCellStyle(headerCalificacionParcialStyle);
+                    } else {
+                        // Encabezado normal
+                        cell.setCellStyle(headerStyle);
+                    }
+                }
             }
 
             // Datos
@@ -1021,47 +1138,49 @@ public class InformeConcentradoController extends BaseController {
 
                 for (TableColumn<Map<String, Object>, ?> column : tabla.getColumns()) {
                     org.apache.poi.ss.usermodel.Cell cell = row.createCell(colIndex);
-                    String columnName = column.getText();
 
                     // Obtener el valor de la celda
                     Object value = null;
+                    String columnName = column.getText(); // Definir columnName aquí para usarlo en todo el scope
 
-                    // Mapeo de nombres de columna a claves del Map
-                    if ("#".equals(columnName)) {
-                        value = item.get("numero");
-                    } else if ("Nombre Completo".equals(columnName)) {
-                        value = item.get("nombreCompleto");
-                    } else if (columnName.startsWith("Acum ")) {
-                        // Es una columna de acumulado - usar el índice para obtener el valor guardado
-                        value = item.get("acumulado_criterio_" + criterioAcumuladoIndex);
-                        criterioAcumuladoIndex++;
-                    } else if ("Total Portafolio".equals(columnName)) {
-                        value = item.get("totalPortafolio");
-                    } else if ("Puntos Examen".equals(columnName)) {
-                        value = item.get("aciertosExamen");
-                    } else if ("% Examen".equals(columnName)) {
-                        value = item.get("porcentajeExamen");
-                    } else if ("Calif. Examen".equals(columnName)) {
-                        value = item.get("calificacionExamen");
-                    } else if ("Puntos Parcial".equals(columnName)) {
-                        value = item.get("puntosParcial");
-                    } else if ("Calificación Parcial".equals(columnName)) {
-                        value = item.get("calificacionParcial");
-                        if (value != null) {
-                            if (value instanceof Double) {
-                                cell.setCellValue((Double) value);
-                            } else {
-                                cell.setCellValue(value.toString());
-                            }
-                            cell.setCellStyle(calificacionFinalStyle);
-                            colIndex++;
-                            continue;
-                        }
+                    // Si la columna tiene un agregado en userData, obtener su valor directamente
+                    if (column.getUserData() instanceof Agregado) {
+                        Agregado agregado = (Agregado) column.getUserData();
+                        value = item.get("agregado_" + agregado.getId());
                     } else {
-                        // Es una columna de agregado
-                        String key = buscarClaveAgregado(item, columnName);
-                        if (key != null) {
-                            value = item.get(key);
+                        // Para otras columnas, usar el texto de la columna como identificador
+
+                        // Mapeo de nombres de columna a claves del Map
+                        if ("#".equals(columnName)) {
+                            value = item.get("numero");
+                        } else if ("Nombre Completo".equals(columnName)) {
+                            value = item.get("nombreCompleto");
+                        } else if (columnName.startsWith("Acum ")) {
+                            // Es una columna de acumulado - usar el índice para obtener el valor guardado
+                            value = item.get("acumulado_criterio_" + criterioAcumuladoIndex);
+                            criterioAcumuladoIndex++;
+                        } else if ("Total Portafolio".equals(columnName)) {
+                            value = item.get("totalPortafolio");
+                        } else if ("Puntos Examen".equals(columnName) || columnName.startsWith("Puntos Examen (")) {
+                            value = item.get("aciertosExamen");
+                        } else if ("% Examen".equals(columnName)) {
+                            value = item.get("porcentajeExamen");
+                        } else if ("Calif. Examen".equals(columnName)) {
+                            value = item.get("calificacionExamen");
+                        } else if ("Puntos Parcial".equals(columnName)) {
+                            value = item.get("puntosParcial");
+                        } else if ("Calificación Parcial".equals(columnName)) {
+                            value = item.get("calificacionParcial");
+                            if (value != null) {
+                                if (value instanceof Double) {
+                                    cell.setCellValue((Double) value);
+                                } else {
+                                    cell.setCellValue(value.toString());
+                                }
+                                cell.setCellStyle(calificacionFinalStyle);
+                                colIndex++;
+                                continue;
+                            }
                         }
                     }
 

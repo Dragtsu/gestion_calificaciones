@@ -61,10 +61,13 @@ public class CriteriosController extends BaseController {
     public VBox crearVista() {
         VBox vista = new VBox(20);
         vista.setStyle("-fx-padding: 20; -fx-background-color: #f5f5f5;");
+        vista.setMaxHeight(Double.MAX_VALUE);
+        vista.setMaxWidth(Double.MAX_VALUE);
 
         // Crear componentes en el orden correcto
         VBox formulario = crearFormulario();
         VBox filtrosYTabla = crearFiltrosYTabla();
+        javafx.scene.layout.VBox.setVgrow(filtrosYTabla, javafx.scene.layout.Priority.ALWAYS);
 
         vista.getChildren().addAll(formulario, filtrosYTabla);
 
@@ -173,6 +176,9 @@ public class CriteriosController extends BaseController {
     private VBox crearFiltrosYTabla() {
         VBox contenedor = new VBox(15);
         contenedor.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
+        contenedor.setMaxHeight(Double.MAX_VALUE);
+        contenedor.setMaxWidth(Double.MAX_VALUE);
+        javafx.scene.layout.VBox.setVgrow(contenedor, javafx.scene.layout.Priority.ALWAYS);;
 
         // Sección de filtros
         javafx.scene.layout.HBox filterBox = new javafx.scene.layout.HBox(10);
@@ -218,6 +224,9 @@ public class CriteriosController extends BaseController {
 
         // Tabla de criterios
         tablaCriterios = new TableView<>(); // 📋 Guardar referencia
+        tablaCriterios.setMaxHeight(Double.MAX_VALUE);
+        tablaCriterios.setMaxWidth(Double.MAX_VALUE);
+        javafx.scene.layout.VBox.setVgrow(tablaCriterios, javafx.scene.layout.Priority.ALWAYS);
 
         TableColumn<Criterio, String> colNombre = new TableColumn<>("Nombre");
         colNombre.setCellValueFactory(data ->

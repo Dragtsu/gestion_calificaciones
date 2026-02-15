@@ -12,6 +12,8 @@ import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.geometry.Pos;
 import org.apache.poi.xwpf.usermodel.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.awt.Desktop;
@@ -38,6 +40,8 @@ import java.util.stream.Collectors;
 @Component
 public class ConcentradoController extends BaseController {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ConcentradoController.class);
+
     private final CalificacionConcentradoServicePort calificacionConcentradoService;
     private final AlumnoServicePort alumnoService;
     private final AgregadoServicePort agregadoService;
@@ -50,6 +54,11 @@ public class ConcentradoController extends BaseController {
     private final GrupoMateriaServicePort grupoMateriaService;
 
     private BorderPane mainContent;
+
+    // Variables para almacenar la última selección y detectar cambios
+    private Long ultimoGrupoId;
+    private Long ultimaMateriaId;
+    private Integer ultimoParcial;
 
     public ConcentradoController(CalificacionConcentradoServicePort calificacionConcentradoService,
                                  AlumnoServicePort alumnoService,
@@ -90,6 +99,8 @@ public class ConcentradoController extends BaseController {
     public VBox crearVistaConcentrado() {
         VBox vista = new VBox(20);
         vista.setStyle("-fx-padding: 20; -fx-background-color: #f5f5f5;");
+        vista.setMaxHeight(Double.MAX_VALUE);
+        vista.setMaxWidth(Double.MAX_VALUE);
 
         try {
             // Header
@@ -162,13 +173,18 @@ public class ConcentradoController extends BaseController {
             // Panel para la tabla
             VBox tablaPanel = new VBox(15);
             tablaPanel.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 2);");
+            tablaPanel.setMaxHeight(Double.MAX_VALUE);
+            tablaPanel.setMaxWidth(Double.MAX_VALUE);
+            javafx.scene.layout.VBox.setVgrow(tablaPanel, javafx.scene.layout.Priority.ALWAYS);
 
             Label lblTabla = new Label("Tabla de Calificaciones");
             lblTabla.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
 
             TableView<Map<String, Object>> tblCalificaciones = new TableView<>();
             tblCalificaciones.setEditable(true);
-            tblCalificaciones.setMinHeight(400);
+            tblCalificaciones.setMaxHeight(Double.MAX_VALUE);
+            tblCalificaciones.setMaxWidth(Double.MAX_VALUE);
+            javafx.scene.layout.VBox.setVgrow(tblCalificaciones, javafx.scene.layout.Priority.ALWAYS);
 
             // Botón para generar tabla
             btnBuscar.setOnAction(e -> {
@@ -176,6 +192,11 @@ public class ConcentradoController extends BaseController {
                     mostrarAdvertencia("Debe seleccionar Grupo, Materia y Parcial");
                     return;
                 }
+                // Registrar la selección actual antes de generar la tabla
+                ultimoGrupoId = cmbGrupo.getValue().getId();
+                ultimaMateriaId = cmbMateria.getValue().getId();
+                ultimoParcial = cmbParcial.getValue();
+
                 generarTablaCalificaciones(tblCalificaciones, cmbGrupo.getValue(), cmbMateria.getValue(), cmbParcial.getValue());
             });
 
@@ -211,6 +232,40 @@ public class ConcentradoController extends BaseController {
 
             vista.getChildren().addAll(lblTitulo, filtrosPanel, tablaPanel);
 
+            // 🔄 Agregar listener de foco para recargar la tabla cuando se regresa a esta vista
+            vista.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal) {
+                    LOG.debug("Vista 'Concentrado de Calificaciones' obtuvo el foco - verificando si hay cambios...");
+
+                    // Si hay una selección válida, verificar si ha cambiado y recargar si es necesario
+                    if (cmbGrupo.getValue() != null && cmbMateria.getValue() != null && cmbParcial.getValue() != null) {
+                        Long grupoActual = cmbGrupo.getValue().getId();
+                        Long materiaActual = cmbMateria.getValue().getId();
+                        Integer parcialActual = cmbParcial.getValue();
+
+                        // Comparar con la última selección
+                        boolean huboChangios = !grupoActual.equals(ultimoGrupoId) ||
+                                            !materiaActual.equals(ultimaMateriaId) ||
+                                            !parcialActual.equals(ultimoParcial);
+
+                        if (huboChangios) {
+                            LOG.info("Se detectó cambio en la selección - recargando tabla...");
+                            LOG.debug("Anterior: Grupo={}, Materia={}, Parcial={}", ultimoGrupoId, ultimaMateriaId, ultimoParcial);
+                            LOG.debug("Actual: Grupo={}, Materia={}, Parcial={}", grupoActual, materiaActual, parcialActual);
+
+                            generarTablaCalificaciones(tblCalificaciones, cmbGrupo.getValue(), cmbMateria.getValue(), cmbParcial.getValue());
+
+                            // Actualizar la última selección
+                            ultimoGrupoId = grupoActual;
+                            ultimaMateriaId = materiaActual;
+                            ultimoParcial = parcialActual;
+                        } else {
+                            LOG.debug("Sin cambios en la selección - no se recarga la tabla");
+                        }
+                    }
+                }
+            });
+
         } catch (Exception e) {
             manejarExcepcion("crear vista de concentrado de calificaciones", e);
         }
@@ -220,6 +275,8 @@ public class ConcentradoController extends BaseController {
 
     private void cargarMateriasPorGrupo(ComboBox<Materia> combo, Grupo grupo) {
         try {
+            LOG.info("Cargando materias para grupo: {}", grupo.getId());
+
             // Obtener asignaciones del grupo y luego las materias
             List<Materia> materias = materiaService.obtenerTodasLasMaterias().stream()
                 .filter(m -> {
@@ -227,8 +284,13 @@ public class ConcentradoController extends BaseController {
                     return true; // Por ahora mostrar todas
                 })
                 .collect(Collectors.toList());
+
+            LOG.info("Total de materias disponibles: {}", materias.size());
+            materias.forEach(m -> LOG.debug("  - {}: {}", m.getId(), m.getNombre()));
+
             combo.setItems(FXCollections.observableArrayList(materias));
         } catch (Exception e) {
+            LOG.error("Error al cargar materias: ", e);
             manejarExcepcion("cargar materias por grupo", e);
         }
     }
@@ -1561,6 +1623,7 @@ public class ConcentradoController extends BaseController {
         try {
             List<Grupo> grupos = grupoService.obtenerTodosLosGrupos();
             combo.setItems(FXCollections.observableArrayList(grupos));
+            LOG.info("Grupos cargados exitosamente: {} grupos disponibles", grupos.size());
             // Configurar el callback para mostrar el ID del grupo
             combo.setCellFactory(param -> new javafx.scene.control.ListCell<Grupo>() {
                 @Override
@@ -1585,15 +1648,27 @@ public class ConcentradoController extends BaseController {
                 }
             });
         } catch (Exception e) {
+            LOG.error("Error al cargar grupos: ", e);
             manejarExcepcion("cargar grupos", e);
         }
     }
 
     private void cargarMaterias(ComboBox<Materia> combo) {
         try {
+            LOG.debug("Cargando materias...");
             List<Materia> materias = materiaService.obtenerTodasLasMaterias();
+
+            if (materias == null || materias.isEmpty()) {
+                LOG.warn("No se encontraron materias");
+                return;
+            }
+
+            LOG.info("Total de materias: {}", materias.size());
+            materias.forEach(m -> LOG.debug("  - {}: {}", m.getId(), m.getNombre()));
+
             combo.setItems(FXCollections.observableArrayList(materias));
         } catch (Exception e) {
+            LOG.error("Error al cargar materias: ", e);
             manejarExcepcion("cargar materias", e);
         }
     }

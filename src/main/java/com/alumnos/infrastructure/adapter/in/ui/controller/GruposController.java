@@ -44,7 +44,14 @@ public class GruposController extends BaseController {
     public VBox crearVista() {
         VBox vista = new VBox(20);
         vista.setStyle("-fx-padding: 20; -fx-background-color: #f5f5f5;");
-        vista.getChildren().addAll(crearFormulario(), crearTabla());
+        vista.setMaxHeight(Double.MAX_VALUE);
+        vista.setMaxWidth(Double.MAX_VALUE);
+
+        VBox formulario = crearFormulario();
+        VBox tabla = crearTabla();
+        javafx.scene.layout.VBox.setVgrow(tabla, javafx.scene.layout.Priority.ALWAYS);
+
+        vista.getChildren().addAll(formulario, tabla);
         return vista;
     }
 
@@ -87,11 +94,17 @@ public class GruposController extends BaseController {
     private VBox crearTabla() {
         VBox contenedor = new VBox(10);
         contenedor.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
+        contenedor.setMaxHeight(Double.MAX_VALUE);
+        contenedor.setMaxWidth(Double.MAX_VALUE);
+        javafx.scene.layout.VBox.setVgrow(contenedor, javafx.scene.layout.Priority.ALWAYS);;
 
         Label lblTableTitle = new Label("Lista de Grupos");
         lblTableTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
 
         tablaGrupos = new TableView<>(); // 📋 Guardar referencia
+        tablaGrupos.setMaxHeight(Double.MAX_VALUE);
+        tablaGrupos.setMaxWidth(Double.MAX_VALUE);
+        javafx.scene.layout.VBox.setVgrow(tablaGrupos, javafx.scene.layout.Priority.ALWAYS);
         TableColumn<Grupo, String> colId = new TableColumn<>("ID");
         colId.setCellValueFactory(data ->
             new javafx.beans.property.SimpleStringProperty(String.valueOf(data.getValue().getId())));

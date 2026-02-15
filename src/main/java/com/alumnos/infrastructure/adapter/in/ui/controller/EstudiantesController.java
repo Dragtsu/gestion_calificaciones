@@ -51,10 +51,14 @@ public class EstudiantesController extends BaseController {
     public VBox crearVista() {
         VBox vista = new VBox(20);
         vista.setStyle("-fx-padding: 20; -fx-background-color: #f5f5f5;");
-        vista.getChildren().addAll(
-            crearFormulario(),
-            crearTabla()
-        );
+        vista.setMaxHeight(Double.MAX_VALUE);
+        vista.setMaxWidth(Double.MAX_VALUE);
+
+        VBox formulario = crearFormulario();
+        VBox tabla = crearTabla();
+        javafx.scene.layout.VBox.setVgrow(tabla, javafx.scene.layout.Priority.ALWAYS);
+
+        vista.getChildren().addAll(formulario, tabla);
         return vista;
     }
 
@@ -144,6 +148,9 @@ public class EstudiantesController extends BaseController {
         headerBox.getChildren().addAll(lblFiltro, cmbFiltroGrupo);
 
         tablaAlumnos = new TableView<>(); // 📋 Guardar referencia
+        tablaAlumnos.setMaxHeight(Double.MAX_VALUE);
+        tablaAlumnos.setMaxWidth(Double.MAX_VALUE);
+        javafx.scene.layout.VBox.setVgrow(tablaAlumnos, javafx.scene.layout.Priority.ALWAYS);
 
         // 📝 Columna Número de Lista (NO EDITABLE) - Primera columna
         TableColumn<Alumno, Integer> colNumeroLista = new TableColumn<>("N° Lista");

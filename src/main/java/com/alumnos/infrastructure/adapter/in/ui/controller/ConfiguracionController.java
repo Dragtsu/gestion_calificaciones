@@ -29,6 +29,8 @@ public class ConfiguracionController extends BaseController {
     public VBox crearVista() {
         VBox vista = new VBox(20);
         vista.setStyle("-fx-padding: 20; -fx-background-color: #f5f5f5;");
+        vista.setMaxHeight(Double.MAX_VALUE);
+        vista.setMaxWidth(Double.MAX_VALUE);
         vista.getChildren().add(crearFormulario());
 
         // Cargar configuración actual

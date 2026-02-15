@@ -2,6 +2,8 @@ package com.alumnos;
 
 import com.alumnos.infrastructure.adapter.in.ui.JavaFXApplication;
 import javafx.application.Application;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 // import org.springframework.cache.annotation.EnableCaching;  // ❌ DESACTIVADO: En apps de escritorio causa más problemas que beneficios
 
@@ -13,6 +15,8 @@ import java.io.InputStream;
 @SpringBootApplication
 // @EnableCaching  // ❌ DESACTIVADO: Para apps de escritorio, los datos deben reflejarse inmediatamente
 public class AlumnosApplication {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AlumnosApplication.class);
 
     static {
         // Configurar UTF-8 para todo el sistema
@@ -34,7 +38,7 @@ public class AlumnosApplication {
                         image = ImageIO.read(iconStream);
                         iconStream.close();
                     } catch (Exception e) {
-                        System.err.println("No se pudo leer el PNG: " + e.getMessage());
+                        LOG.warn("No se pudo leer el PNG: {}", e.getMessage());
                     }
                 }
 
@@ -46,7 +50,7 @@ public class AlumnosApplication {
                             image = ImageIO.read(iconStream);
                             iconStream.close();
                         } catch (Exception e) {
-                            System.err.println("No se pudo leer el ICO: " + e.getMessage());
+                            LOG.warn("No se pudo leer el ICO: {}", e.getMessage());
                         }
                     }
                 }
@@ -54,13 +58,13 @@ public class AlumnosApplication {
                 // Establecer el icono si se cargó exitosamente
                 if (image != null) {
                     Taskbar.getTaskbar().setIconImage(image);
-                    System.out.println("Icono de la barra de tareas configurado correctamente");
+                    LOG.info("Icono de la barra de tareas configurado correctamente");
                 } else {
-                    System.err.println("No se pudo cargar ningun formato de icono");
+                    LOG.warn("No se pudo cargar ningun formato de icono");
                 }
             }
         } catch (Exception e) {
-            System.err.println("No se pudo establecer el icono de la barra de tareas: " + e.getMessage());
+            LOG.error("No se pudo establecer el icono de la barra de tareas: {}", e.getMessage());
         }
     }
 
