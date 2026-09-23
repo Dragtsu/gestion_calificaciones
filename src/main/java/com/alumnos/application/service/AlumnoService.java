@@ -1,6 +1,9 @@
 package com.alumnos.application.service;
 
 import com.alumnos.domain.model.Alumno;
+import com.alumnos.domain.model.AlumnoExamen;
+import com.alumnos.domain.model.Calificacion;
+import com.alumnos.domain.model.CalificacionConcentrado;
 import com.alumnos.domain.port.in.AlumnoServicePort;
 import com.alumnos.domain.port.in.CalificacionServicePort;
 import com.alumnos.domain.port.in.CalificacionConcentradoServicePort;
@@ -107,6 +110,46 @@ public class AlumnoService implements AlumnoServicePort {
         // Verificar si el alumno tiene exámenes asociados
         if (!alumnoExamenService.obtenerAlumnoExamenPorAlumno(id).isEmpty()) {
             throw new IllegalStateException("No se puede eliminar el alumno porque tiene exámenes registrados");
+        }
+
+        // Obtener el grupo antes de eliminar para recalcular
+        Optional<Alumno> alumno = alumnoRepositoryPort.findById(id);
+        Long grupoId = alumno.map(Alumno::getGrupoId).orElse(null);
+
+        alumnoRepositoryPort.deleteById(id);
+
+        // Recalcular números de lista para el grupo
+        if (grupoId != null) {
+            recalcularNumerosLista(grupoId);
+        }
+    }
+    
+     @Override
+    @Transactional
+    public void eliminarAlumnoCascada(Long id) {
+        
+        // Verificar si el alumno tiene calificaciones asociadas
+        List<Calificacion> calificacion = calificacionService.obtenerCalificacionesPorAlumno(id);
+        if (!calificacion.isEmpty()) {
+            
+            for(Calificacion calif:calificacion)
+                calificacionService.eliminarCalificacion(calif.getId());
+        }
+
+        // Verificar si el alumno tiene calificaciones en el concentrado
+        List<CalificacionConcentrado> concentrado = calificacionConcentradoService.obtenerCalificacionesPorAlumno(id);
+        if (!concentrado.isEmpty()) {
+           
+            for(CalificacionConcentrado califiConcentrado: concentrado)
+                calificacionConcentradoService.eliminarCalificacion(califiConcentrado.getId());
+        }
+
+        // Verificar si el alumno tiene exámenes asociados
+        List<AlumnoExamen> alumnoExamen = alumnoExamenService.obtenerAlumnoExamenPorAlumno(id);
+        if (!alumnoExamen.isEmpty()) {
+            
+            for(AlumnoExamen alExam: alumnoExamen )
+                alumnoExamenService.eliminarAlumnoExamen(alExam.getId());
         }
 
         // Obtener el grupo antes de eliminar para recalcular
