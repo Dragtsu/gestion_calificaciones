@@ -96,21 +96,16 @@ public class AlumnoService implements AlumnoServicePort {
 
     @Override
     @Transactional
-    public void eliminarAlumno(Long id) {
+    public int eliminarAlumno(Long id) {
         // Verificar si el alumno tiene calificaciones asociadas
-        if (!calificacionService.obtenerCalificacionesPorAlumno(id).isEmpty()) {
-            throw new IllegalStateException("No se puede eliminar el alumno porque tiene calificaciones registradas");
-        }
-
-        // Verificar si el alumno tiene calificaciones en el concentrado
-        if (!calificacionConcentradoService.obtenerCalificacionesPorAlumno(id).isEmpty()) {
-            throw new IllegalStateException("No se puede eliminar el alumno porque tiene calificaciones en el concentrado");
-        }
-
-        // Verificar si el alumno tiene exámenes asociados
-        if (!alumnoExamenService.obtenerAlumnoExamenPorAlumno(id).isEmpty()) {
-            throw new IllegalStateException("No se puede eliminar el alumno porque tiene exámenes registrados");
-        }
+                       
+        //Pedir confirmación para eliminacion de alumno en cascada, si viene de 
+        if (!calificacionService.obtenerCalificacionesPorAlumno(id).isEmpty()
+                || !calificacionConcentradoService.obtenerCalificacionesPorAlumno(id).isEmpty()
+                || !alumnoExamenService.obtenerAlumnoExamenPorAlumno(id).isEmpty()) {
+            
+            return 2;
+        }                
 
         // Obtener el grupo antes de eliminar para recalcular
         Optional<Alumno> alumno = alumnoRepositoryPort.findById(id);
@@ -122,11 +117,13 @@ public class AlumnoService implements AlumnoServicePort {
         if (grupoId != null) {
             recalcularNumerosLista(grupoId);
         }
+        
+        return 1;
     }
     
      @Override
     @Transactional
-    public void eliminarAlumnoCascada(Long id) {
+    public int eliminarAlumnoCascada(Long id) {
         
         // Verificar si el alumno tiene calificaciones asociadas
         List<Calificacion> calificacion = calificacionService.obtenerCalificacionesPorAlumno(id);
@@ -162,6 +159,8 @@ public class AlumnoService implements AlumnoServicePort {
         if (grupoId != null) {
             recalcularNumerosLista(grupoId);
         }
+        
+        return 1;
     }
 
     @Override
