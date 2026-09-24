@@ -10,5 +10,6 @@ public interface GrupoServicePort {
     Optional<Grupo> obtenerGrupoPorId(Long id);
     List<Grupo> obtenerTodosLosGrupos();
     Grupo actualizarGrupo(Grupo grupo);
-    void eliminarGrupo(Long id);
+    int eliminarGrupo(Long id);
+    int eliminarGrupoCascada(Long id);
 }

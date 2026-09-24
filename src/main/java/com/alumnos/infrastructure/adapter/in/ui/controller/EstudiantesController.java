@@ -298,6 +298,13 @@ public class EstudiantesController extends BaseController {
             cargarGrupos(cmbGrupo);
         }
     }
+    
+    
+    public void refrescarTablaAlumnos(){
+       if (tablaAlumnos != null) {
+        cargarDatos(tablaAlumnos);
+       }
+    }
 
     private void cargarDatos(TableView<Alumno> tabla) {
         try {
@@ -345,7 +352,25 @@ public class EstudiantesController extends BaseController {
         confirmacion.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 try {
-                    alumnoService.eliminarAlumno(alumno.getId());
+                    int respuesta = alumnoService.eliminarAlumno(alumno.getId());
+                    
+                    if(respuesta==2){
+                        
+                        Alert eliminacionCascadaAlert = new Alert(Alert.AlertType.CONFIRMATION);
+                        eliminacionCascadaAlert.setTitle("Confirmar eliminación");
+                        eliminacionCascadaAlert.setHeaderText("¿Está seguro de eliminar este alumno?, tiene calificaciones cargadas");
+                        eliminacionCascadaAlert.setContentText(alumno.getNombre() + " " +
+                                                alumno.getApellidoPaterno() + " " +
+                                                alumno.getApellidoMaterno());
+                        
+                            eliminacionCascadaAlert.showAndWait().ifPresent(val -> {
+                                if (val == ButtonType.OK) {
+                                    alumnoService.eliminarAlumnoCascada(alumno.getId());
+                                }
+                            });
+                        }
+                        
+                    
                     mostrarExito("Alumno eliminado correctamente");
 
                     // Recargar la tabla
@@ -361,6 +386,11 @@ public class EstudiantesController extends BaseController {
             }
         });
     }
+    
+    private void eliminarAlumnoCascada(Alumno alumno){
+    
+        
+    } 
 
     private void cargarAlumnoEnFormulario(Alumno alumno) {
         if (alumno == null) {

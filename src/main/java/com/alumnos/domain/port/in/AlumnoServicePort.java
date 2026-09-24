@@ -10,6 +10,7 @@ public interface AlumnoServicePort {
     Optional<Alumno> obtenerAlumnoPorId(Long id);
     List<Alumno> obtenerTodosLosAlumnos();
     Alumno actualizarAlumno(Alumno alumno);
-    void eliminarAlumno(Long id);
+    int eliminarAlumno(Long id);
+    int eliminarAlumnoCascada(Long id);
     List<Alumno> buscarPorNombre(String nombre);
 }

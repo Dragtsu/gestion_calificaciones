@@ -23,10 +23,10 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>22</maven.compiler.source>
-        <maven.compiler.target>22</maven.compiler.target>
-        <java.version>22</java.version>
-        <javafx.version>21.0.1</javafx.version>
+        <maven.compiler.source>26</maven.compiler.source>
+        <maven.compiler.target>26</maven.compiler.target>
+        <java.version>26</java.version>
+        <javafx.version>26</javafx.version>
         <sqlite.version>3.44.1.0</sqlite.version>
         <poi.version>5.2.5</poi.version>
     </properties>
@@ -184,24 +184,27 @@
                     <execution>
                         <!-- Default configuration for running -->
                         <!-- Usage: mvn clean javafx:run -->
-                        <id>default-cli</id>
-                        <configuration>
-                            <mainClass>com.alumnos.AlumnosApplication</mainClass>
-                        </configuration>
+                        <id>default-cli</id>                        
                     </execution>
                 </executions>
                 <configuration>
-                    <mainClass>com.alumnos/com.alumnos.AlumnosApplication</mainClass>
+                    <mainClass>com.alumnos.AlumnosApplication</mainClass>
                 </configuration>
             </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>22</source>
-                    <target>22</target>
-                    <encoding>UTF-8</encoding>
+                <version>3.8.0</version>
+                <configuration>                   
+                    <release>22</release>
+                     <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>1.18.46</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
         </plugins>

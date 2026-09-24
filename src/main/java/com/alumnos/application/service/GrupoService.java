@@ -1,6 +1,8 @@
 package com.alumnos.application.service;
 
+import com.alumnos.domain.model.Alumno;
 import com.alumnos.domain.model.Grupo;
+import com.alumnos.domain.model.GrupoMateria;
 import com.alumnos.domain.port.in.GrupoServicePort;
 import com.alumnos.domain.port.in.AlumnoServicePort;
 import com.alumnos.domain.port.in.GrupoMateriaServicePort;
@@ -73,14 +75,14 @@ public class GrupoService implements GrupoServicePort {
     @Override
     @Transactional
     @CacheEvict(value = "grupos", allEntries = true) // 🗑️ Limpia el caché al eliminar
-    public void eliminarGrupo(Long id) {
+    public int eliminarGrupo(Long id) {
         // Verificar si el grupo tiene alumnos asociados
         long cantidadAlumnos = alumnoService.obtenerTodosLosAlumnos().stream()
             .filter(alumno -> id.equals(alumno.getGrupoId()))
             .count();
 
         if (cantidadAlumnos > 0) {
-            throw new IllegalStateException("No se puede eliminar el grupo porque tiene " + cantidadAlumnos + " alumno(s) asociado(s)");
+             return 2; //Pedir confirmacion eliminacion en cascada           
         }
 
         // Verificar si el grupo tiene materias asignadas
@@ -89,5 +91,41 @@ public class GrupoService implements GrupoServicePort {
         }
 
         grupoRepositoryPort.deleteById(id);
+        
+        return 1; //Eliminacion correcta
+    }
+    
+    
+    @Override    
+    @Transactional
+    @CacheEvict(value = "grupos", allEntries = true)    
+    public int eliminarGrupoCascada( Long id ){
+        
+         long cantidadAlumnos = alumnoService.obtenerTodosLosAlumnos().stream()
+            .filter(alumno -> id.equals(alumno.getGrupoId()))
+            .count();
+
+        if (cantidadAlumnos > 0) {
+          
+            List<Alumno> alumnos= alumnoService.obtenerTodosLosAlumnos().stream().filter(alumno -> id.equals(alumno.getGrupoId())).toList();
+            
+            for(Alumno alumno : alumnos){                
+                alumnoService.eliminarAlumnoCascada(alumno.getId());                
+            }
+            
+        }   
+         
+        
+        //Eliminar materias asignadas al grupo
+        List<GrupoMateria> asignaciones = grupoMateriaService.obtenerMateriasPorGrupo(id);
+        if (!asignaciones.isEmpty()) { 
+             for(GrupoMateria grupoMateria:asignaciones)
+                 grupoMateriaService.eliminarAsignacion(grupoMateria.getId());
+        }
+        
+         grupoRepositoryPort.deleteById(id);
+        
+            return 1;
+    
     }
 }

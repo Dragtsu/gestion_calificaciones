@@ -9,6 +9,7 @@ import javafx.scene.layout.VBox;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Controlador para la gestión de grupos
@@ -198,8 +199,15 @@ public class GruposController extends BaseController {
         confirmacion.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 try {
-                    grupoService.eliminarGrupo(grupo.getId());
-                    mostrarExito("Grupo eliminado correctamente");
+                    
+                    int resultado = grupoService.eliminarGrupo(grupo.getId());
+                    
+                    
+                    if(resultado == 1)
+                        mostrarExito("Grupo eliminado correctamente");
+                    else if(resultado == 2)//LLamar para eliminar en cascada                        
+                        if( eliminarGrupoCascada(grupo.getId()) == 1 )
+                                mostrarExito("Grupo eliminado correctamente");                    
 
                     // Recargar la tabla
                     if (tablaGrupos != null) {
@@ -209,9 +217,12 @@ public class GruposController extends BaseController {
                     // 🔔 NOTIFICAR a otros controladores para actualizar sus ComboBox de grupos
                     if (estudiantesController != null) {
                         estudiantesController.refrescarListaGrupos();
+                        estudiantesController.refrescarTablaAlumnos();
                     }
                     if (asignacionesController != null) {
                         asignacionesController.refrescarListaGrupos();
+                        asignacionesController.refrescarListaMaterias();
+                        asignacionesController.refrescarTablaAsignacioes();
                     }
                 } catch (IllegalStateException e) {
                     // Error de validación de dependencias
@@ -221,6 +232,32 @@ public class GruposController extends BaseController {
                 }
             }
         });
+    }
+    
+    public int eliminarGrupoCascada(Long grupo){
+               
+        Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmacion.setTitle("Confirmar eliminación");
+        confirmacion.setHeaderText("¿Está seguro de eliminar este grupo? Contiene alumnos registrados");
+        confirmacion.setContentText("Grupo: " + grupo);
+        
+        AtomicReference<Integer> respuesta = new AtomicReference<>(1);
+
+        confirmacion.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try {                    
+                    respuesta.set( grupoService.eliminarGrupoCascada(grupo) );                  
+                } catch (IllegalStateException e) {
+                    // Error de validación de dependencias
+                    mostrarError(e.getMessage());
+                } catch (Exception e) {
+                    manejarExcepcion("eliminar grupo", e);
+                }
+            } else
+                respuesta.set( 0 );
+        });
+        
+        return respuesta.get();
     }
 
     private void ajustarColumnasAlContenido(TableView<Grupo> tabla) {

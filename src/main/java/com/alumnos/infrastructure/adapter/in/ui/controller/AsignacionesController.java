@@ -239,6 +239,12 @@ public class AsignacionesController extends BaseController {
             cargarMaterias(cmbMateria);
         }
     }
+    
+    public void refrescarTablaAsignacioes(){
+        if (tablaAsignaciones != null) {
+                cargarDatos(tablaAsignaciones);
+            }
+    }
 
     private void cargarMaterias(ComboBox<Materia> combo) {
         try {
